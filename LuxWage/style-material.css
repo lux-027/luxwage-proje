@@ -1,0 +1,1351 @@
+/* LuxWage - Google Material Design Stilinde Modern CSS */
+
+/* CSS Variables - Google Material Design Renk Paleti */
+:root {
+    /* Google Material Design Renkleri */
+    --bg-primary: #F8F9FA; /* Çok açık gri - ana arka plan */
+    --bg-secondary: #FFFFFF; /* Saf beyaz - kartlar, sidebar, modal */
+    --primary-color: #1A73E8; /* Google mavisi - ana vurgu */
+    --primary-hover: #E8F0FE; /* Çok açık mavi - hover ve seçili alanlar */
+    --text-primary: #202124; /* Koyu gri - ana metinler */
+    --text-secondary: #5F6368; /* Orta gri - ikincil metinler */
+    --error-color: #D93025; /* Google kırmızısı - hatalar */
+    --success-color: #0F9D58; /* Google yeşili - başarı */
+    --warning-color: #F9AB00; /* Google sarısı - uyarılar */
+    --border-color: #DADCE0; /* Açık gri - kenarlıklar */
+    --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.12);
+    --shadow-md: 0 4px 6px rgba(0, 0, 0, 0.16);
+    --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.19);
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Modal Styles */
+.modal {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    padding: 32px;
+    border-radius: var(--radius-lg);
+    width: 90%;
+    max-width: 420px;
+    box-shadow: var(--shadow-lg);
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    animation: modalSlideIn 0.3s ease-out;
+}
+
+.modal-content h2 {
+    margin: 0;
+    color: var(--primary-color);
+    font-size: 28px;
+    font-weight: 600;
+    text-align: center;
+    font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+.modal-content input {
+    padding: 16px;
+    border: 2px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    outline: none;
+    font-size: 16px;
+    transition: var(--transition);
+    font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: var(--bg-primary);
+    color: var(--text-primary);
+}
+
+.modal-content input:focus {
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 4px rgba(26, 115, 232, 0.1);
+    background: var(--bg-secondary);
+}
+
+.modal-content button {
+    padding: 14px 24px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-size: 16px;
+    font-weight: 500;
+    transition: var(--transition);
+    font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-primary:hover {
+    background-color: var(--primary-hover);
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background-color: var(--text-secondary);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-secondary:hover {
+    background-color: #3c4043;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.btn-danger {
+    background-color: var(--error-color);
+    color: white;
+    box-shadow: var(--shadow-sm);
+}
+
+.btn-danger:hover {
+    background-color: #b3261e;
+    box-shadow: var(--shadow-md);
+    transform: translateY(-2px);
+}
+
+.w-100 {
+    width: 100%;
+    margin-top: 12px;
+}
+
+.close {
+    position: absolute;
+    right: 20px;
+    top: 20px;
+    font-size: 28px;
+    cursor: pointer;
+    color: var(--text-secondary);
+    transition: var(--transition);
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.close:hover {
+    color: var(--error-color);
+    background: rgba(217, 48, 37, 0.1);
+}
+
+/* Modal Animation */
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-50px) scale(0.9);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+/* Button Base Styles */
+.btn {
+    padding: 10px 20px;
+    border: none;
+    border-radius: var(--radius-sm);
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--transition);
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+}
+
+/* Responsive Design */
+@media (max-width: 480px) {
+    .modal-content {
+        width: 95%;
+        padding: 24px;
+        margin: 20px;
+    }
+    
+    .modal-content input {
+        font-size: 16px;
+        padding: 14px;
+    }
+    
+    .modal-content button {
+        font-size: 14px;
+        padding: 12px 20px;
+    }
+    
+    .close {
+        width: 36px;
+        height: 36px;
+        font-size: 24px;
+        right: 16px;
+        top: 16px;
+    }
+}
+
+/* High contrast for accessibility */
+@media (prefers-contrast: high) {
+    .modal-content input {
+        border-width: 2px;
+    }
+    
+    .modal-content button {
+        border: 1px solid currentColor;
+    }
+}
+
+/* Notification Styles */
+#notificationContainer {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 9999;
+    max-width: 400px;
+}
+
+.notification {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-md);
+    box-shadow: var(--shadow-lg);
+    margin-bottom: 10px;
+    padding: 16px;
+    border-left: 4px solid;
+    animation: slideInRight 0.3s ease-out;
+    display: flex;
+    align-items: center;
+}
+
+.notification-success {
+    border-left-color: var(--success-color);
+}
+
+.notification-error {
+    border-left-color: var(--error-color);
+}
+
+.notification-info {
+    border-left-color: var(--primary-color);
+}
+
+.notification-content {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.notification-content i {
+    font-size: 18px;
+    flex-shrink: 0;
+}
+
+.notification-content span {
+    color: var(--text-primary);
+    font-size: 14px;
+    font-weight: 500;
+    line-height: 1.4;
+}
+
+@keyframes slideInRight {
+    from {
+        opacity: 0;
+        transform: translateX(100px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Responsive notifications */
+@media (max-width: 480px) {
+    #notificationContainer {
+        left: 10px;
+        right: 10px;
+        max-width: calc(100% - 20px);
+    }
+    
+    .notification {
+        padding: 12px;
+    }
+    
+    .notification-content span {
+        font-size: 13px;
+    }
+}
+
+/* Additional CSS Variables */
+:root {
+    --text-secondary: #5F6368; /* Orta gri - açıklamalar, tarihler */
+    --border-color: #DADCE0; /* Açık gri - kenarlıklar */
+    --success-color: #34A853; /* Google yeşili - ödemeler */
+    --danger-color: #D93025; /* Google kırmızısı - devamsızlık */
+    --warning-color: #F9AB00; /* Google sarısı - uyarılar */
+    --info-color: #1A73E8; /* Google mavisi - bilgi */
+    
+    /* Material Design Gölgeler */
+    --shadow-1: 0 1px 2px 0 rgba(60,64,67,0.3), 0 1px 3px 1px rgba(60,64,67,0.15);
+    --shadow-2: 0 1px 2px 0 rgba(60,64,67,0.3), 0 2px 6px 2px rgba(60,64,67,0.15);
+    --shadow-3: 0 4px 8px 3px rgba(60,64,67,0.15);
+    --shadow-4: 0 6px 10px 4px rgba(60,64,67,0.15);
+    --shadow-5: 0 8px 12px 6px rgba(60,64,67,0.15);
+    
+    /* Material Design Border Radius */
+    --radius-sm: 4px;
+    --radius-md: 8px;
+    --radius-lg: 12px;
+    --radius-xl: 16px;
+    --radius-full: 9999px;
+    
+    /* Animasyonlar */
+    --transition-fast: 150ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-normal: 250ms cubic-bezier(0.4, 0, 0.2, 1);
+    --transition-slow: 350ms cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Genel Reset ve Base Stiller */
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Google Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    line-height: 1.6;
+    color: var(--text-primary);
+    background-color: var(--bg-primary);
+    padding: 0;
+    box-sizing: border-box;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+}
+
+/* Smooth Scroll */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Custom Scrollbar - Material Design */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--bg-primary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: var(--radius-sm);
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: var(--text-secondary);
+}
+
+/* Landing Page - Material Design */
+.hero-gradient {
+    background: linear-gradient(135deg, var(--primary-color) 0%, #185ABC 50%, var(--success-color) 100%);
+}
+
+.glass-effect {
+    background: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+/* Material Design Animasyonlar */
+@keyframes mds-fade-in {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes mds-slide-in {
+    from {
+        opacity: 0;
+        transform: translateX(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes mds-scale-in {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+@keyframes mds-ripple {
+    to {
+        transform: scale(4);
+        opacity: 0;
+    }
+}
+
+.mds-fade-in {
+    animation: mds-fade-in var(--transition-normal) ease-out;
+}
+
+.mds-slide-in {
+    animation: mds-slide-in var(--transition-normal) ease-out;
+}
+
+.mds-scale-in {
+    animation: mds-scale-in var(--transition-normal) ease-out;
+}
+
+/* Sidebar - Material Design */
+.sidebar {
+    background: var(--bg-secondary);
+    box-shadow: var(--shadow-2);
+    border-right: 1px solid var(--border-color);
+}
+
+.nav-item {
+    transition: all var(--transition-fast) ease;
+    border-radius: var(--radius-md);
+    margin-bottom: 2px;
+    position: relative;
+    color: var(--text-primary);
+}
+
+.nav-item::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 20px;
+    background: var(--primary-color);
+    border-radius: 0 2px 2px 0;
+    opacity: 0;
+    transition: opacity var(--transition-fast) ease;
+}
+
+.nav-item:hover {
+    background: var(--primary-hover);
+    color: var(--primary-color);
+}
+
+.nav-item.active {
+    background: var(--primary-hover);
+    color: var(--primary-color);
+    font-weight: 500;
+}
+
+.nav-item.active::before {
+    opacity: 1;
+}
+
+/* Kartlar - Material Design */
+.card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast) ease;
+    overflow: hidden;
+}
+
+.card:hover {
+    box-shadow: var(--shadow-2);
+}
+
+.card-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+}
+
+.card-body {
+    padding: 1.5rem;
+}
+
+.card-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-primary);
+}
+
+/* Dashboard Kartları - Material Design */
+.stat-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast) ease;
+    position: relative;
+    overflow: hidden;
+}
+
+.stat-card:hover {
+    box-shadow: var(--shadow-3);
+    transform: translateY(-2px);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background: var(--primary-color);
+}
+
+.stat-card.danger::before {
+    background: var(--danger-color);
+}
+
+.stat-card.warning::before {
+    background: var(--warning-color);
+}
+
+.stat-card.info::before {
+    background: var(--info-color);
+}
+
+.stat-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-lg);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    transition: all var(--transition-fast) ease;
+}
+
+.stat-icon.success {
+    background: rgba(52, 168, 83, 0.1);
+    color: var(--success-color);
+}
+
+.stat-icon.danger {
+    background: rgba(217, 48, 37, 0.1);
+    color: var(--danger-color);
+}
+
+.stat-icon.warning {
+    background: rgba(249, 171, 0, 0.1);
+    color: var(--warning-color);
+}
+
+.stat-icon.info {
+    background: rgba(26, 115, 232, 0.1);
+    color: var(--info-color);
+}
+
+.stat-card:hover .stat-icon {
+    transform: scale(1.05);
+}
+
+.stat-value {
+    font-size: 2rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.25rem;
+    transition: all var(--transition-fast) ease;
+}
+
+.stat-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    font-weight: 400;
+}
+
+/* Çalışan Kartları - Material Design */
+.employee-card {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast) ease;
+    cursor: pointer;
+    position: relative;
+    user-select: none;
+}
+
+.employee-card:hover {
+    box-shadow: var(--shadow-3);
+    transform: translateY(-2px);
+    border-color: var(--primary-color);
+}
+
+.employee-card:active {
+    transform: translateY(0);
+    box-shadow: var(--shadow-1);
+}
+
+.employee-card::after {
+    content: 'Detayları gör';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--primary-color);
+    color: white;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 500;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity var(--transition-fast) ease;
+    z-index: 10;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.employee-card:hover::after {
+    opacity: 1;
+}
+
+.employee-avatar {
+    width: 48px;
+    height: 48px;
+    border-radius: var(--radius-full);
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: 500;
+    font-size: 1.125rem;
+    margin-bottom: 1rem;
+    box-shadow: var(--shadow-2);
+}
+
+.employee-name {
+    font-weight: 500;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.employee-info {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+}
+
+.employee-debt {
+    font-weight: 500;
+    font-size: 0.875rem;
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.employee-debt.positive {
+    color: var(--danger-color);
+}
+
+.employee-debt.zero {
+    color: var(--success-color);
+}
+
+/* Tablo Stilleri - Material Design */
+.modern-table {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow-1);
+    border: 1px solid var(--border-color);
+}
+
+.modern-table thead {
+    background: var(--bg-primary);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.modern-table th {
+    padding: 1rem;
+    text-align: left;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.modern-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.modern-table tbody tr {
+    transition: background-color var(--transition-fast) ease;
+}
+
+.modern-table tbody tr:hover {
+    background: var(--primary-hover);
+}
+
+.modern-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+/* Butonlar - Material Design */
+.btn {
+    padding: 0.625rem 1.25rem;
+    border-radius: var(--radius-md);
+    font-weight: 500;
+    font-size: 0.875rem;
+    transition: all var(--transition-fast) ease;
+    border: none;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    position: relative;
+    overflow: hidden;
+    box-shadow: var(--shadow-1);
+}
+
+.btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.2);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.btn:active::before {
+    width: 300px;
+    height: 300px;
+}
+
+.btn-primary {
+    background: var(--primary-color);
+    color: white;
+}
+
+.btn-primary:hover {
+    background: #1557B0;
+    box-shadow: var(--shadow-2);
+}
+
+.btn-primary:focus {
+    outline: none;
+    box-shadow: 0 0 0 2px var(--primary-hover), var(--shadow-2);
+}
+
+.btn-danger {
+    background: var(--danger-color);
+    color: white;
+}
+
+.btn-danger:hover {
+    background: #C5221F;
+    box-shadow: var(--shadow-2);
+}
+
+.btn-warning {
+    background: var(--warning-color);
+    color: white;
+}
+
+.btn-warning:hover {
+    background: #E37400;
+    box-shadow: var(--shadow-2);
+}
+
+.btn-success {
+    background: var(--success-color);
+    color: white;
+}
+
+.btn-success:hover {
+    background: #0D652D;
+    box-shadow: var(--shadow-2);
+}
+
+.btn-info {
+    background: var(--info-color);
+    color: white;
+}
+
+.btn-info:hover {
+    background: #1557B0;
+    box-shadow: var(--shadow-2);
+}
+
+.btn-secondary {
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+    border: 1px solid var(--border-color);
+    box-shadow: none;
+}
+
+.btn-secondary:hover {
+    background: var(--primary-hover);
+    border-color: var(--primary-color);
+    color: var(--primary-color);
+}
+
+.btn-sm {
+    padding: 0.5rem 1rem;
+    font-size: 0.75rem;
+}
+
+.btn-lg {
+    padding: 0.75rem 1.5rem;
+    font-size: 1rem;
+}
+
+/* Modal Pencereler - Material Design */
+.modal-backdrop {
+    background: rgba(0, 0, 0, 0.5);
+    backdrop-filter: blur(4px);
+}
+
+.modal-content {
+    background: var(--bg-secondary);
+    border-radius: var(--radius-xl);
+    box-shadow: var(--shadow-5);
+    border: 1px solid var(--border-color);
+}
+
+.modal-header {
+    padding: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    background: var(--bg-secondary);
+    border-radius: var(--radius-xl) var(--radius-xl) 0 0;
+}
+
+.modal-body {
+    padding: 1.5rem;
+}
+
+.modal-footer {
+    padding: 1rem 1.5rem;
+    border-top: 1px solid var(--border-color);
+    background: var(--bg-primary);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+}
+
+/* Form Elemanları - Material Design */
+.form-group {
+    margin-bottom: 1.5rem;
+}
+
+.form-label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-weight: 500;
+    color: var(--text-primary);
+    font-size: 0.875rem;
+}
+
+.form-control {
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    transition: all var(--transition-fast) ease;
+    background: var(--bg-secondary);
+    color: var(--text-primary);
+}
+
+.form-control:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px var(--primary-hover);
+}
+
+.form-control:disabled {
+    background: var(--bg-primary);
+    color: var(--text-secondary);
+    cursor: not-allowed;
+}
+
+/* Checkbox Stilleri - Material Design */
+.checkbox-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.checkbox-wrapper input[type="checkbox"] {
+    width: 1rem;
+    height: 1rem;
+    accent-color: var(--primary-color);
+    border-color: var(--border-color);
+    border-radius: var(--radius-sm);
+    transition: all var(--transition-fast) ease;
+}
+
+.checkbox-wrapper input[type="checkbox"]:checked {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+}
+
+.checkbox-wrapper input[type="checkbox"]:focus {
+    outline: 2px solid var(--primary-hover);
+    outline-offset: 2px;
+}
+
+/* Badge Stilleri - Material Design */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius-full);
+    font-size: 0.75rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-success {
+    background: rgba(52, 168, 83, 0.1);
+    color: var(--success-color);
+}
+
+.badge-danger {
+    background: rgba(217, 48, 37, 0.1);
+    color: var(--danger-color);
+}
+
+.badge-warning {
+    background: rgba(249, 171, 0, 0.1);
+    color: var(--warning-color);
+}
+
+.badge-info {
+    background: rgba(26, 115, 232, 0.1);
+    color: var(--info-color);
+}
+
+.badge-secondary {
+    background: rgba(95, 99, 104, 0.1);
+    color: var(--text-secondary);
+}
+
+/* Bildirimler - Material Design */
+.notification {
+    padding: 1rem 1.5rem;
+    border-radius: var(--radius-lg);
+    box-shadow: var(--shadow-3);
+    margin-bottom: 0.5rem;
+    display: flex;
+    align-items: center;
+    animation: mds-slide-in var(--transition-normal) ease-out;
+    min-width: 300px;
+    border-left: 4px solid;
+    position: relative;
+    background: var(--bg-secondary);
+}
+
+.notification.success {
+    border-left-color: var(--success-color);
+}
+
+.notification.error {
+    border-left-color: var(--danger-color);
+}
+
+.notification.warning {
+    border-left-color: var(--warning-color);
+}
+
+.notification.info {
+    border-left-color: var(--info-color);
+}
+
+.notification-icon {
+    margin-right: 0.75rem;
+    font-size: 1.125rem;
+}
+
+.notification-content {
+    flex: 1;
+    color: var(--text-primary);
+}
+
+.notification-close {
+    margin-left: 0.75rem;
+    color: var(--text-secondary);
+    opacity: 0.7;
+    cursor: pointer;
+    transition: opacity var(--transition-fast) ease;
+}
+
+.notification-close:hover {
+    opacity: 1;
+}
+
+/* Period Kartları - Material Design */
+.period-card {
+    background: var(--bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-lg);
+    padding: 1rem;
+    margin-bottom: 1rem;
+    transition: all var(--transition-fast) ease;
+    cursor: pointer;
+}
+
+.period-card:hover {
+    border-color: var(--primary-color);
+    box-shadow: var(--shadow-2);
+}
+
+.period-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+}
+
+.period-card-title {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.period-card-amount {
+    font-weight: 500;
+    color: var(--primary-color);
+}
+
+.period-card-details {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+}
+
+/* Çalışan Detay Header - Material Design */
+.employee-detail-header {
+    background: linear-gradient(135deg, var(--primary-color), #185ABC);
+    color: white;
+    padding: 2rem;
+    border-radius: var(--radius-xl);
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-3);
+}
+
+/* Loading Spinner - Material Design */
+.spinner {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-color);
+    border-top: 2px solid var(--primary-color);
+    border-radius: var(--radius-full);
+    animation: mds-spin 1s linear infinite;
+}
+
+@keyframes mds-spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Legal Modal Stilleri - Material Design */
+#legalContent h2 {
+    color: var(--primary-color);
+    border-bottom: 2px solid var(--primary-color);
+    padding-bottom: 0.5rem;
+    margin-bottom: 1.5rem;
+}
+
+#legalContent h3 {
+    color: var(--text-primary);
+    margin-top: 2rem;
+    margin-bottom: 1rem;
+    font-size: 1.125rem;
+    font-weight: 500;
+}
+
+#legalContent h4 {
+    color: var(--text-primary);
+    margin-top: 1.5rem;
+    margin-bottom: 0.75rem;
+    font-size: 1rem;
+    font-weight: 500;
+}
+
+#legalContent p {
+    margin-bottom: 1rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+}
+
+#legalContent ul {
+    margin-bottom: 1rem;
+    padding-left: 1.5rem;
+}
+
+#legalContent li {
+    margin-bottom: 0.5rem;
+    color: var(--text-secondary);
+}
+
+#legalContent strong {
+    color: var(--text-primary);
+    font-weight: 500;
+}
+
+/* Responsive Design - Material Design */
+@media (max-width: 768px) {
+    .sidebar {
+        position: fixed;
+        left: -100%;
+        top: 0;
+        height: 100vh;
+        z-index: 40;
+        transition: left var(--transition-normal) ease;
+    }
+    
+    .sidebar.open {
+        left: 0;
+    }
+    
+    .stat-card {
+        margin-bottom: 1rem;
+    }
+    
+    .modern-table {
+        font-size: 0.875rem;
+    }
+    
+    .modern-table th,
+    .modern-table td {
+        padding: 0.75rem 0.5rem;
+    }
+    
+    .btn {
+        padding: 0.5rem 1rem;
+        font-size: 0.75rem;
+    }
+    
+    .modal-content {
+        margin: 1rem;
+        max-width: calc(100% - 2rem);
+    }
+}
+
+@media (max-width: 640px) {
+    .hero-gradient h1 {
+        font-size: 2.5rem;
+    }
+    
+    .stat-value {
+        font-size: 1.5rem;
+    }
+    
+    .notification {
+        min-width: 250px;
+        font-size: 0.875rem;
+    }
+    
+    .employee-card {
+        padding: 1rem;
+    }
+    
+    .employee-detail-header {
+        padding: 1.5rem;
+    }
+    
+    .employee-detail-header h2 {
+        font-size: 1.5rem;
+    }
+}
+
+/* Print Stilleri */
+@media print {
+    .sidebar,
+    .btn,
+    .modal-backdrop {
+        display: none !important;
+    }
+    
+    .main-content {
+        margin-left: 0 !important;
+    }
+    
+    .card {
+        break-inside: avoid;
+        box-shadow: none;
+        border: 1px solid var(--border-color);
+    }
+}
+
+/* Focus ve Accessibility - Material Design */
+.btn:focus,
+.form-control:focus {
+    outline: 2px solid transparent;
+    outline-offset: 2px;
+}
+
+.btn:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+.form-control:focus-visible {
+    outline: 2px solid var(--primary-color);
+    outline-offset: 2px;
+}
+
+/* Transition Utilities */
+.transition-all {
+    transition: all var(--transition-fast) ease;
+}
+
+.transition-colors {
+    transition: color var(--transition-fast) ease, background-color var(--transition-fast) ease, border-color var(--transition-fast) ease;
+}
+
+.transition-transform {
+    transition: transform var(--transition-fast) ease;
+}
+
+/* Hover Effects - Material Design */
+.hover-lift:hover {
+    transform: translateY(-2px);
+}
+
+.hover-scale:hover {
+    transform: scale(1.02);
+}
+
+/* Text Utilities - Material Design */
+.text-gradient {
+    background: linear-gradient(135deg, var(--primary-color), var(--info-color));
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+/* Shadow Utilities - Material Design */
+.shadow-1 { box-shadow: var(--shadow-1); }
+.shadow-2 { box-shadow: var(--shadow-2); }
+.shadow-3 { box-shadow: var(--shadow-3); }
+.shadow-4 { box-shadow: var(--shadow-4); }
+.shadow-5 { box-shadow: var(--shadow-5); }
+
+/* Material Design Ripple Effect */
+.mds-ripple {
+    position: relative;
+    overflow: hidden;
+}
+
+.mds-ripple::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: var(--radius-full);
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s, height 0.6s;
+}
+
+.mds-ripple:active::after {
+    width: 300px;
+    height: 300px;
+}
+
+/* Özel Component Stilleri */
+.info-grid {
+    display: grid;
+    gap: 0.75rem;
+}
+
+.info-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem;
+    background: var(--bg-primary);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+    transition: all var(--transition-fast) ease;
+}
+
+.info-item:hover {
+    border-color: var(--primary-color);
+    background: var(--primary-hover);
+}
+
+.info-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.info-value {
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.info-value.primary {
+    color: var(--primary-color);
+}
+
+.info-value.success {
+    color: var(--success-color);
+}
+
+.info-value.danger {
+    color: var(--danger-color);
+}
