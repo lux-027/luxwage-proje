@@ -1,0 +1,16 @@
+{
+  "name": "luxwage",
+  "version": "1.0.0",
+  "description": "Maaş ve Devamsızlık Takip Sistemi",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "build": "echo 'Build complete'",
+    "start": "python -m http.server 8000"
+  },
+  "keywords": ["maas", "devamsizlik", "takip", "firebase"],
+  "author": "LuxWage Team",
+  "license": "MIT",
+  "devDependencies": {},
+  "dependencies": {}
+}
