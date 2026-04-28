@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LuxWage - Çalışan Yönetim Sistemi</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="style.css">
+</head>
+<body class="bg-gray-50">
+    
+    <!-- Landing Page -->
+    <div id="landingPage" class="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-emerald-700">
+        <!-- Navbar -->
+        <nav class="bg-white/10 backdrop-blur-md border-b border-white/20">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <!-- Logo -->
+                    <div class="flex items-center">
+                        <i class="fas fa-coins text-emerald-400 text-2xl mr-2"></i>
+                        <span class="text-white text-xl font-bold">LuxWage</span>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        
+        <!-- Hero Section -->
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-32">
+            <div class="text-center">
+                <h1 class="text-5xl md:text-6xl font-bold text-white mb-6">
+                    Çalışan Yönetiminin <span class="text-emerald-400">Modern</span> Yolu
+                </h1>
+                <p class="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
+                    LuxWage ile çalışanlarınızın maaş, avans ve devamsızlık durumlarını kolayca takip edin. 
+                    Kurumsal, şık ve kullanıcı dostu arayüz ile yönetimi basitleştirin.
+                </p>
+                
+                <!-- Feature Cards -->
+                <div class="grid md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto">
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+                        <i class="fas fa-users text-emerald-400 text-3xl mb-4"></i>
+                        <h3 class="text-white font-semibold mb-2">Çalışan Yönetimi</h3>
+                        <p class="text-blue-100 text-sm">Tüm çalışanlarınızı tek yerden yönetin</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+                        <i class="fas fa-calculator text-emerald-400 text-3xl mb-4"></i>
+                        <h3 class="text-white font-semibold mb-2">Akıllı Yevmiye</h3>
+                        <p class="text-blue-100 text-sm">Kapalı günler dikkate alınarak hesaplama</p>
+                    </div>
+                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
+                        <i class="fas fa-chart-line text-emerald-400 text-3xl mb-4"></i>
+                        <h3 class="text-white font-semibold mb-2">Detaylı Raporlama</h3>
+                        <p class="text-blue-100 text-sm">Ödeme geçmişini ve istatistikleri görün</p>
+                    </div>
+                </div>
+                
+                <!-- CTA Button -->
+                <button onclick="luxwage.showDashboard()" class="bg-emerald-500 text-white text-lg px-8 py-4 rounded-xl hover:bg-emerald-600 transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 transform hover:scale-105">
+                    <i class="fas fa-rocket mr-2"></i>
+                    Hazırsanız Başlayalım
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Main Application -->
+    <div id="app" class="hidden min-h-screen bg-gray-50">
+        <div class="flex">
+            <!-- Sidebar -->
+            <aside class="w-64 bg-blue-900 text-white min-h-screen shadow-xl flex flex-col">
+                <div class="p-6 flex-1 flex flex-col">
+                    <button onclick="luxwage.showLandingPage()" class="flex items-center mb-8 w-full text-left hover:bg-blue-800 p-2 rounded-lg transition-all duration-300">
+                        <i class="fas fa-coins text-emerald-400 text-2xl mr-2"></i>
+                        <span class="text-xl font-bold">LuxWage</span>
+                    </button>
+                    
+                    <nav class="space-y-2 mb-8">
+                        <a href="#" onclick="luxwage.showPage('home')" class="nav-item flex items-center px-4 py-3 rounded-lg bg-blue-800 text-white transition-all duration-300">
+                            <i class="fas fa-home w-5 mr-3"></i>
+                            Ana Sayfa
+                        </a>
+                        <a href="#" onclick="luxwage.showPage('employees')" class="nav-item flex items-center px-4 py-3 rounded-lg hover:bg-blue-800 transition-all duration-300">
+                            <i class="fas fa-users w-5 mr-3"></i>
+                            Çalışanlarım
+                        </a>
+                    </nav>
+                    
+                    <!-- Legal Links -->
+                    <div class="border-t border-blue-700 pt-4 mt-auto">
+                        <h4 class="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-3">Yasal Bilgiler</h4>
+                        <nav class="space-y-1">
+                            <a href="#" onclick="luxwage.showLegalInfo('privacy')" class="flex items-center px-3 py-2 text-xs text-blue-200 hover:text-white hover:bg-blue-800 rounded transition-all duration-300">
+                                <i class="fas fa-shield-alt w-4 mr-2"></i>
+                                Gizlilik Politikası
+                            </a>
+                            <a href="#" onclick="luxwage.showLegalInfo('terms')" class="flex items-center px-3 py-2 text-xs text-blue-200 hover:text-white hover:bg-blue-800 rounded transition-all duration-300">
+                                <i class="fas fa-file-contract w-4 mr-2"></i>
+                                Kullanım Şartları
+                            </a>
+                        </nav>
+                        
+                        <div class="mt-4 pt-4 border-t border-blue-700">
+                            <p class="text-xs text-blue-400 text-center">
+                                © 2026 LuxWage<br>
+                                Tüm hakları saklıdır.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+            
+            <!-- Main Content -->
+            <main class="flex-1">
+                <!-- Header -->
+                <header class="bg-white shadow-sm border-b border-gray-200">
+                    <div class="px-6 py-4 flex justify-between items-center">
+                        <h1 id="pageTitle" class="text-2xl font-bold text-gray-800">Ana Sayfa</h1>
+                        <div class="flex items-center space-x-4">
+                            <span class="text-gray-600">
+                                <i class="fas fa-calendar-alt mr-2"></i>
+                                <span id="currentDate"></span>
+                            </span>
+                            <button onclick="luxwage.showNotification('info', 'Çıkış yapılıyor...')" class="text-gray-600 hover:text-red-600 transition-colors">
+                                <i class="fas fa-sign-out-alt text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </header>
+                
+                <!-- Page Content -->
+                <div id="pageContent" class="p-6">
+                    <!-- Dynamic content will be loaded here -->
+                </div>
+            </main>
+        </div>
+    </div>
+    
+    <!-- Employee Modal -->
+    <div id="employeeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 max-h-[90vh] overflow-y-auto">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-user-plus text-emerald-500 mr-2"></i>
+                        Yeni İşçi Ekle
+                    </h3>
+                    <button onclick="luxwage.closeModal('employeeModal')" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <form id="employeeForm" class="space-y-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ad Soyad</label>
+                            <input type="text" id="employeeName" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Telefon Numarası</label>
+                            <input type="tel" id="employeePhone" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">İşe Başlama Tarihi</label>
+                            <input type="date" id="startDate" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Maaş Tipi</label>
+                            <select id="salaryType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                                <option value="">Seçiniz</option>
+                                <option value="weekly">Haftalık</option>
+                                <option value="monthly">Aylık</option>
+                            </select>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Ücret (TL)</label>
+                            <input type="number" id="salaryAmount" required min="0" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Dükkanın Kapalı Olduğu Günler</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="closedDays" value="0" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="text-sm">Pazartesi</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="closedDays" value="1" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="text-sm">Salı</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="closedDays" value="2" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="text-sm">Çarşamba</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="closedDays" value="3" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="text-sm">Perşembe</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="closedDays" value="4" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="text-sm">Cuma</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="closedDays" value="5" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="text-sm">Cumartesi</span>
+                            </label>
+                            <label class="flex items-center space-x-2 cursor-pointer">
+                                <input type="checkbox" name="closedDays" value="6" class="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500">
+                                <span class="text-sm">Pazar</span>
+                            </label>
+                        </div>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button type="submit" class="flex-1 bg-emerald-500 text-white py-2 rounded-lg hover:bg-emerald-600 transition-colors">
+                            <i class="fas fa-save mr-2"></i>
+                            Kaydet
+                        </button>
+                        <button type="button" onclick="luxwage.closeModal('employeeModal')" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">
+                            İptal
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Notification Container -->
+    <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
+    
+    <!-- JavaScript -->
+    <script src="app.js" type="module"></script>
+</body>
+</html>
