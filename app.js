@@ -1,6 +1,6 @@
 // Firebase CDN Import'ları
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getFirestore } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // Firebase Config
@@ -46,33 +46,79 @@ window.closeModals = function() {
     }
 };
 
-window.showNotification = function(type, message) {
+window.showNotification = function(message, type = 'info') {
     const container = document.getElementById('notificationContainer');
     if (!container) {
         return;
     }
     
+    // Tip bazlı renk ve icon seçimi
+    const typeConfig = {
+        success: {
+            bgColor: 'bg-emerald-500',
+            icon: 'fa-check-circle',
+            iconColor: 'text-white'
+        },
+        error: {
+            bgColor: 'bg-red-500',
+            icon: 'fa-exclamation-circle',
+            iconColor: 'text-white'
+        },
+        info: {
+            bgColor: 'bg-blue-500',
+            icon: 'fa-info-circle',
+            iconColor: 'text-white'
+        }
+    };
+    
+    const config = typeConfig[type] || typeConfig.info;
+    
+    // Notification element oluştur
     const notification = document.createElement('div');
-    notification.className = `notification ${type}`;
+    notification.className = `
+        ${config.bgColor} text-white px-6 py-4 rounded-lg shadow-lg 
+        flex items-center space-x-3 min-w-[300px] max-w-md
+        transform translate-x-full opacity-0 transition-all duration-500 ease-out
+        cursor-pointer hover:scale-105
+    `;
     notification.innerHTML = `
-        <div class="flex items-center">
-            <i class="fas ${type === 'success' ? 'fa-check-circle' : type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'} mr-3"></i>
-            <span>${message}</span>
-        </div>
+        <i class="fas ${config.icon} ${config.iconColor} text-xl flex-shrink-0"></i>
+        <span class="font-medium text-sm flex-grow">${message}</span>
+        <button class="ml-2 text-white/80 hover:text-white transition-colors">
+            <i class="fas fa-times"></i>
+        </button>
     `;
     
+    // Container'a ekle
     container.appendChild(notification);
     
+    // Slide-in animasyonu (bir frame bekle sonra animasyon başlat)
+    requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+            notification.classList.remove('translate-x-full', 'opacity-0');
+        });
+    });
+    
+    // Kapatma butonu
+    const closeBtn = notification.querySelector('button');
+    const removeNotification = () => {
+        notification.classList.add('translate-x-full', 'opacity-0');
+        setTimeout(() => {
+            if (notification.parentNode) {
+                notification.parentNode.removeChild(notification);
+            }
+        }, 500);
+    };
+    
+    closeBtn.addEventListener('click', removeNotification);
+    notification.addEventListener('click', removeNotification);
+    
+    // 3 saniye sonra otomatik kapat
     setTimeout(() => {
         if (notification.parentNode) {
-            notification.style.opacity = '0';
-            setTimeout(() => {
-                if (notification.parentNode) {
-                    notification.parentNode.removeChild(notification);
-                }
-            }, 200);
+            removeNotification();
         }
-    }, 5000);
+    }, 3000);
 };
 
 // "Hazırsanız Başlayalım" butonu için fonksiyon
@@ -82,7 +128,7 @@ window.handleStartButton = function() {
             luxwage.showDashboard();
         }
     } else {
-        showNotification('info', 'Devam etmek için lütfen giriş yapın veya kayıt olun');
+        showNotification('Devam etmek için lütfen giriş yapın veya kayıt olun', 'info');
         window.openLoginModal();
     }
 };
@@ -90,14 +136,14 @@ window.handleStartButton = function() {
 window.logout = function() {
     signOut(auth)
         .then(() => {
-            showNotification('success', 'Çıkış yapıldı');
+            showNotification('Çıkış yapıldı', 'success');
             setTimeout(() => {
                 window.location.reload();
             }, 1500);
         })
         .catch((error) => {
             console.error('Logout error:', error);
-            showNotification('error', 'Çıkış yapılırken hata oluştu');
+            showNotification('Çıkış yapılırken hata oluştu', 'error');
         });
 };
 
@@ -135,18 +181,23 @@ class LuxWage {
             const userEmailDisplay = document.getElementById('userEmailDisplay');
             const dashboard = document.getElementById('dashboard');
             const landingPage = document.getElementById('landingPage');
+            const welcomeScreen = document.getElementById('welcomeScreen');
             
             if (user) {
                 // Kullanıcı giriş yapmış
                 if (authButtons) authButtons.style.display = 'none';
                 if (userProfile) userProfile.style.display = 'flex';
-                if (userEmailDisplay) userEmailDisplay.textContent = user.email;
                 
-                // Dashboard'u göster, landing page'i gizle
+                // displayName varsa kullan, yoksa email kullan
+                const displayName = user.displayName || user.email;
+                if (userEmailDisplay) userEmailDisplay.textContent = displayName;
+                
+                // Dashboard'u göster, landing page ve welcome screen'i gizle
                 if (dashboard) dashboard.style.display = 'block';
                 if (landingPage) landingPage.style.display = 'none';
+                if (welcomeScreen) welcomeScreen.style.display = 'none';
                 
-                showNotification('success', 'Hoş geldiniz, ' + user.email + '!');
+                showNotification('Hoş geldiniz, ' + displayName + '!', 'success');
                 
                 // Sayfa yenilenmede giriş yapmışsa dashboard'a yönlendir
                 if (window.location.pathname === '/' || window.location.pathname.includes('index.html')) {
@@ -157,8 +208,9 @@ class LuxWage {
                 if (authButtons) authButtons.style.display = 'flex';
                 if (userProfile) userProfile.style.display = 'none';
                 
-                // Dashboard'u gizle, landing page'i göster
+                // Dashboard'u ve welcome screen'i gizle, landing page'i göster
                 if (dashboard) dashboard.style.display = 'none';
+                if (welcomeScreen) welcomeScreen.style.display = 'none';
                 if (landingPage) landingPage.style.display = 'block';
             }
         });
@@ -460,7 +512,7 @@ class LuxWage {
         const salaryAmount = parseFloat(document.getElementById('salaryAmount').value);
         
         if (!name || !phone || !salaryType || isNaN(closedDay) || isNaN(salaryAmount)) {
-            showNotification('error', 'Lütfen tüm alanları doldurun');
+            showNotification('Lütfen tüm alanları doldurun', 'error');
             return;
         }
         
@@ -481,7 +533,7 @@ class LuxWage {
         document.getElementById('employeeForm').reset();
         closeModal('employeeModal');
         
-        showNotification('success', 'İşçi başarıyla eklendi');
+        showNotification('İşçi başarıyla eklendi', 'success');
         this.renderEmployeesPage();
     }
 
@@ -491,7 +543,7 @@ class LuxWage {
         const date = document.getElementById('absenceDate').value;
         
         if (!date) {
-            showNotification('error', 'Lütfen tarih seçin');
+            showNotification('Lütfen tarih seçin', 'error');
             return;
         }
         
@@ -511,7 +563,7 @@ class LuxWage {
         this.saveData();
         closeModal('absenceModal');
         
-        showNotification('success', `Devamsızlık kaydedildi. Kesinti: ${deduction.toFixed(2)} TL`);
+        showNotification(`Devamsızlık kaydedildi. Kesinti: ${deduction.toFixed(2)} TL`, 'success');
         this.renderEmployeesPage();
     }
 
@@ -521,7 +573,7 @@ class LuxWage {
         const amount = parseFloat(document.getElementById('paymentAmount').value);
         
         if (isNaN(amount) || amount <= 0) {
-            showNotification('error', 'Lütfen geçerli bir tutar girin');
+            showNotification('Lütfen geçerli bir tutar girin', 'error');
             return;
         }
         
@@ -539,7 +591,7 @@ class LuxWage {
         this.saveData();
         closeModal('paymentModal');
         
-        showNotification('success', `${amount.toFixed(2)} TL ödeme kaydedildi`);
+        showNotification(`${amount.toFixed(2)} TL ödeme kaydedildi`, 'success');
         this.renderEmployeesPage();
     }
 
@@ -588,7 +640,7 @@ document.addEventListener('DOMContentLoaded', function() {
             const password = document.getElementById('loginPassword').value;
             
             if (!email || !password) {
-                showNotification('error', 'Lütfen e-posta ve şifre girin');
+                showNotification('Lütfen e-posta ve şifre girin', 'error');
                 return;
             }
 
@@ -596,7 +648,7 @@ document.addEventListener('DOMContentLoaded', function() {
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
-                    showNotification('success', 'Giriş başarılı! Yönlendiriliyorsunuz...');
+                    showNotification('Giriş başarılı! Yönlendiriliyorsunuz...', 'success');
                     
                     // Formu temizle
                     loginForm.reset();
@@ -629,7 +681,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         errorMessage = 'Ağ hatası. Lütfen internet bağlantınızı kontrol edin.';
                     }
                     
-                    showNotification('error', errorMessage);
+                    showNotification(errorMessage, 'error');
                 });
         });
     }
@@ -659,6 +711,32 @@ window.showLandingPage = function() {
 
 window.showDashboard = function() {
     luxwage.showDashboard();
+};
+
+// Hoş geldin ekranını göster
+window.showWelcomeScreen = function(userName) {
+    const landingPage = document.getElementById('landingPage');
+    const dashboard = document.getElementById('dashboard');
+    const welcomeScreen = document.getElementById('welcomeScreen');
+    const welcomeUserName = document.getElementById('welcomeUserName');
+    
+    if (welcomeUserName) {
+        welcomeUserName.textContent = userName;
+    }
+    
+    if (landingPage) landingPage.style.display = 'none';
+    if (dashboard) dashboard.style.display = 'none';
+    if (welcomeScreen) welcomeScreen.style.display = 'block';
+    
+    // Welcome start button event listener
+    const welcomeStartButton = document.getElementById('welcomeStartButton');
+    if (welcomeStartButton) {
+        welcomeStartButton.onclick = function() {
+            if (welcomeScreen) welcomeScreen.style.display = 'none';
+            if (dashboard) dashboard.style.display = 'block';
+            luxwage.showDashboard();
+        };
+    }
 };
 
 // Modal açma fonksiyonu
@@ -742,7 +820,7 @@ window.deleteEmployee = function(employeeIndex) {
         luxwage.employees.splice(employeeIndex, 1);
         luxwage.saveData();
         luxwage.renderEmployeesPage();
-        showNotification('success', 'İşçi silindi');
+        showNotification('İşçi silindi', 'success');
     }
 };
 
@@ -835,17 +913,23 @@ document.addEventListener('DOMContentLoaded', () => {
     if (registerForm) {
         registerForm.addEventListener('submit', function(e) {
             e.preventDefault();
+            const name = document.getElementById('registerName').value.trim();
             const email = document.getElementById('registerEmail').value.trim();
             const password = document.getElementById('registerPassword').value;
             const passwordConfirm = document.getElementById('registerPasswordConfirm') ? document.getElementById('registerPasswordConfirm').value : '';
 
-            if (!email || !password) {
-                showNotification('error', 'Lütfen tüm alanları doldurun');
+            if (!name || !email || !password) {
+                showNotification('Lütfen tüm alanları doldurun', 'error');
                 return;
             }
 
             if (password.length < 6) {
-                showNotification('error', 'Şifre en az 6 karakter olmalıdır');
+                showNotification('Şifre en az 6 karakter olmalıdır', 'error');
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                showNotification('Şifreler eşleşmiyor', 'error');
                 return;
             }
 
@@ -853,14 +937,19 @@ document.addEventListener('DOMContentLoaded', () => {
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
-                    showNotification('success', 'Kayıt başarılı! Giriş yapabilirsiniz.');
                     
-                    // Formları temizle
-                    registerForm.reset();
-                    window.closeModals();
-                    
-                    // Giriş modalını otomatik aç
-                    setTimeout(() => window.openLoginModal(), 1000);
+                    // Kullanıcı profilini güncelle (displayName)
+                    return updateProfile(user, { displayName: name })
+                        .then(() => {
+                            showNotification('Kayıt başarılı! Hoş geldiniz, ' + name, 'success');
+                            
+                            // Formları temizle
+                            registerForm.reset();
+                            window.closeModals();
+                            
+                            // Hoş geldin ekranını göster
+                            setTimeout(() => showWelcomeScreen(name), 500);
+                        });
                 })
                 .catch((error) => {
                     console.error('Kayıt hatası:', error);
@@ -876,7 +965,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         errorMessage = 'Ağ hatası. Lütfen internet bağlantınızı kontrol edin.';
                     }
                     
-                    showNotification('error', errorMessage);
+                    showNotification(errorMessage, 'error');
                 });
         });
     }
@@ -893,7 +982,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     luxwage.showDashboard();
                 }
             } else {
-                showNotification('info', 'Devam etmek için lütfen giriş yapın veya kayıt olun');
+                showNotification('Devam etmek için lütfen giriş yapın veya kayıt olun', 'info');
                 window.openLoginModal();
             }
         });
