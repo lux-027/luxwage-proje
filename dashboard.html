@@ -36,6 +36,10 @@
                             <i class="fas fa-users w-5 mr-3"></i>
                             Çalışanlarım
                         </a>
+                        <a href="#" id="accountPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg hover:bg-blue-800 transition-all duration-300">
+                            <i class="fas fa-user-cog w-5 mr-3"></i>
+                            Hesabım
+                        </a>
                     </nav>
                     
                     <nav class="space-y-2" id="userNav" style="display: none;">
@@ -110,7 +114,20 @@
                 
                 <!-- Page Content -->
                 <div id="pageContent" class="p-6">
-                    <!-- Dynamic content will be loaded here -->
+                    <!-- Home Section -->
+                    <div id="homeSection">
+                        <!-- Summary cards will be loaded here -->
+                    </div>
+                    
+                    <!-- Employees Section -->
+                    <div id="employeesSection" style="display: none;">
+                        <!-- Add employee button and table will be loaded here -->
+                    </div>
+                    
+                    <!-- Account Section -->
+                    <div id="accountSection" style="display: none;">
+                        <!-- Account form will be loaded here -->
+                    </div>
                 </div>
             </main>
         </div>
@@ -330,6 +347,30 @@
             <div class="p-6 overflow-y-auto max-h-[60vh]">
                 <div id="legalContent" class="prose max-w-none">
                     <!-- Legal content will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-sign-out-alt text-red-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Çıkış Yap</h3>
+                    <p class="text-gray-600">Çıkış yapmak istediğinize emin misiniz?</p>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button id="cancelLogoutBtn" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                        İptal
+                    </button>
+                    <button id="confirmLogoutBtn" class="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors font-semibold">
+                        Evet, Çıkış Yap
+                    </button>
                 </div>
             </div>
         </div>

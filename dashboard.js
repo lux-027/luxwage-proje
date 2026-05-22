@@ -1,6 +1,6 @@
 // Firebase CDN Import'ları
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, updateProfile, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -114,6 +114,12 @@ onAuthStateChanged(auth, (user) => {
     if (!user) {
         // Kullanıcı giriş yapmamış, index.html'e yönlendir
         window.location.href = 'index.html';
+    } else {
+        // Kullanıcı giriş yapmış, hesap formunu doldur
+        const accountName = document.getElementById('accountName');
+        if (accountName && user.displayName) {
+            accountName.value = user.displayName;
+        }
     }
 });
 
@@ -224,10 +230,15 @@ class LuxWage {
     // Sayfa göster
     showPage(pageName) {
         this.currentPage = pageName;
-        const pageContent = document.getElementById('pageContent');
+        const homeSection = document.getElementById('homeSection');
+        const employeesSection = document.getElementById('employeesSection');
+        const accountSection = document.getElementById('accountSection');
         const pageTitle = document.getElementById('pageTitle');
         
-        if (!pageContent || !pageTitle) return;
+        // Hide all sections
+        if (homeSection) homeSection.style.display = 'none';
+        if (employeesSection) employeesSection.style.display = 'none';
+        if (accountSection) accountSection.style.display = 'none';
         
         // Nav item'larını güncelle
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -243,25 +254,32 @@ class LuxWage {
         
         switch(pageName) {
             case 'home':
-                pageTitle.textContent = 'Ana Sayfa';
+                if (pageTitle) pageTitle.textContent = 'Ana Sayfa';
+                if (homeSection) homeSection.style.display = 'block';
                 this.renderHomePage();
                 break;
             case 'employees':
-                pageTitle.textContent = 'Çalışanlarım';
+                if (pageTitle) pageTitle.textContent = 'Çalışanlarım';
+                if (employeesSection) employeesSection.style.display = 'block';
                 this.renderEmployeesPage();
+                break;
+            case 'account':
+                if (pageTitle) pageTitle.textContent = 'Hesabım';
+                if (accountSection) accountSection.style.display = 'block';
+                this.renderAccountPage();
                 break;
         }
     }
 
     // Ana sayfayı render et
     renderHomePage() {
-        const pageContent = document.getElementById('pageContent');
-        if (!pageContent) return;
+        const homeSection = document.getElementById('homeSection');
+        if (!homeSection) return;
         
         const totalEmployees = this.employees.length;
         const totalDebt = this.employees.reduce((sum, emp) => sum + (emp.debt || 0), 0);
         
-        pageContent.innerHTML = `
+        homeSection.innerHTML = `
             <div class="grid md:grid-cols-3 gap-6 mb-8">
                 <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-500">
                     <div class="flex items-center justify-between">
@@ -299,38 +317,21 @@ class LuxWage {
                     </div>
                 </div>
             </div>
-            
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">
-                    <i class="fas fa-clock text-blue-500 mr-2"></i>
-                    Hızlı İşlemler
-                </h2>
-                <div class="grid md:grid-cols-2 gap-4">
-                    <button onclick="openModal('employeeModal')" class="bg-emerald-500 text-white px-6 py-4 rounded-lg hover:bg-emerald-600 transition-colors flex items-center justify-center">
-                        <i class="fas fa-user-plus mr-2"></i>
-                        Yeni İşçi Ekle
-                    </button>
-                    <button onclick="showPage('employees')" class="bg-blue-500 text-white px-6 py-4 rounded-lg hover:bg-blue-600 transition-colors flex items-center justify-center">
-                        <i class="fas fa-users mr-2"></i>
-                        Çalışanları Görüntüle
-                    </button>
-                </div>
-            </div>
         `;
     }
 
     // Çalışanlar sayfasını render et
     renderEmployeesPage() {
-        const pageContent = document.getElementById('pageContent');
-        if (!pageContent) return;
+        const employeesSection = document.getElementById('employeesSection');
+        if (!employeesSection) return;
         
         if (this.employees.length === 0) {
-            pageContent.innerHTML = `
+            employeesSection.innerHTML = `
                 <div class="bg-white rounded-xl shadow-lg p-8 text-center">
                     <i class="fas fa-users text-gray-300 text-6xl mb-4"></i>
                     <h3 class="text-xl font-bold text-gray-800 mb-2">Henüz çalışan yok</h3>
                     <p class="text-gray-500 mb-4">İlk çalışanınızı eklemek için butona tıklayın</p>
-                    <button onclick="openModal('employeeModal')" class="bg-emerald-500 text-white px-6 py-3 rounded-lg hover:bg-emerald-600 transition-colors">
+                    <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-6 py-3 rounded-lg hover:bg-emerald-600 transition-colors">
                         <i class="fas fa-user-plus mr-2"></i>
                         Yeni İşçi Ekle
                     </button>
@@ -363,19 +364,19 @@ class LuxWage {
                         <span class="font-bold ${emp.debt > 0 ? 'text-red-500' : 'text-green-500'}">${(emp.debt || 0).toFixed(2)} TL</span>
                     </div>
                     <div class="flex space-x-2">
-                        <button onclick="openAbsenceModal(${index})" class="bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
+                        <button data-index="${index}" class="absenceBtn bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
                             <i class="fas fa-calendar-times mr-1"></i>
                             Devamsızlık
                         </button>
-                        <button onclick="openPaymentModal(${index})" class="bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm">
+                        <button data-index="${index}" class="paymentBtn bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm">
                             <i class="fas fa-money-check-alt mr-1"></i>
                             Ödeme
                         </button>
-                        <button onclick="showHistory(${index})" class="bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                        <button data-index="${index}" class="historyBtn bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
                             <i class="fas fa-history mr-1"></i>
                             Geçmiş
                         </button>
-                        <button onclick="deleteEmployee(${index})" class="bg-gray-500 text-white px-3 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm">
+                        <button data-index="${index}" class="deleteBtn bg-gray-500 text-white px-3 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm">
                             <i class="fas fa-trash mr-1"></i>
                             Sil
                         </button>
@@ -384,15 +385,64 @@ class LuxWage {
             </div>
         `).join('');
         
-        pageContent.innerHTML = `
+        employeesSection.innerHTML = `
             <div class="mb-4">
-                <button onclick="openModal('employeeModal')" class="bg-emerald-500 text-white px-6 py-3 rounded-lg hover:bg-emerald-600 transition-colors">
+                <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-6 py-3 rounded-lg hover:bg-emerald-600 transition-colors">
                     <i class="fas fa-user-plus mr-2"></i>
                     Yeni İşçi Ekle
                 </button>
             </div>
             <div class="grid gap-4">
                 ${employeesHTML}
+            </div>
+        `;
+    }
+
+    // Hesap sayfasını render et
+    renderAccountPage() {
+        const accountSection = document.getElementById('accountSection');
+        if (!accountSection) return;
+        
+        const user = auth.currentUser;
+        if (!user) return;
+        
+        accountSection.innerHTML = `
+            <div class="max-w-2xl mx-auto">
+                <div class="bg-white rounded-xl shadow-lg p-8">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                        <i class="fas fa-user-cog text-blue-500 mr-2"></i>
+                        Hesabım
+                    </h2>
+                    
+                    <form id="accountForm" class="space-y-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">E-posta Adresi</label>
+                            <input type="email" value="${user.email}" disabled class="w-full px-4 py-3 border border-gray-300 rounded-lg bg-gray-100 text-gray-500 cursor-not-allowed">
+                            <p class="text-xs text-gray-500 mt-1">E-posta adresi değiştirilemez</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">İsim Soyisim</label>
+                            <input type="text" id="accountName" value="${user.displayName || ''}" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Yeni Şifre</label>
+                            <input type="password" id="accountPassword" placeholder="Şifrenizi değiştirmek için boş bırakın" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">En az 6 karakter olmalıdır</p>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Şifre Tekrar</label>
+                            <input type="password" id="accountPasswordConfirm" placeholder="Şifrenizi değiştirmek için boş bırakın" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors font-semibold">
+                            <i class="fas fa-save mr-2"></i>
+                            Bilgileri Güncelle
+                        </button>
+                    </form>
+                </div>
             </div>
         `;
     }
@@ -700,7 +750,10 @@ window.showPage = function(pageName) {
 document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('logoutBtn')?.addEventListener('click', function(e) {
         e.preventDefault();
-        logout();
+        const logoutModal = document.getElementById('logoutModal');
+        if (logoutModal) {
+            logoutModal.classList.remove('hidden');
+        }
     });
     
     // Home button event listener
@@ -720,9 +773,18 @@ document.addEventListener('DOMContentLoaded', function() {
         luxwage.showPage('employees');
     });
     
+    // Account page button event listener
+    document.getElementById('accountPageBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        luxwage.showPage('account');
+    });
+    
     // Sidebar logout button event listener
     document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function() {
-        logout();
+        const logoutModal = document.getElementById('logoutModal');
+        if (logoutModal) {
+            logoutModal.classList.remove('hidden');
+        }
     });
     
     // Legal info buttons event listeners
@@ -782,6 +844,130 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('closeLegalModalBtn')?.addEventListener('click', function() {
         closeModal('legalModal');
+    });
+    
+    // Logout modal event listeners
+    document.getElementById('cancelLogoutBtn')?.addEventListener('click', function() {
+        const logoutModal = document.getElementById('logoutModal');
+        if (logoutModal) {
+            logoutModal.classList.add('hidden');
+        }
+    });
+    
+    document.getElementById('confirmLogoutBtn')?.addEventListener('click', function() {
+        signOut(auth)
+            .then(() => {
+                showNotification('Çıkış yapıldı', 'success');
+                window.location.href = 'index.html';
+            })
+            .catch((error) => {
+                console.error('Çıkış hatası:', error);
+                showNotification('Çıkış yapılırken hata oluştu', 'error');
+            });
+    });
+    
+    // Add employee button event listener
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'addEmployeeBtn') {
+            openModal('employeeModal');
+        }
+        
+        // Employee action buttons with data-index
+        if (e.target && e.target.classList.contains('absenceBtn')) {
+            const index = e.target.getAttribute('data-index');
+            openAbsenceModal(parseInt(index));
+        }
+        
+        if (e.target && e.target.classList.contains('paymentBtn')) {
+            const index = e.target.getAttribute('data-index');
+            openPaymentModal(parseInt(index));
+        }
+        
+        if (e.target && e.target.classList.contains('historyBtn')) {
+            const index = e.target.getAttribute('data-index');
+            showHistory(parseInt(index));
+        }
+        
+        if (e.target && e.target.classList.contains('deleteBtn')) {
+            const index = e.target.getAttribute('data-index');
+            deleteEmployee(parseInt(index));
+        }
+    });
+    
+    // Account form event listener
+    document.addEventListener('submit', function(e) {
+        if (e.target && e.target.id === 'accountForm') {
+            e.preventDefault();
+            const name = document.getElementById('accountName').value.trim();
+            const password = document.getElementById('accountPassword').value;
+            const passwordConfirm = document.getElementById('accountPasswordConfirm').value;
+            
+            if (!name) {
+                showNotification('İsim soyisim alanı zorunludur', 'error');
+                return;
+            }
+            
+            if (password && password.length < 6) {
+                showNotification('Şifre en az 6 karakter olmalıdır', 'error');
+                return;
+            }
+            
+            if (password !== passwordConfirm) {
+                showNotification('Şifreler eşleşmiyor', 'error');
+                return;
+            }
+            
+            const user = auth.currentUser;
+            if (!user) {
+                showNotification('Kullanıcı oturumu bulunamadı', 'error');
+                return;
+            }
+            
+            // Update display name if changed
+            const nameChanged = user.displayName !== name;
+            const passwordChanged = password.length > 0;
+            
+            if (!nameChanged && !passwordChanged) {
+                showNotification('Değişiklik yapılmadı', 'info');
+                return;
+            }
+            
+            // Update display name
+            if (nameChanged) {
+                updateProfile(user, { displayName: name })
+                    .then(() => {
+                        if (!passwordChanged) {
+                            showNotification('Bilgileriniz başarıyla güncellendi!', 'success');
+                            // Clear password fields
+                            document.getElementById('accountPassword').value = '';
+                            document.getElementById('accountPasswordConfirm').value = '';
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Profil güncelleme hatası:', error);
+                        showNotification('Profil güncellenemedi: ' + error.message, 'error');
+                    });
+            }
+            
+            // Update password if provided
+            if (passwordChanged) {
+                updatePassword(user, password)
+                    .then(() => {
+                        showNotification('Bilgileriniz başarıyla güncellendi!', 'success');
+                        // Clear password fields
+                        document.getElementById('accountPassword').value = '';
+                        document.getElementById('accountPasswordConfirm').value = '';
+                    })
+                    .catch((error) => {
+                        console.error('Şifre güncelleme hatası:', error);
+                        if (error.code === 'auth/requires-recent-login') {
+                            showNotification('Lütfen güvenlik için çıkış yapıp tekrar giriş yaptıktan sonra şifrenizi değiştirin', 'error');
+                        } else {
+                            showNotification('Şifre güncellenemedi: ' + error.message, 'error');
+                        }
+                    });
+            }
+        }
     });
 });
 
