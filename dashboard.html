@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>LuxWage - Maaş ve Devamsızlık Takip Sistemi</title>
+    <title>LuxWage - Yönetim Paneli</title>
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -16,169 +16,13 @@
 </head>
 <body>
     
-    <!-- Landing Page -->
-    <div id="landingPage" class="min-h-screen bg-gradient-to-br from-blue-900 via-blue-800 to-emerald-700">
-        <!-- Navbar -->
-        <nav class="bg-white/10 backdrop-blur-md border-b border-white/20">
-            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div class="flex justify-between items-center h-16">
-                    <!-- Logo -->
-                    <div class="flex items-center">
-                        <i class="fas fa-coins text-emerald-400 text-2xl mr-2"></i>
-                        <span class="text-white text-xl font-bold">LuxWage</span>
-                    </div>
-                    
-                    <!-- Auth Buttons -->
-                    <div class="flex space-x-4 auth-buttons">
-                        <button onclick="openLoginModal()" class="text-white hover:text-emerald-300 px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300">
-                            <i class="fas fa-sign-in-alt mr-2"></i>
-                            Giriş Yap
-                        </button>
-                        <button onclick="openRegisterModal()" class="bg-emerald-500 text-white px-6 py-2 rounded-lg hover:bg-emerald-600 transition-all duration-300 shadow-lg hover:shadow-emerald-500/25">
-                            <i class="fas fa-user-plus mr-2"></i>
-                            Kayıt Ol
-                        </button>
-                        
-                        <!-- Kullanıcı Profili (Giriş yapıldığında) -->
-                        <div id="userProfile" style="display: none;" class="flex items-center space-x-3">
-                            <div class="flex items-center text-white">
-                                <i class="fas fa-user-circle text-xl mr-2"></i>
-                                <span id="userEmailDisplay" class="font-medium">kullanici@ornek.com</span>
-                            </div>
-                            <button onclick="logout()" class="bg-red-500 text-white px-4 py-2 rounded-lg hover:bg-red-600 transition-all duration-300">
-                                <i class="fas fa-sign-out-alt mr-2"></i>
-                                Çıkış Yap
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </nav>
-        
-        <!-- Hero Section -->
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-32">
-            <div class="text-center">
-                <h1 class="text-5xl md:text-6xl font-bold text-white mb-6">
-                    Çalışan Yönetiminin <span class="text-emerald-400">Modern</span> Yolu
-                </h1>
-                <p class="text-xl text-blue-100 mb-8 max-w-3xl mx-auto">
-                    LuxWage ile çalışanlarınızın maaş, avans ve devamsızlık durumlarını kolayca takip edin. 
-                    Kurumsal, şık ve kullanıcı dostu arayüz ile yönetimi basitleştirin.
-                </p>
-                
-                <!-- Feature Cards -->
-                <div class="grid md:grid-cols-3 gap-6 mb-12 max-w-4xl mx-auto">
-                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-                        <i class="fas fa-users text-emerald-400 text-3xl mb-4"></i>
-                        <h3 class="text-white font-semibold mb-2">Çalışan Yönetimi</h3>
-                        <p class="text-blue-100 text-sm">Tüm çalışanlarınızı tek yerden yönetin</p>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-                        <i class="fas fa-calculator text-emerald-400 text-3xl mb-4"></i>
-                        <h3 class="text-white font-semibold mb-2">Otomatik Hesaplama</h3>
-                        <p class="text-blue-100 text-sm">Devamsızlık kesintilerini otomatik hesaplayın</p>
-                    </div>
-                    <div class="bg-white/10 backdrop-blur-md rounded-xl p-6 border border-white/20">
-                        <i class="fas fa-chart-line text-emerald-400 text-3xl mb-4"></i>
-                        <h3 class="text-white font-semibold mb-2">Detaylı Raporlama</h3>
-                        <p class="text-blue-100 text-sm">Ödeme geçmişini ve istatistikleri görün</p>
-                    </div>
-                </div>
-                
-                <button id="startButton" onclick="showDashboard()" class="bg-emerald-500 text-white text-lg px-8 py-4 rounded-xl hover:bg-emerald-600 transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 transform hover:scale-105">
-                    <i class="fas fa-rocket mr-2"></i>
-                    Hazırsanız Başlayalım
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Register Modal -->
-    <div id="registerModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-800">
-                    <i class="fas fa-user-plus text-emerald-500 mr-2"></i>
-                    Kayıt Ol
-                </h3>
-                <button onclick="closeModals()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            
-            <form id="registerForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">E-posta Adresi</label>
-                    <input type="email" id="registerEmail" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="ornek@email.com">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
-                    <input type="password" id="registerPassword" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="En az 6 karakter">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Şifre Tekrar</label>
-                    <input type="password" id="registerPasswordConfirm" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Şifrenizi tekrar girin">
-                </div>
-                
-                <div class="flex space-x-3">
-                    <button type="submit" class="flex-1 bg-emerald-500 text-white py-2 rounded-lg hover:bg-emerald-600 transition-colors">
-                        <i class="fas fa-check mr-2"></i>
-                        Kayıt Ol
-                    </button>
-                    <button type="button" onclick="closeModals()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">
-                        İptal
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- Login Modal -->
-    <div id="loginModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-xl font-bold text-gray-800">
-                    <i class="fas fa-sign-in-alt text-blue-500 mr-2"></i>
-                    Giriş Yap
-                </h3>
-                <button onclick="closeModals()" class="text-gray-400 hover:text-gray-600">
-                    <i class="fas fa-times text-xl"></i>
-                </button>
-            </div>
-            
-            <form id="loginForm" class="space-y-4">
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">E-posta Adresi</label>
-                    <input type="email" id="loginEmail" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="ornek@email.com">
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
-                    <input type="password" id="loginPassword" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500" placeholder="Şifrenizi girin">
-                </div>
-                
-                <div class="flex space-x-3">
-                    <button type="submit" class="flex-1 bg-blue-500 text-white py-2 rounded-lg hover:bg-blue-600 transition-colors">
-                        <i class="fas fa-sign-in-alt mr-2"></i>
-                        Giriş Yap
-                    </button>
-                    <button type="button" onclick="closeModals()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">
-                        İptal
-                    </button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
     <!-- Dashboard -->
-    <div id="dashboard" class="hidden min-h-screen">
+    <div id="dashboard" class="min-h-screen">
         <div class="flex">
             <!-- Sidebar -->
             <aside class="w-64 bg-blue-900 text-white min-h-screen shadow-xl flex flex-col">
                 <div class="p-6 flex-1 flex flex-col">
-                    <button onclick="showLandingPage()" class="flex items-center mb-8 w-full text-left hover:bg-blue-800 p-2 rounded-lg transition-all duration-300">
+                    <button onclick="window.location.href = 'index.html'" class="flex items-center mb-8 w-full text-left hover:bg-blue-800 p-2 rounded-lg transition-all duration-300">
                         <i class="fas fa-coins text-emerald-400 text-2xl mr-2"></i>
                         <span class="text-xl font-bold">LuxWage</span>
                     </button>
@@ -253,15 +97,11 @@
                     <div class="px-6 py-4 flex justify-between items-center">
                         <h1 id="pageTitle" class="text-2xl font-bold text-gray-800">Ana Sayfa</h1>
                         <div class="flex items-center space-x-4">
-                            <button onclick="openRegisterModal()" class="bg-emerald-500 text-white px-4 py-2 rounded-lg hover:bg-emerald-600 transition-colors">
-                                <i class="fas fa-user-plus mr-2"></i>
-                                Kayıt Ol
-                            </button>
                             <span class="text-gray-600">
                                 <i class="fas fa-calendar-alt mr-2"></i>
                                 <span id="currentDate"></span>
                             </span>
-                            <button onclick="showNotification('info', 'Çıkış yapılıyor...')" class="text-gray-600 hover:text-red-600 transition-colors">
+                            <button id="logoutBtn" class="text-gray-600 hover:text-red-600 transition-colors">
                                 <i class="fas fa-sign-out-alt text-xl"></i>
                             </button>
                         </div>
@@ -495,37 +335,10 @@
         </div>
     </div>
     
-        
-    <!-- Login Modal -->
-    <div id="loginModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModals()">&times;</span>
-            <h2>Giriş Yap</h2>
-            <form id="loginForm">
-                <input type="email" id="loginEmail" placeholder="E-posta" required>
-                <input type="password" id="loginPassword" placeholder="Şifre" required>
-                <button type="submit" class="btn-primary w-100">Sisteme Gir</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- Register Modal -->
-    <div id="registerModal" class="modal">
-        <div class="modal-content">
-            <span class="close" onclick="closeModals()">&times;</span>
-            <h2>Kayıt Ol</h2>
-            <form id="registerForm">
-                <input type="email" id="registerEmail" placeholder="E-posta" required>
-                <input type="password" id="registerPassword" placeholder="Şifre" required>
-                <button type="submit" class="btn-primary w-100">Kayıt İşlemini Tamamla</button>
-            </form>
-        </div>
-    </div>
-        
     <!-- Notification Container -->
     <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
     
     <!-- JavaScript -->
-    <script type="module" src="app.js"></script>
+    <script type="module" src="dashboard.js"></script>
 </body>
 </html>
