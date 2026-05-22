@@ -28,15 +28,15 @@
                     </button>
                     
                     <nav class="space-y-2 mb-8" id="authNav">
-                        <a href="#" id="homePageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg bg-blue-800 text-white transition-all duration-300">
+                        <a href="#" id="homePageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg bg-white/10 text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
                             <i class="fas fa-home w-5 mr-3"></i>
                             Ana Sayfa
                         </a>
-                        <a href="#" id="employeesPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg hover:bg-blue-800 transition-all duration-300">
+                        <a href="#" id="employeesPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
                             <i class="fas fa-users w-5 mr-3"></i>
                             Çalışanlarım
                         </a>
-                        <a href="#" id="accountPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg hover:bg-blue-800 transition-all duration-300">
+                        <a href="#" id="accountPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
                             <i class="fas fa-user-cog w-5 mr-3"></i>
                             Hesabım
                         </a>
@@ -62,33 +62,29 @@
                     <div class="border-t border-blue-700 pt-4 mt-auto">
                         <h4 class="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-3">Yasal Bilgiler</h4>
                         <nav class="space-y-1">
-                            <a href="#" id="privacyBtn" class="flex items-center px-3 py-2 text-xs text-blue-200 hover:text-white hover:bg-blue-800 rounded transition-all duration-300">
+                            <a href="gizlilik-politikasi.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
                                 <i class="fas fa-shield-alt w-4 mr-2"></i>
                                 Gizlilik Politikası
                             </a>
-                            <a href="#" id="termsBtn" class="flex items-center px-3 py-2 text-xs text-blue-200 hover:text-white hover:bg-blue-800 rounded transition-all duration-300">
+                            <a href="kullanim-sartlari.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
                                 <i class="fas fa-file-contract w-4 mr-2"></i>
                                 Kullanım Şartları
                             </a>
-                            <a href="#" id="aboutBtn" class="flex items-center px-3 py-2 text-xs text-blue-200 hover:text-white hover:bg-blue-800 rounded transition-all duration-300">
+                            <a href="hakkimizda.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
                                 <i class="fas fa-info-circle w-4 mr-2"></i>
                                 Hakkımızda
                             </a>
-                            <a href="#" id="contactBtn" class="flex items-center px-3 py-2 text-xs text-blue-200 hover:text-white hover:bg-blue-800 rounded transition-all duration-300">
+                            <a href="iletisim.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
                                 <i class="fas fa-envelope w-4 mr-2"></i>
                                 İletişim
                             </a>
-                            <a href="#" id="cookiesBtn" class="flex items-center px-3 py-2 text-xs text-blue-200 hover:text-white hover:bg-blue-800 rounded transition-all duration-300">
+                            <a href="cerez-politikasi.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
                                 <i class="fas fa-cookie w-4 mr-2"></i>
                                 Çerez Politikası
                             </a>
                         </nav>
                         
                         <div class="mt-4 pt-4 border-t border-blue-700">
-                            <button id="testEmreBtn" class="w-full bg-red-500/80 hover:bg-red-600 text-white px-4 py-2 rounded-lg transition-all duration-300 text-sm font-semibold mb-3">
-                                <i class="fas fa-flask mr-2"></i>
-                                TEST: Emre'yi Ekle
-                            </button>
                             <p class="text-xs text-blue-400 text-center">
                                 © 2026 LuxWage<br>
                                 Tüm hakları saklıdır.
@@ -172,17 +168,38 @@
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Dükkanın Kapalı Olduğu Gün</label>
-                        <select id="closedDay" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                            <option value="">Seçiniz</option>
-                            <option value="0">Pazartesi</option>
-                            <option value="1">Salı</option>
-                            <option value="2">Çarşamba</option>
-                            <option value="3">Perşembe</option>
-                            <option value="4">Cuma</option>
-                            <option value="5">Cumartesi</option>
-                            <option value="6">Pazar</option>
-                        </select>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Dükkanın Kapalı Olduğu Günler</label>
+                        <div class="grid grid-cols-4 gap-2">
+                            <label class="flex items-center p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" name="closedDays" value="0" class="mr-2 accent-emerald-500">
+                                <span class="text-sm">Pzt</span>
+                            </label>
+                            <label class="flex items-center p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" name="closedDays" value="1" class="mr-2 accent-emerald-500">
+                                <span class="text-sm">Sal</span>
+                            </label>
+                            <label class="flex items-center p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" name="closedDays" value="2" class="mr-2 accent-emerald-500">
+                                <span class="text-sm">Çarş</span>
+                            </label>
+                            <label class="flex items-center p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" name="closedDays" value="3" class="mr-2 accent-emerald-500">
+                                <span class="text-sm">Perş</span>
+                            </label>
+                            <label class="flex items-center p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" name="closedDays" value="4" class="mr-2 accent-emerald-500">
+                                <span class="text-sm">Cum</span>
+                            </label>
+                            <label class="flex items-center p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" name="closedDays" value="5" class="mr-2 accent-emerald-500">
+                                <span class="text-sm">Cmt</span>
+                            </label>
+                            <label class="flex items-center p-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" name="closedDays" value="6" class="mr-2 accent-emerald-500">
+                                <span class="text-sm">Paz</span>
+                            </label>
+                        </div>
+                        <p class="text-xs text-gray-500 mt-1">Dükkanın kapalı olduğu günleri seçin</p>
                     </div>
                     
                     <div>
@@ -374,6 +391,30 @@
                     </button>
                     <button id="confirmLogoutBtn" class="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors font-semibold">
                         Evet, Çıkış Yap
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Employee Confirmation Modal -->
+    <div id="deleteEmployeeModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="bg-red-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-exclamation-triangle text-red-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Çalışanı Sil</h3>
+                    <p class="text-gray-600">Bu çalışanı silmek istediğinize emin misiniz? Bu işlem geri alınamaz!</p>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button id="cancelDeleteBtn" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                        İptal
+                    </button>
+                    <button id="confirmDeleteBtn" class="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors font-semibold">
+                        Evet, Sil
                     </button>
                 </div>
             </div>

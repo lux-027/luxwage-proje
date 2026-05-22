@@ -16,6 +16,9 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
+// Global variable for employee deletion
+let employeeIdToDelete = null;
+
 // Toast Notification Sistemi
 function showNotification(message, type = 'info') {
     const container = document.getElementById('notificationContainer');
@@ -685,10 +688,13 @@ class LuxWage {
         const name = document.getElementById('employeeName').value.trim();
         const phone = document.getElementById('employeePhone').value.trim();
         const salaryType = document.getElementById('salaryType').value;
-        const closedDay = parseInt(document.getElementById('closedDay').value);
         const salaryAmount = parseFloat(document.getElementById('salaryAmount').value);
         
-        if (!name || !phone || !salaryType || isNaN(closedDay) || isNaN(salaryAmount)) {
+        // Get selected closed days from checkboxes
+        const closedDaysCheckboxes = document.querySelectorAll('input[name="closedDays"]:checked');
+        const closedDays = Array.from(closedDaysCheckboxes).map(cb => parseInt(cb.value));
+        
+        if (!name || !phone || !salaryType || isNaN(salaryAmount)) {
             showNotification('Lütfen tüm alanları doldurun', 'error');
             return;
         }
@@ -698,10 +704,12 @@ class LuxWage {
             name,
             phone,
             salaryType,
-            closedDay,
+            closedDays,
             salaryAmount,
             debt: 0,
-            history: []
+            startDate: Date.now(),
+            absenceHistory: [],
+            paymentHistory: []
         };
         
         this.employees.push(employee);
@@ -774,11 +782,24 @@ class LuxWage {
 
     // Günlük ücret hesapla
     calculateDailyWage(employee) {
+        const closedDays = employee.closedDays || [];
+        const workingDaysPerWeek = 7 - closedDays.length;
+        
         if (employee.salaryType === 'weekly') {
-            return employee.salaryAmount / 6;
+            // Haftalık maaş / çalışma gün sayısı (kapalı günler hariç)
+            return workingDaysPerWeek > 0 ? employee.salaryAmount / workingDaysPerWeek : employee.salaryAmount / 6;
         } else {
-            return employee.salaryAmount / 26;
+            // Aylık maaş / 26 gün (kapalı günler haftalık olarak hesaplanır ve aya yansıtılır)
+            const workingDaysPerMonth = Math.round(workingDaysPerWeek * 4);
+            return workingDaysPerMonth > 0 ? employee.salaryAmount / workingDaysPerMonth : employee.salaryAmount / 26;
         }
+    }
+    
+    // Günün kapalı olup olmadığını kontrol et
+    isClosedDay(date, employee) {
+        const closedDays = employee.closedDays || [];
+        const dayOfWeek = date.getDay();
+        return closedDays.includes(dayOfWeek);
     }
 
     // Devamsızlık kesintisini hesapla
@@ -1099,59 +1120,24 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     });
     
-    // Test button event listener
-    document.getElementById('testEmreBtn')?.addEventListener('click', function() {
-        // 60 gün önceki tarih
-        const sixtyDaysAgo = new Date();
-        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
-        const startDateTimestamp = sixtyDaysAgo.getTime();
-        
-        // Rastgele geçmiş tarihler için devamsızlık (son 30 gün içinde)
-        const generateRandomAbsence = () => {
-            const daysAgo = Math.floor(Math.random() * 30) + 1;
-            const date = new Date();
-            date.setDate(date.getDate() - daysAgo);
-            return {
-                date: date.toLocaleDateString('tr-TR'),
-                deduction: 500,
-                timestamp: date.getTime()
-            };
-        };
-        
-        // Geçmiş ödeme (30 gün önce)
-        const paymentDate = new Date();
-        paymentDate.setDate(paymentDate.getDate() - 30);
-        
-        const testEmployee = {
-            name: 'Emre (Test)',
-            phone: '555-1234567',
-            salaryType: 'weekly',
-            closedDay: 0,
-            salaryAmount: 10000,
-            startDate: startDateTimestamp,
-            debt: 0,
-            absenceHistory: [
-                generateRandomAbsence(),
-                generateRandomAbsence(),
-                generateRandomAbsence(),
-                generateRandomAbsence()
-            ],
-            paymentHistory: [
-                {
-                    amount: 15000,
-                    date: paymentDate.toLocaleDateString('tr-TR'),
-                    timestamp: paymentDate.getTime()
-                }
-            ]
-        };
-        
-        // Test çalışanını ekle
-        luxwage.employees.push(testEmployee);
-        luxwage.saveData();
-        luxwage.renderHomePage();
-        luxwage.renderEmployeesPage();
-        
-        showNotification('Test verisi başarıyla eklendi', 'success');
+    // Delete employee modal event listeners
+    document.getElementById('cancelDeleteBtn')?.addEventListener('click', function() {
+        const deleteModal = document.getElementById('deleteEmployeeModal');
+        if (deleteModal) {
+            deleteModal.classList.add('hidden');
+        }
+        employeeIdToDelete = null;
+    });
+    
+    document.getElementById('confirmDeleteBtn')?.addEventListener('click', function() {
+        if (employeeIdToDelete !== null) {
+            luxwage.deleteEmployee(employeeIdToDelete);
+            const deleteModal = document.getElementById('deleteEmployeeModal');
+            if (deleteModal) {
+                deleteModal.classList.add('hidden');
+            }
+            employeeIdToDelete = null;
+        }
     });
     
     // Add employee button event listener
@@ -1178,7 +1164,11 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (e.target && e.target.classList.contains('deleteBtn')) {
             const index = e.target.getAttribute('data-index');
-            deleteEmployee(parseInt(index));
+            employeeIdToDelete = parseInt(index);
+            const deleteModal = document.getElementById('deleteEmployeeModal');
+            if (deleteModal) {
+                deleteModal.classList.remove('hidden');
+            }
         }
     });
     
