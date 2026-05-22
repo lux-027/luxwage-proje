@@ -136,7 +136,7 @@ window.handleStartButton = function() {
 window.logout = function() {
     signOut(auth)
         .then(() => {
-            showNotification('Çıkış yapıldı', 'success');
+            showNotification('Başarıyla çıkış yapıldı', 'success');
             setTimeout(() => {
                 window.location.reload();
             }, 1500);
@@ -146,6 +146,16 @@ window.logout = function() {
             showNotification('Çıkış yapılırken hata oluştu', 'error');
         });
 };
+
+// Logout button event listener
+document.addEventListener('DOMContentLoaded', function() {
+    const logoutBtn = document.getElementById('logoutBtn');
+    if (logoutBtn) {
+        logoutBtn.addEventListener('click', function() {
+            logout();
+        });
+    }
+});
 
 // LuxWage - Maaş ve Devamsızlık Takip Sistemi
 // Ana JavaScript Dosyası
@@ -178,6 +188,7 @@ class LuxWage {
         onAuthStateChanged(auth, (user) => {
             const authButtons = document.querySelectorAll('.auth-buttons')[0];
             const userProfile = document.getElementById('userProfile');
+            const userNameDisplay = document.getElementById('userNameDisplay');
             const userEmailDisplay = document.getElementById('userEmailDisplay');
             const dashboard = document.getElementById('dashboard');
             const landingPage = document.getElementById('landingPage');
@@ -190,7 +201,8 @@ class LuxWage {
                 
                 // displayName varsa kullan, yoksa email kullan
                 const displayName = user.displayName || user.email;
-                if (userEmailDisplay) userEmailDisplay.textContent = displayName;
+                if (userNameDisplay) userNameDisplay.textContent = displayName;
+                if (userEmailDisplay) userEmailDisplay.textContent = user.email;
                 
                 // Dashboard'u göster, landing page ve welcome screen'i gizle
                 if (dashboard) dashboard.style.display = 'block';
