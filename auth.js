@@ -161,6 +161,8 @@ onAuthStateChanged(auth, (user) => {
     const userEmailDisplay = document.getElementById('userEmailDisplay');
     const landingPage = document.getElementById('landingPage');
     const welcomeScreen = document.getElementById('welcomeScreen');
+    const visitorMessage = document.getElementById('visitorMessage');
+    const dashboardButton = document.getElementById('dashboardButton');
     
     if (user) {
         // Kullanıcı giriş yapmış
@@ -172,16 +174,21 @@ onAuthStateChanged(auth, (user) => {
         if (userNameDisplay) userNameDisplay.textContent = displayName;
         if (userEmailDisplay) userEmailDisplay.textContent = user.email;
         
-        // Eğer index.html'deysek ve welcome screen gösterilmiyorsa, dashboard'a yönlendir
-        if (window.location.pathname.includes('index.html') || window.location.pathname === '/') {
-            if (welcomeScreen && welcomeScreen.style.display !== 'block') {
-                window.location.href = 'dashboard.html';
-            }
-        }
+        // STATE B: Giriş yapmış kullanıcı için
+        if (visitorMessage) visitorMessage.style.display = 'none';
+        if (dashboardButton) dashboardButton.style.display = 'inline-block';
+        
+        // Landing page'i göster
+        if (landingPage) landingPage.style.display = 'block';
+        if (welcomeScreen) welcomeScreen.style.display = 'none';
     } else {
         // Kullanıcı çıkış yapmış
         if (authButtons) authButtons.style.display = 'flex';
         if (userProfile) userProfile.style.display = 'none';
+        
+        // STATE A: Çıkış yapmış kullanıcı için
+        if (visitorMessage) visitorMessage.style.display = 'block';
+        if (dashboardButton) dashboardButton.style.display = 'none';
         
         // Landing page'i göster
         if (landingPage) landingPage.style.display = 'block';
@@ -207,16 +214,11 @@ document.addEventListener('DOMContentLoaded', function() {
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
-                    showNotification('Giriş başarılı! Yönlendiriliyorsunuz...', 'success');
+                    showNotification('Giriş başarılı!', 'success');
                     
                     // Formu temizle
                     loginForm.reset();
                     closeModals();
-                    
-                    // Dashboard'a yönlendir
-                    setTimeout(() => {
-                        window.location.href = 'dashboard.html';
-                    }, 1500);
                 })
                 .catch((error) => {
                     console.error('Giriş hatası:', error);
@@ -279,9 +281,6 @@ document.addEventListener('DOMContentLoaded', function() {
                             // Formları temizle
                             registerForm.reset();
                             closeModals();
-                            
-                            // Hoş geldin ekranını göster
-                            setTimeout(() => showWelcomeScreen(name), 500);
                         });
                 })
                 .catch((error) => {
@@ -304,60 +303,44 @@ document.addEventListener('DOMContentLoaded', function() {
     }
     
     // Start button event listener
-    const startButton = document.getElementById('startButton');
-    if (startButton) {
-        startButton.addEventListener('click', function() {
-            handleStartButton();
-        });
-    }
+    document.getElementById('startButton')?.addEventListener('click', function() {
+        handleStartButton();
+    });
+    
+    // Dashboard button event listener (for logged in users)
+    document.getElementById('dashboardButton')?.addEventListener('click', function() {
+        window.location.href = 'dashboard.html';
+    });
     
     // Login button event listener
-    const loginBtn = document.getElementById('loginBtn');
-    if (loginBtn) {
-        loginBtn.addEventListener('click', function() {
-            openLoginModal();
-        });
-    }
+    document.getElementById('loginBtn')?.addEventListener('click', function() {
+        openLoginModal();
+    });
     
     // Register button event listener
-    const registerBtn = document.getElementById('registerBtn');
-    if (registerBtn) {
-        registerBtn.addEventListener('click', function() {
-            openRegisterModal();
-        });
-    }
+    document.getElementById('registerBtn')?.addEventListener('click', function() {
+        openRegisterModal();
+    });
     
     // Close register modal button event listener
-    const closeRegisterModalBtn = document.getElementById('closeRegisterModalBtn');
-    if (closeRegisterModalBtn) {
-        closeRegisterModalBtn.addEventListener('click', function() {
-            closeModals();
-        });
-    }
+    document.getElementById('closeRegisterModalBtn')?.addEventListener('click', function() {
+        closeModals();
+    });
     
     // Cancel register button event listener
-    const cancelRegisterBtn = document.getElementById('cancelRegisterBtn');
-    if (cancelRegisterBtn) {
-        cancelRegisterBtn.addEventListener('click', function() {
-            closeModals();
-        });
-    }
+    document.getElementById('cancelRegisterBtn')?.addEventListener('click', function() {
+        closeModals();
+    });
     
     // Close login modal button event listener
-    const closeLoginModalBtn = document.getElementById('closeLoginModalBtn');
-    if (closeLoginModalBtn) {
-        closeLoginModalBtn.addEventListener('click', function() {
-            closeModals();
-        });
-    }
+    document.getElementById('closeLoginModalBtn')?.addEventListener('click', function() {
+        closeModals();
+    });
     
     // Cancel login button event listener
-    const cancelLoginBtn = document.getElementById('cancelLoginBtn');
-    if (cancelLoginBtn) {
-        cancelLoginBtn.addEventListener('click', function() {
-            closeModals();
-        });
-    }
+    document.getElementById('cancelLoginBtn')?.addEventListener('click', function() {
+        closeModals();
+    });
 });
 
 // Modal dışına tıklayınca kapatma

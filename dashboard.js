@@ -698,145 +698,91 @@ window.showPage = function(pageName) {
 
 // Logout button event listener
 document.addEventListener('DOMContentLoaded', function() {
-    const logoutBtn = document.getElementById('logoutBtn');
-    if (logoutBtn) {
-        logoutBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            logout();
-        });
-    }
+    document.getElementById('logoutBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        logout();
+    });
     
     // Home button event listener
-    const homeBtn = document.getElementById('homeBtn');
-    if (homeBtn) {
-        homeBtn.addEventListener('click', function() {
-            window.location.href = 'index.html';
-        });
-    }
+    document.getElementById('homeBtn')?.addEventListener('click', function() {
+        window.location.href = 'index.html';
+    });
     
     // Home page button event listener
-    const homePageBtn = document.getElementById('homePageBtn');
-    if (homePageBtn) {
-        homePageBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            luxwage.showPage('home');
-        });
-    }
+    document.getElementById('homePageBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        luxwage.showPage('home');
+    });
     
     // Employees page button event listener
-    const employeesPageBtn = document.getElementById('employeesPageBtn');
-    if (employeesPageBtn) {
-        employeesPageBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            luxwage.showPage('employees');
-        });
-    }
+    document.getElementById('employeesPageBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        luxwage.showPage('employees');
+    });
     
     // Sidebar logout button event listener
-    const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
-    if (sidebarLogoutBtn) {
-        sidebarLogoutBtn.addEventListener('click', function() {
-            logout();
-        });
-    }
+    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function() {
+        logout();
+    });
     
     // Legal info buttons event listeners
-    const privacyBtn = document.getElementById('privacyBtn');
-    if (privacyBtn) {
-        privacyBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            showLegalInfo('privacy');
-        });
-    }
+    document.getElementById('privacyBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        showLegalInfo('privacy');
+    });
     
-    const termsBtn = document.getElementById('termsBtn');
-    if (termsBtn) {
-        termsBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            showLegalInfo('terms');
-        });
-    }
+    document.getElementById('termsBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        showLegalInfo('terms');
+    });
     
-    const aboutBtn = document.getElementById('aboutBtn');
-    if (aboutBtn) {
-        aboutBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            showLegalInfo('about');
-        });
-    }
+    document.getElementById('aboutBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        showLegalInfo('about');
+    });
     
-    const contactBtn = document.getElementById('contactBtn');
-    if (contactBtn) {
-        contactBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            showLegalInfo('contact');
-        });
-    }
+    document.getElementById('contactBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        showLegalInfo('contact');
+    });
     
-    const cookiesBtn = document.getElementById('cookiesBtn');
-    if (cookiesBtn) {
-        cookiesBtn.addEventListener('click', function(e) {
-            e.preventDefault();
-            showLegalInfo('cookies');
-        });
-    }
+    document.getElementById('cookiesBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        showLegalInfo('cookies');
+    });
     
     // Modal close buttons event listeners
-    const closeEmployeeModalBtn = document.getElementById('closeEmployeeModalBtn');
-    if (closeEmployeeModalBtn) {
-        closeEmployeeModalBtn.addEventListener('click', function() {
-            closeModal('employeeModal');
-        });
-    }
+    document.getElementById('closeEmployeeModalBtn')?.addEventListener('click', function() {
+        closeModal('employeeModal');
+    });
     
-    const cancelEmployeeBtn = document.getElementById('cancelEmployeeBtn');
-    if (cancelEmployeeBtn) {
-        cancelEmployeeBtn.addEventListener('click', function() {
-            closeModal('employeeModal');
-        });
-    }
+    document.getElementById('cancelEmployeeBtn')?.addEventListener('click', function() {
+        closeModal('employeeModal');
+    });
     
-    const closeAbsenceModalBtn = document.getElementById('closeAbsenceModalBtn');
-    if (closeAbsenceModalBtn) {
-        closeAbsenceModalBtn.addEventListener('click', function() {
-            closeModal('absenceModal');
-        });
-    }
+    document.getElementById('closeAbsenceModalBtn')?.addEventListener('click', function() {
+        closeModal('absenceModal');
+    });
     
-    const cancelAbsenceBtn = document.getElementById('cancelAbsenceBtn');
-    if (cancelAbsenceBtn) {
-        cancelAbsenceBtn.addEventListener('click', function() {
-            closeModal('absenceModal');
-        });
-    }
+    document.getElementById('cancelAbsenceBtn')?.addEventListener('click', function() {
+        closeModal('absenceModal');
+    });
     
-    const closePaymentModalBtn = document.getElementById('closePaymentModalBtn');
-    if (closePaymentModalBtn) {
-        closePaymentModalBtn.addEventListener('click', function() {
-            closeModal('paymentModal');
-        });
-    }
+    document.getElementById('closePaymentModalBtn')?.addEventListener('click', function() {
+        closeModal('paymentModal');
+    });
     
-    const cancelPaymentBtn = document.getElementById('cancelPaymentBtn');
-    if (cancelPaymentBtn) {
-        cancelPaymentBtn.addEventListener('click', function() {
-            closeModal('paymentModal');
-        });
-    }
+    document.getElementById('cancelPaymentBtn')?.addEventListener('click', function() {
+        closeModal('paymentModal');
+    });
     
-    const closeHistoryModalBtn = document.getElementById('closeHistoryModalBtn');
-    if (closeHistoryModalBtn) {
-        closeHistoryModalBtn.addEventListener('click', function() {
-            closeModal('historyModal');
-        });
-    }
+    document.getElementById('closeHistoryModalBtn')?.addEventListener('click', function() {
+        closeModal('historyModal');
+    });
     
-    const closeLegalModalBtn = document.getElementById('closeLegalModalBtn');
-    if (closeLegalModalBtn) {
-        closeLegalModalBtn.addEventListener('click', function() {
-            closeModal('legalModal');
-        });
-    }
+    document.getElementById('closeLegalModalBtn')?.addEventListener('click', function() {
+        closeModal('legalModal');
+    });
 });
 
 // Modal dışına tıklayınca kapatma
