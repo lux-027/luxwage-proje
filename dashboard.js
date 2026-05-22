@@ -114,8 +114,12 @@ function logout() {
 
 // Firebase Auth State Listener - Routing
 onAuthStateChanged(auth, (user) => {
-    if (!user) {
-        // Kullanıcı giriş yapmamış, index.html'e yönlendir
+    // Yasal sayfalar için yönlendirme muafiyeti
+    const legalPages = ['gizlilik-politikasi.html', 'kullanim-sartlari.html', 'hakkimizda.html', 'iletisim.html', 'cerez-politikasi.html'];
+    const isLegalPage = legalPages.some(page => window.location.pathname.includes(page));
+    
+    if (!user && !isLegalPage) {
+        // Kullanıcı giriş yapmamış ve yasal sayfada değil, index.html'e yönlendir
         window.location.href = 'index.html';
     } else {
         // Kullanıcı giriş yapmış, hesap formunu doldur
@@ -189,6 +193,28 @@ class LuxWage {
                 this.calculateRemainingDebt();
             });
         }
+        
+        // Phone number auto-format
+        const employeePhone = document.getElementById('employeePhone');
+        if (employeePhone) {
+            employeePhone.addEventListener('input', (e) => {
+                let val = e.target.value.replace(/\D/g, '');
+                
+                if (val.length > 0) {
+                    if (val.length <= 4) {
+                        val = val;
+                    } else if (val.length <= 7) {
+                        val = val.slice(0, 4) + ' ' + val.slice(4);
+                    } else if (val.length <= 9) {
+                        val = val.slice(0, 4) + ' ' + val.slice(4, 7) + ' ' + val.slice(7);
+                    } else {
+                        val = val.slice(0, 4) + ' ' + val.slice(4, 7) + ' ' + val.slice(7, 9) + ' ' + val.slice(9, 11);
+                    }
+                }
+                
+                e.target.value = val;
+            });
+        }
     }
 
     // LocalStorage'dan verileri yükle
@@ -245,14 +271,14 @@ class LuxWage {
         
         // Nav item'larını güncelle
         document.querySelectorAll('.nav-item').forEach(item => {
-            item.classList.remove('bg-blue-800', 'text-white');
-            item.classList.add('hover:bg-blue-800');
+            item.classList.remove('bg-white/10', 'text-white');
+            item.classList.add('text-gray-300');
         });
         
-        const activeNav = document.querySelector(`[onclick="showPage('${pageName}')"]`);
+        const activeNav = document.getElementById(pageName + 'PageBtn');
         if (activeNav) {
-            activeNav.classList.add('bg-blue-800', 'text-white');
-            activeNav.classList.remove('hover:bg-blue-800');
+            activeNav.classList.remove('text-gray-300');
+            activeNav.classList.add('bg-white/10', 'text-white');
         }
         
         switch(pageName) {
@@ -732,6 +758,33 @@ class LuxWage {
             showNotification('Çalışan başarıyla silindi', 'success');
         }
     }
+    
+    // Ödemeyi sil
+    deletePayment(employeeIndex, recordIndex) {
+        const employee = this.employees[employeeIndex];
+        if (!employee) return;
+        
+        const record = employee.history[recordIndex];
+        if (!record || record.type !== 'payment') return;
+        
+        // Ödeme tutarını borca geri ekle
+        const paymentAmount = Math.abs(record.amount);
+        employee.debt = (employee.debt || 0) + paymentAmount;
+        
+        // Kaydı sil
+        employee.history.splice(recordIndex, 1);
+        
+        this.saveData();
+        
+        // Geçmiş modalını güncelle
+        showHistory(employeeIndex);
+        
+        // Listeleri güncelle
+        this.renderEmployeesPage();
+        this.renderHomePage();
+        
+        showNotification('Ödeme başarıyla iptal edildi', 'success');
+    }
 
     // Devamsızlık ekle
     addAbsence() {
@@ -761,6 +814,7 @@ class LuxWage {
         
         showNotification(`Devamsızlık kaydedildi. Kesinti: ${deduction.toFixed(2)} TL`, 'success');
         this.renderEmployeesPage();
+        this.renderHomePage();
     }
 
     // Ödeme ekle
@@ -789,6 +843,7 @@ class LuxWage {
         
         showNotification(`${amount.toFixed(2)} TL ödeme kaydedildi`, 'success');
         this.renderEmployeesPage();
+        this.renderHomePage();
     }
 
     // Günlük ücret hesapla
@@ -892,17 +947,24 @@ function showHistory(employeeIndex) {
     if (!employee.history || employee.history.length === 0) {
         historyContent.innerHTML = '<p class="text-gray-500 text-center">Henüz geçmiş kaydı yok</p>';
     } else {
-        historyContent.innerHTML = employee.history.map(record => `
+        historyContent.innerHTML = employee.history.map((record, recordIndex) => `
             <div class="bg-gray-50 rounded-lg p-4 border-l-4 ${record.type === 'absence' ? 'border-red-500' : 'border-green-500'}">
                 <div class="flex justify-between items-center">
                     <div>
                         <p class="font-semibold text-gray-800">${record.description}</p>
                         <p class="text-sm text-gray-500">${record.date}</p>
                     </div>
-                    <div class="text-right">
-                        <p class="font-bold ${record.amount > 0 ? 'text-red-500' : 'text-green-500'}">
-                            ${record.amount > 0 ? '+' : ''}${record.amount.toFixed(2)} TL
-                        </p>
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <p class="font-bold ${record.amount > 0 ? 'text-red-500' : 'text-green-500'}">
+                                ${record.amount > 0 ? '+' : ''}${record.amount.toFixed(2)} TL
+                            </p>
+                        </div>
+                        ${record.type === 'payment' ? `
+                            <button onclick="deletePayment(${employeeIndex}, ${recordIndex})" class="text-red-500 hover:text-red-700 transition-colors p-1" title="Ödemeyi Sil">
+                                <i class="fas fa-trash-alt"></i>
+                            </button>
+                        ` : ''}
                     </div>
                 </div>
             </div>
@@ -1009,6 +1071,10 @@ const luxwage = new LuxWage();
 // Global method'ları window objesine bağla (HTML onclick için)
 window.showPage = function(pageName) {
     luxwage.showPage(pageName);
+};
+
+window.deletePayment = function(employeeIndex, recordIndex) {
+    luxwage.deletePayment(employeeIndex, recordIndex);
 };
 
 // Logout button event listener
