@@ -1,6 +1,6 @@
 // Firebase CDN Import'ları
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, updateProfile, updatePassword } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -317,7 +317,217 @@ class LuxWage {
                     </div>
                 </div>
             </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">
+                    <i class="fas fa-bell text-blue-500 mr-2"></i>
+                    Son İşlemler ve Bildirimler
+                </h2>
+                <div id="recentActivityList">
+                    <!-- Activities will be loaded here -->
+                </div>
+            </div>
         `;
+        
+        this.renderRecentActivities();
+    }
+
+    // Son işlemleri render et
+    renderRecentActivities() {
+        const recentActivityList = document.getElementById('recentActivityList');
+        if (!recentActivityList) return;
+        
+        const activities = [];
+        
+        // Tüm çalışanların ödeme ve devamsızlık geçmişini topla
+        this.employees.forEach(emp => {
+            // Ödeme geçmişi
+            if (emp.paymentHistory && emp.paymentHistory.length > 0) {
+                emp.paymentHistory.forEach(payment => {
+                    activities.push({
+                        type: 'payment',
+                        employeeName: emp.name,
+                        amount: payment.amount,
+                        date: payment.date,
+                        timestamp: payment.timestamp || Date.now()
+                    });
+                });
+            }
+            
+            // Devamsızlık geçmişi
+            if (emp.absenceHistory && emp.absenceHistory.length > 0) {
+                emp.absenceHistory.forEach(absence => {
+                    activities.push({
+                        type: 'absence',
+                        employeeName: emp.name,
+                        date: absence.date,
+                        deduction: absence.deduction,
+                        timestamp: absence.timestamp || Date.now()
+                    });
+                });
+            }
+            
+            // Ödeme günü kontrolü
+            const paymentDue = this.checkPaymentDue(emp);
+            if (paymentDue) {
+                activities.push({
+                    type: 'warning',
+                    employeeName: emp.name,
+                    message: paymentDue.message,
+                    timestamp: Date.now()
+                });
+            }
+        });
+        
+        // Tarihe göre sırala (yeniden eskiye)
+        activities.sort((a, b) => b.timestamp - a.timestamp);
+        
+        // Eğer aktivite yoksa
+        if (activities.length === 0) {
+            recentActivityList.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-inbox text-4xl mb-3"></i>
+                    <p>Henüz işlem kaydı yok</p>
+                </div>
+            `;
+            return;
+        }
+        
+        // Aktiviteleri render et
+        const activitiesHTML = activities.slice(0, 10).map(activity => {
+            const timeAgo = this.getTimeAgo(activity.timestamp);
+            
+            if (activity.type === 'payment') {
+                return `
+                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-green-100 p-3 rounded-full mr-4">
+                            <i class="fas fa-money-bill-wave text-green-500"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-800">${activity.employeeName} isimli çalışana ${activity.amount.toFixed(2)} TL ödeme yapıldı</p>
+                            <p class="text-sm text-gray-500">${timeAgo}</p>
+                        </div>
+                    </div>
+                `;
+            } else if (activity.type === 'absence') {
+                return `
+                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-red-100 p-3 rounded-full mr-4">
+                            <i class="fas fa-calendar-times text-red-500"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-800">${activity.employeeName} isimli çalışana devamsızlık kaydı (${activity.deduction.toFixed(2)} TL kesinti)</p>
+                            <p class="text-sm text-gray-500">${timeAgo}</p>
+                        </div>
+                    </div>
+                `;
+            } else if (activity.type === 'warning') {
+                return `
+                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-yellow-100 p-3 rounded-full mr-4">
+                            <i class="fas fa-exclamation-triangle text-yellow-500"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
+                            <p class="text-sm text-gray-500">${timeAgo}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }).join('');
+        
+        recentActivityList.innerHTML = activitiesHTML;
+    }
+    
+    // Ödeme günü kontrolü
+    checkPaymentDue(employee) {
+        if (!employee.startDate) return null;
+        
+        const now = new Date();
+        const startDate = new Date(employee.startDate);
+        const daysSinceStart = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
+        
+        if (employee.salaryType === 'weekly') {
+            // Haftalık çalışanlar için her 7 günde bir ödeme günü
+            const weeksSinceStart = Math.floor(daysSinceStart / 7);
+            const daysSinceLastPayment = daysSinceStart % 7;
+            
+            // Son 3 gün içinde ödeme günü geldi mi?
+            if (daysSinceLastPayment <= 3 && daysSinceLastPayment >= 0) {
+                return {
+                    message: `Haftalık ödeme günü geldi (${daysSinceLastPayment === 0 ? 'Bugün' : daysSinceLastPayment + ' gün önce'})`
+                };
+            }
+        } else if (employee.salaryType === 'monthly') {
+            // Aylık çalışanlar için her 30 günde bir ödeme günü
+            const monthsSinceStart = Math.floor(daysSinceStart / 30);
+            const daysSinceLastPayment = daysSinceStart % 30;
+            
+            // Son 5 gün içinde ödeme günü geldi mi?
+            if (daysSinceLastPayment <= 5 && daysSinceLastPayment >= 0) {
+                return {
+                    message: `Aylık ödeme günü geldi (${daysSinceLastPayment === 0 ? 'Bugün' : daysSinceLastPayment + ' gün önce'})`
+                };
+            }
+        }
+        
+        return null;
+    }
+    
+    // Zaman farkını hesapla
+    getTimeAgo(timestamp) {
+        const seconds = Math.floor((Date.now() - timestamp) / 1000);
+        
+        if (seconds < 60) {
+            return 'Az önce';
+        } else if (seconds < 3600) {
+            const minutes = Math.floor(seconds / 60);
+            return `${minutes} dakika önce`;
+        } else if (seconds < 86400) {
+            const hours = Math.floor(seconds / 3600);
+            return `${hours} saat önce`;
+        } else if (seconds < 604800) {
+            const days = Math.floor(seconds / 86400);
+            return `${days} gün önce`;
+        } else {
+            const date = new Date(timestamp);
+            return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+        }
+    }
+    
+    // Çalışma süresini hesapla
+    calculateWorkingDuration(startDate) {
+        const start = new Date(startDate);
+        const now = new Date();
+        
+        // Farkı hesapla
+        let years = now.getFullYear() - start.getFullYear();
+        let months = now.getMonth() - start.getMonth();
+        let days = now.getDate() - start.getDate();
+        
+        // Günleri ayarlama
+        if (days < 0) {
+            months--;
+            const previousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
+            days += previousMonth.getDate();
+        }
+        
+        // Ayları ayarlama
+        if (months < 0) {
+            years--;
+            months += 12;
+        }
+        
+        // Formatla
+        const parts = [];
+        if (years > 0) parts.push(`${years} Yıl`);
+        if (months > 0) parts.push(`${months} Ay`);
+        if (days > 0) parts.push(`${days} Gün`);
+        
+        // Eğer tüm değerler 0 ise
+        if (parts.length === 0) return 'Bugün başladı';
+        
+        return parts.join(', ') + ' süredir çalışıyor';
     }
 
     // Çalışanlar sayfasını render et
@@ -340,7 +550,12 @@ class LuxWage {
             return;
         }
         
-        let employeesHTML = this.employees.map((emp, index) => `
+        let employeesHTML = this.employees.map((emp, index) => {
+            const startDate = emp.startDate ? new Date(emp.startDate) : null;
+            const startDateStr = startDate ? startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belirtilmemiş';
+            const workingDuration = emp.startDate ? this.calculateWorkingDuration(emp.startDate) : 'Belirtilmemiş';
+            
+            return `
             <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between mb-4">
                     <div class="flex items-center">
@@ -350,11 +565,22 @@ class LuxWage {
                         <div>
                             <h3 class="font-bold text-gray-800">${emp.name}</h3>
                             <p class="text-gray-500 text-sm">${emp.phone}</p>
+                            <div class="flex items-center mt-1 text-xs text-gray-400">
+                                <i class="fas fa-calendar-alt mr-1"></i>
+                                <span>İşe Başlama: ${startDateStr}</span>
+                            </div>
                         </div>
                     </div>
                     <div class="text-right">
                         <p class="text-lg font-bold text-gray-800">${emp.salaryAmount} TL</p>
                         <p class="text-sm text-gray-500">${emp.salaryType === 'weekly' ? 'Haftalık' : 'Aylık'}</p>
+                    </div>
+                </div>
+                
+                <div class="bg-blue-50 rounded-lg p-3 mb-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-clock text-blue-500 mr-2"></i>
+                        <span class="text-sm text-blue-700 font-medium">${workingDuration}</span>
                     </div>
                 </div>
                 
@@ -383,7 +609,8 @@ class LuxWage {
                     </div>
                 </div>
             </div>
-        `).join('');
+            `;
+        }).join('');
         
         employeesSection.innerHTML = `
             <div class="mb-4">
@@ -424,6 +651,12 @@ class LuxWage {
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">İsim Soyisim</label>
                             <input type="text" id="accountName" value="${user.displayName || ''}" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Mevcut Şifre</label>
+                            <input type="password" id="accountOldPassword" placeholder="Şifrenizi değiştirmek için boş bırakın" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">Şifrenizi değiştirmek için gereklidir</p>
                         </div>
                         
                         <div>
@@ -866,6 +1099,61 @@ document.addEventListener('DOMContentLoaded', function() {
             });
     });
     
+    // Test button event listener
+    document.getElementById('testEmreBtn')?.addEventListener('click', function() {
+        // 60 gün önceki tarih
+        const sixtyDaysAgo = new Date();
+        sixtyDaysAgo.setDate(sixtyDaysAgo.getDate() - 60);
+        const startDateTimestamp = sixtyDaysAgo.getTime();
+        
+        // Rastgele geçmiş tarihler için devamsızlık (son 30 gün içinde)
+        const generateRandomAbsence = () => {
+            const daysAgo = Math.floor(Math.random() * 30) + 1;
+            const date = new Date();
+            date.setDate(date.getDate() - daysAgo);
+            return {
+                date: date.toLocaleDateString('tr-TR'),
+                deduction: 500,
+                timestamp: date.getTime()
+            };
+        };
+        
+        // Geçmiş ödeme (30 gün önce)
+        const paymentDate = new Date();
+        paymentDate.setDate(paymentDate.getDate() - 30);
+        
+        const testEmployee = {
+            name: 'Emre (Test)',
+            phone: '555-1234567',
+            salaryType: 'weekly',
+            closedDay: 0,
+            salaryAmount: 10000,
+            startDate: startDateTimestamp,
+            debt: 0,
+            absenceHistory: [
+                generateRandomAbsence(),
+                generateRandomAbsence(),
+                generateRandomAbsence(),
+                generateRandomAbsence()
+            ],
+            paymentHistory: [
+                {
+                    amount: 15000,
+                    date: paymentDate.toLocaleDateString('tr-TR'),
+                    timestamp: paymentDate.getTime()
+                }
+            ]
+        };
+        
+        // Test çalışanını ekle
+        luxwage.employees.push(testEmployee);
+        luxwage.saveData();
+        luxwage.renderHomePage();
+        luxwage.renderEmployeesPage();
+        
+        showNotification('Test verisi başarıyla eklendi', 'success');
+    });
+    
     // Add employee button event listener
     document.addEventListener('click', function(e) {
         if (e.target && e.target.id === 'addEmployeeBtn') {
@@ -899,6 +1187,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target && e.target.id === 'accountForm') {
             e.preventDefault();
             const name = document.getElementById('accountName').value.trim();
+            const oldPassword = document.getElementById('accountOldPassword').value;
             const password = document.getElementById('accountPassword').value;
             const passwordConfirm = document.getElementById('accountPasswordConfirm').value;
             
@@ -914,6 +1203,11 @@ document.addEventListener('DOMContentLoaded', function() {
             
             if (password !== passwordConfirm) {
                 showNotification('Şifreler eşleşmiyor', 'error');
+                return;
+            }
+            
+            if (password && !oldPassword) {
+                showNotification('Şifrenizi değiştirmek için lütfen mevcut şifrenizi girin', 'error');
                 return;
             }
             
@@ -939,6 +1233,7 @@ document.addEventListener('DOMContentLoaded', function() {
                         if (!passwordChanged) {
                             showNotification('Bilgileriniz başarıyla güncellendi!', 'success');
                             // Clear password fields
+                            document.getElementById('accountOldPassword').value = '';
                             document.getElementById('accountPassword').value = '';
                             document.getElementById('accountPasswordConfirm').value = '';
                         }
@@ -951,16 +1246,25 @@ document.addEventListener('DOMContentLoaded', function() {
             
             // Update password if provided
             if (passwordChanged) {
-                updatePassword(user, password)
+                // Re-authenticate with old password first
+                const credential = EmailAuthProvider.credential(user.email, oldPassword);
+                reauthenticateWithCredential(user, credential)
                     .then(() => {
-                        showNotification('Bilgileriniz başarıyla güncellendi!', 'success');
+                        // Re-authentication successful, now update password
+                        return updatePassword(user, password);
+                    })
+                    .then(() => {
+                        showNotification('Şifreniz başarıyla güncellendi', 'success');
                         // Clear password fields
+                        document.getElementById('accountOldPassword').value = '';
                         document.getElementById('accountPassword').value = '';
                         document.getElementById('accountPasswordConfirm').value = '';
                     })
                     .catch((error) => {
                         console.error('Şifre güncelleme hatası:', error);
-                        if (error.code === 'auth/requires-recent-login') {
+                        if (error.code === 'auth/wrong-password') {
+                            showNotification('Mevcut şifrenizi yanlış girdiniz!', 'error');
+                        } else if (error.code === 'auth/requires-recent-login') {
                             showNotification('Lütfen güvenlik için çıkış yapıp tekrar giriş yaptıktan sonra şifrenizi değiştirin', 'error');
                         } else {
                             showNotification('Şifre güncellenemedi: ' + error.message, 'error');
