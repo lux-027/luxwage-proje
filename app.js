@@ -134,24 +134,27 @@ window.handleStartButton = function() {
 };
 
 window.logout = function() {
-    signOut(auth)
-        .then(() => {
-            showNotification('Başarıyla çıkış yapıldı', 'success');
-            setTimeout(() => {
-                window.location.reload();
-            }, 1500);
-        })
-        .catch((error) => {
-            console.error('Logout error:', error);
-            showNotification('Çıkış yapılırken hata oluştu', 'error');
-        });
+    if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+        signOut(auth)
+            .then(() => {
+                showNotification('Başarıyla çıkış yapıldı', 'success');
+                setTimeout(() => {
+                    window.location.reload();
+                }, 1500);
+            })
+            .catch((error) => {
+                console.error('Logout error:', error);
+                showNotification('Çıkış yapılırken hata oluştu', 'error');
+            });
+    }
 };
 
 // Logout button event listener
 document.addEventListener('DOMContentLoaded', function() {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
-        logoutBtn.addEventListener('click', function() {
+        logoutBtn.addEventListener('click', function(e) {
+            e.preventDefault();
             logout();
         });
     }
