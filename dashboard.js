@@ -721,6 +721,17 @@ class LuxWage {
         showNotification('İşçi başarıyla eklendi', 'success');
         this.renderEmployeesPage();
     }
+    
+    // İşçi sil
+    deleteEmployee(employeeIndex) {
+        if (employeeIndex !== null && employeeIndex >= 0 && employeeIndex < this.employees.length) {
+            this.employees.splice(employeeIndex, 1);
+            this.saveData();
+            this.renderEmployeesPage();
+            this.renderHomePage();
+            showNotification('Çalışan başarıyla silindi', 'success');
+        }
+    }
 
     // Devamsızlık ekle
     addAbsence() {
