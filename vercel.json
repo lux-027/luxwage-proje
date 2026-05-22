@@ -7,11 +7,23 @@
       "use": "@vercel/static"
     },
     {
-      "src": "app.js",
+      "src": "auth.js",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "dashboard.html",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "dashboard.js",
       "use": "@vercel/static"
     },
     {
       "src": "style.css",
+      "use": "@vercel/static"
+    },
+    {
+      "src": "style-material.css",
       "use": "@vercel/static"
     },
     {
@@ -25,12 +37,24 @@
       "dest": "/index.html"
     },
     {
-      "src": "/app.js",
-      "dest": "/app.js"
+      "src": "/auth.js",
+      "dest": "/auth.js"
+    },
+    {
+      "src": "/dashboard.html",
+      "dest": "/dashboard.html"
+    },
+    {
+      "src": "/dashboard.js",
+      "dest": "/dashboard.js"
     },
     {
       "src": "/style.css",
       "dest": "/style.css"
+    },
+    {
+      "src": "/style-material.css",
+      "dest": "/style-material.css"
     },
     {
       "src": "/(.*)",
