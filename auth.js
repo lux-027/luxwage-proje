@@ -17,7 +17,7 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
 // Toast Notification Sistemi
-window.showNotification = function(message, type = 'info') {
+function showNotification(message, type = 'info') {
     const container = document.getElementById('notificationContainer');
     if (!container) {
         return;
@@ -93,21 +93,21 @@ window.showNotification = function(message, type = 'info') {
 };
 
 // Modal Fonksiyonları
-window.openLoginModal = function() {
+function openLoginModal() {
     const modal = document.getElementById('loginModal');
     if (modal) {
         modal.style.display = 'flex';
     }
-};
+}
 
-window.openRegisterModal = function() {
+function openRegisterModal() {
     const modal = document.getElementById('registerModal');
     if (modal) {
         modal.style.display = 'flex';
     }
-};
+}
 
-window.closeModals = function() {
+function closeModals() {
     const loginModal = document.getElementById('loginModal');
     const registerModal = document.getElementById('registerModal');
     
@@ -118,21 +118,21 @@ window.closeModals = function() {
     if (registerModal) {
         registerModal.style.display = 'none';
     }
-};
+}
 
 // "Hazırsanız Başlayalım" butonu için fonksiyon
-window.handleStartButton = function() {
+function handleStartButton() {
     if (auth.currentUser) {
         // Kullanıcı giriş yapmış, dashboard'a yönlendir
         window.location.href = 'dashboard.html';
     } else {
         showNotification('Devam etmek için lütfen giriş yapın veya kayıt olun', 'info');
-        window.openLoginModal();
+        openLoginModal();
     }
-};
+}
 
 // Hoş geldin ekranını göster
-window.showWelcomeScreen = function(userName) {
+function showWelcomeScreen(userName) {
     const landingPage = document.getElementById('landingPage');
     const welcomeScreen = document.getElementById('welcomeScreen');
     const welcomeUserName = document.getElementById('welcomeUserName');
@@ -151,7 +151,7 @@ window.showWelcomeScreen = function(userName) {
             window.location.href = 'dashboard.html';
         };
     }
-};
+}
 
 // Firebase Auth State Listener - Routing
 onAuthStateChanged(auth, (user) => {
@@ -211,7 +211,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     
                     // Formu temizle
                     loginForm.reset();
-                    window.closeModals();
+                    closeModals();
                     
                     // Dashboard'a yönlendir
                     setTimeout(() => {
@@ -278,7 +278,7 @@ document.addEventListener('DOMContentLoaded', function() {
                             
                             // Formları temizle
                             registerForm.reset();
-                            window.closeModals();
+                            closeModals();
                             
                             // Hoş geldin ekranını göster
                             setTimeout(() => showWelcomeScreen(name), 500);
@@ -310,18 +310,66 @@ document.addEventListener('DOMContentLoaded', function() {
             handleStartButton();
         });
     }
+    
+    // Login button event listener
+    const loginBtn = document.getElementById('loginBtn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', function() {
+            openLoginModal();
+        });
+    }
+    
+    // Register button event listener
+    const registerBtn = document.getElementById('registerBtn');
+    if (registerBtn) {
+        registerBtn.addEventListener('click', function() {
+            openRegisterModal();
+        });
+    }
+    
+    // Close register modal button event listener
+    const closeRegisterModalBtn = document.getElementById('closeRegisterModalBtn');
+    if (closeRegisterModalBtn) {
+        closeRegisterModalBtn.addEventListener('click', function() {
+            closeModals();
+        });
+    }
+    
+    // Cancel register button event listener
+    const cancelRegisterBtn = document.getElementById('cancelRegisterBtn');
+    if (cancelRegisterBtn) {
+        cancelRegisterBtn.addEventListener('click', function() {
+            closeModals();
+        });
+    }
+    
+    // Close login modal button event listener
+    const closeLoginModalBtn = document.getElementById('closeLoginModalBtn');
+    if (closeLoginModalBtn) {
+        closeLoginModalBtn.addEventListener('click', function() {
+            closeModals();
+        });
+    }
+    
+    // Cancel login button event listener
+    const cancelLoginBtn = document.getElementById('cancelLoginBtn');
+    if (cancelLoginBtn) {
+        cancelLoginBtn.addEventListener('click', function() {
+            closeModals();
+        });
+    }
 });
 
 // Modal dışına tıklayınca kapatma
 document.addEventListener('click', function(e) {
     if (e.target && e.target.classList && e.target.classList.contains('modal')) {
-        window.closeModals();
+        closeModals();
     }
 });
 
 // ESC tuşuna basınca modalları kapatma
 document.addEventListener('keydown', function(e) {
     if (e.key === 'Escape') {
-        window.closeModals();
+        closeModals();
     }
 });

@@ -30,11 +30,11 @@
                     
                     <!-- Auth Buttons (Giriş yapmamış kullanıcılar için) -->
                     <div class="flex space-x-4 auth-buttons">
-                        <button onclick="openLoginModal()" class="text-white hover:text-emerald-300 px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300">
+                        <button id="loginBtn" class="text-white hover:text-emerald-300 px-4 py-2 rounded-lg hover:bg-white/10 transition-all duration-300">
                             <i class="fas fa-sign-in-alt mr-2"></i>
                             Giriş Yap
                         </button>
-                        <button onclick="openRegisterModal()" class="bg-emerald-500 text-white px-6 py-2 rounded-lg hover:bg-emerald-600 transition-all duration-300 shadow-lg hover:shadow-emerald-500/25">
+                        <button id="registerBtn" class="bg-emerald-500 text-white px-6 py-2 rounded-lg hover:bg-emerald-600 transition-all duration-300 shadow-lg hover:shadow-emerald-500/25">
                             <i class="fas fa-user-plus mr-2"></i>
                             Kayıt Ol
                         </button>
@@ -130,7 +130,7 @@
                     <i class="fas fa-user-plus text-emerald-500 mr-2"></i>
                     Kayıt Ol
                 </h3>
-                <button onclick="closeModals()" class="text-gray-400 hover:text-gray-600">
+                <button id="closeRegisterModalBtn" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -161,7 +161,7 @@
                         <i class="fas fa-check mr-2"></i>
                         Kayıt Ol
                     </button>
-                    <button type="button" onclick="closeModals()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">
+                    <button type="button" id="cancelRegisterBtn" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">
                         İptal
                     </button>
                 </div>
@@ -177,7 +177,7 @@
                     <i class="fas fa-sign-in-alt text-blue-500 mr-2"></i>
                     Giriş Yap
                 </h3>
-                <button onclick="closeModals()" class="text-gray-400 hover:text-gray-600">
+                <button id="closeLoginModalBtn" class="text-gray-400 hover:text-gray-600">
                     <i class="fas fa-times text-xl"></i>
                 </button>
             </div>
@@ -198,13 +198,13 @@
                         <i class="fas fa-sign-in-alt mr-2"></i>
                         Giriş Yap
                     </button>
-                    <button type="button" onclick="closeModals()" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">
+                    <button type="button" id="cancelLoginBtn" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">
                         İptal
                     </button>
                 </div>
             </form>
         </div>
-    </div>>
+    </div>
     
     <!-- Notification Container -->
     <div id="notificationContainer" class="fixed top-4 right-4 z-50 space-y-2"></div>
