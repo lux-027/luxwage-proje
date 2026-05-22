@@ -682,28 +682,18 @@ class LuxWage {
                             <input type="text" id="accountName" value="${user.displayName || ''}" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
                         </div>
                         
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Mevcut Şifre</label>
-                            <input type="password" id="accountOldPassword" placeholder="Şifrenizi değiştirmek için boş bırakın" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <p class="text-xs text-gray-500 mt-1">Şifrenizi değiştirmek için gereklidir</p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Yeni Şifre</label>
-                            <input type="password" id="accountPassword" placeholder="Şifrenizi değiştirmek için boş bırakın" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                            <p class="text-xs text-gray-500 mt-1">En az 6 karakter olmalıdır</p>
-                        </div>
-                        
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Şifre Tekrar</label>
-                            <input type="password" id="accountPasswordConfirm" placeholder="Şifrenizi değiştirmek için boş bırakın" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
-                        </div>
-                        
                         <button type="submit" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors font-semibold">
                             <i class="fas fa-save mr-2"></i>
                             Bilgileri Güncelle
                         </button>
                     </form>
+                    
+                    <div class="border-t border-gray-200 pt-6 mt-6">
+                        <button id="openPasswordModalBtn" class="w-full bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 transition-colors font-semibold">
+                            <i class="fas fa-key mr-2"></i>
+                            Şifreyi Değiştir
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -1217,6 +1207,76 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Password modal event listeners
+    document.addEventListener('click', function(e) {
+        if (e.target && e.target.id === 'openPasswordModalBtn') {
+            const passwordModal = document.getElementById('changePasswordModal');
+            if (passwordModal) {
+                passwordModal.classList.remove('hidden');
+            }
+        }
+        
+        if (e.target && e.target.id === 'closePasswordModalBtn') {
+            const passwordModal = document.getElementById('changePasswordModal');
+            if (passwordModal) {
+                passwordModal.classList.add('hidden');
+                document.getElementById('modalOldPassword').value = '';
+                document.getElementById('modalNewPassword').value = '';
+            }
+        }
+        
+        if (e.target && e.target.id === 'cancelPasswordBtn') {
+            const passwordModal = document.getElementById('changePasswordModal');
+            if (passwordModal) {
+                passwordModal.classList.add('hidden');
+                document.getElementById('modalOldPassword').value = '';
+                document.getElementById('modalNewPassword').value = '';
+            }
+        }
+        
+        if (e.target && e.target.id === 'confirmPasswordBtn') {
+            const oldPassword = document.getElementById('modalOldPassword').value;
+            const newPassword = document.getElementById('modalNewPassword').value;
+            
+            if (!oldPassword || !newPassword) {
+                showNotification('Lütfen tüm alanları doldurun', 'error');
+                return;
+            }
+            
+            if (newPassword.length < 6) {
+                showNotification('Yeni şifre en az 6 karakter olmalıdır', 'error');
+                return;
+            }
+            
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const credential = EmailAuthProvider.credential(user.email, oldPassword);
+            
+            reauthenticateWithCredential(user, credential)
+                .then(() => {
+                    return updatePassword(user, newPassword);
+                })
+                .then(() => {
+                    showNotification('Şifreniz başarıyla güncellendi', 'success');
+                    const passwordModal = document.getElementById('changePasswordModal');
+                    if (passwordModal) {
+                        passwordModal.classList.add('hidden');
+                    }
+                    document.getElementById('modalOldPassword').value = '';
+                    document.getElementById('modalNewPassword').value = '';
+                })
+                .catch((error) => {
+                    console.error('Şifre güncelleme hatası:', error);
+                    if (error.code === 'auth/wrong-password') {
+                        showNotification('Mevcut şifre hatalı', 'error');
+                    } else {
+                        showNotification('Şifre güncellenirken hata oluştu', 'error');
+                    }
+                });
+        }
+    });
+    
     // Add employee button event listener
     document.addEventListener('click', function(e) {
         if (e.target && e.target.id === 'addEmployeeBtn') {
@@ -1254,27 +1314,9 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target && e.target.id === 'accountForm') {
             e.preventDefault();
             const name = document.getElementById('accountName').value.trim();
-            const oldPassword = document.getElementById('accountOldPassword').value;
-            const password = document.getElementById('accountPassword').value;
-            const passwordConfirm = document.getElementById('accountPasswordConfirm').value;
             
             if (!name) {
                 showNotification('İsim soyisim alanı zorunludur', 'error');
-                return;
-            }
-            
-            if (password && password.length < 6) {
-                showNotification('Şifre en az 6 karakter olmalıdır', 'error');
-                return;
-            }
-            
-            if (password !== passwordConfirm) {
-                showNotification('Şifreler eşleşmiyor', 'error');
-                return;
-            }
-            
-            if (password && !oldPassword) {
-                showNotification('Şifrenizi değiştirmek için lütfen mevcut şifrenizi girin', 'error');
                 return;
             }
             
@@ -1285,58 +1327,17 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             
             // Update display name if changed
-            const nameChanged = user.displayName !== name;
-            const passwordChanged = password.length > 0;
-            
-            if (!nameChanged && !passwordChanged) {
-                showNotification('Değişiklik yapılmadı', 'info');
-                return;
-            }
-            
-            // Update display name
-            if (nameChanged) {
+            if (user.displayName !== name) {
                 updateProfile(user, { displayName: name })
                     .then(() => {
-                        if (!passwordChanged) {
-                            showNotification('Bilgileriniz başarıyla güncellendi!', 'success');
-                            // Clear password fields
-                            document.getElementById('accountOldPassword').value = '';
-                            document.getElementById('accountPassword').value = '';
-                            document.getElementById('accountPasswordConfirm').value = '';
-                        }
+                        showNotification('Bilgileriniz başarıyla güncellendi!', 'success');
                     })
                     .catch((error) => {
                         console.error('Profil güncelleme hatası:', error);
                         showNotification('Profil güncellenemedi: ' + error.message, 'error');
                     });
-            }
-            
-            // Update password if provided
-            if (passwordChanged) {
-                // Re-authenticate with old password first
-                const credential = EmailAuthProvider.credential(user.email, oldPassword);
-                reauthenticateWithCredential(user, credential)
-                    .then(() => {
-                        // Re-authentication successful, now update password
-                        return updatePassword(user, password);
-                    })
-                    .then(() => {
-                        showNotification('Şifreniz başarıyla güncellendi', 'success');
-                        // Clear password fields
-                        document.getElementById('accountOldPassword').value = '';
-                        document.getElementById('accountPassword').value = '';
-                        document.getElementById('accountPasswordConfirm').value = '';
-                    })
-                    .catch((error) => {
-                        console.error('Şifre güncelleme hatası:', error);
-                        if (error.code === 'auth/wrong-password') {
-                            showNotification('Mevcut şifrenizi yanlış girdiniz!', 'error');
-                        } else if (error.code === 'auth/requires-recent-login') {
-                            showNotification('Lütfen güvenlik için çıkış yapıp tekrar giriş yaptıktan sonra şifrenizi değiştirin', 'error');
-                        } else {
-                            showNotification('Şifre güncellenemedi: ' + error.message, 'error');
-                        }
-                    });
+            } else {
+                showNotification('Değişiklik yapılmadı', 'info');
             }
         }
     });
