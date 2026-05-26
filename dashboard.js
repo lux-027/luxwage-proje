@@ -114,18 +114,33 @@ function logout() {
 
 // Firebase Auth State Listener - Dashboard
 onAuthStateChanged(auth, (user) => {
-    // Basit auth guard mantığı
-    const currentPath = window.location.pathname;
+    // Beyaz liste (whitelist) - yasal sayfalar
+    const serbestSayfalar = [
+        'gizlilik-politikasi.html', 
+        'kullanim-sartlari.html', 
+        'hakkimizda.html', 
+        'iletisim.html', 
+        'cerez-politikasi.html'
+    ];
+    const suAnkiSayfa = window.location.pathname;
     
-    if (!user && currentPath.includes('dashboard')) {
-        // Kullanıcı giriş yapmamışsa ve dashboard'daysa index'e yönlendir
-        window.location.href = 'index.html';
+    // Eğer kullanıcı bu serbest/yasal sayfalardan birindeyse, yönlendirme motorunu durdur
+    const yasalSayfadaMiyim = serbestSayfalar.some(page => suAnkiSayfa.includes(page));
+    if (yasalSayfadaMiyim) {
+        return;
     }
-    
-    // Kullanıcı giriş yapmış, hesap formunu doldur
-    const accountName = document.getElementById('accountName');
-    if (accountName && user && user.displayName) {
-        accountName.value = user.displayName;
+
+    if (user) {
+        // Kullanıcı giriş YAPMIŞSA ve SADECE ana sayfa (index.html), login veya kök dizindeyse dashboard'a yönlendir
+        if (suAnkiSayfa.includes('index.html') || suAnkiSayfa.includes('login.html') || suAnkiSayfa === '/' || suAnkiSayfa === '') {
+            window.location.href = 'dashboard.html';
+        }
+        // Bunun dışındaki TÜM durumlarda (dashboard'da kalıyorsa, yasal sayfalara gidiyorsa vb.) ASLA bir yönlendirme kodu çalıştırma, dokunma!
+    } else {
+        // Kullanıcı giriş YAPMAMIŞSA ve dashboard'a girmeye çalışıyorsa index'e fırlat
+        if (suAnkiSayfa.includes('dashboard.html')) {
+            window.location.href = 'index.html';
+        }
     }
 });
 

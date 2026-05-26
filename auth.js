@@ -169,14 +169,28 @@ onAuthStateChanged(auth, (user) => {
     const visitorMessage = document.getElementById('visitorMessage');
     const dashboardButton = document.getElementById('dashboardButton');
     
-    // Basit auth guard mantığı
-    const currentPath = window.location.pathname;
+    // Beyaz liste (whitelist) - yasal sayfalar
+    const serbestSayfalar = [
+        'gizlilik-politikasi.html', 
+        'kullanim-sartlari.html', 
+        'hakkimizda.html', 
+        'iletisim.html', 
+        'cerez-politikasi.html'
+    ];
+    const suAnkiSayfa = window.location.pathname;
     
-    if (!user && currentPath.includes('dashboard')) {
+    // Eğer kullanıcı bu serbest/yasal sayfalardan birindeyse, yönlendirme motorunu durdur
+    const yasalSayfadaMiyim = serbestSayfalar.some(page => suAnkiSayfa.includes(page));
+    if (yasalSayfadaMiyim) {
+        return;
+    }
+    
+    // Basit auth guard mantığı
+    if (!user && suAnkiSayfa.includes('dashboard')) {
         // Kullanıcı giriş yapmamışsa ve dashboard'daysa index'e yönlendir
         window.location.href = 'index.html';
-    } else if (user && (currentPath.includes('index') || currentPath.includes('login'))) {
-        // Kullanıcı giriş yapmışsa ve index veya login'deyse dashboard'a yönlendir
+    } else if (user && (suAnkiSayfa.includes('index.html') || suAnkiSayfa.includes('login.html') || suAnkiSayfa === '/' || suAnkiSayfa === '')) {
+        // Kullanıcı giriş yapmışsa ve sadece index/login/kök dizindeyse dashboard'a yönlendir
         window.location.href = 'dashboard.html';
     }
     
