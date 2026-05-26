@@ -991,7 +991,8 @@ class LuxWage {
             debt: 0,
             startDate: Date.now(),
             absenceHistory: [],
-            paymentHistory: []
+            paymentHistory: [],
+            dailyLogs: []
         };
         
         this.employees.push(employee);
@@ -1056,6 +1057,66 @@ class LuxWage {
         const modal = document.getElementById('workStopModal');
         if (modal) modal.classList.add('hidden');
         this.pendingWorkStopIndex = null;
+    }
+
+    // 10 günlük günlük hesaplama
+    calculateDailyLogs(employee) {
+        const logs = [];
+        const today = new Date();
+        
+        for (let i = 0; i < 10; i++) {
+            const date = new Date(today);
+            date.setDate(date.getDate() - i);
+            const dateStr = date.toISOString().split('T')[0];
+            const dayOfWeek = date.getDay();
+            
+            // Check if this day is a closed day
+            const isClosedDay = employee.closedDays && employee.closedDays.includes(dayOfWeek);
+            
+            // Check if there's an existing log for this date
+            const existingLog = employee.dailyLogs && employee.dailyLogs.find(log => log.date === dateStr);
+            
+            if (existingLog) {
+                logs.push(existingLog);
+            } else {
+                // Calculate daily amount based on salary type
+                let dailyAmount = 0;
+                if (employee.salaryType === 'daily') {
+                    dailyAmount = employee.salaryAmount;
+                } else if (employee.salaryType === 'weekly') {
+                    dailyAmount = employee.salaryAmount / 7;
+                } else if (employee.salaryType === 'monthly') {
+                    dailyAmount = employee.salaryAmount / 30;
+                }
+                
+                // If it's a closed day, no payment
+                if (isClosedDay) {
+                    dailyAmount = 0;
+                }
+                
+                // Determine status based on payment history
+                let status = 'pending';
+                if (employee.paymentHistory) {
+                    const paymentOnDate = employee.paymentHistory.find(p => p.date === dateStr);
+                    if (paymentOnDate) {
+                        status = 'paid';
+                    }
+                }
+                
+                // Check if work was stopped on this day
+                const isStopped = employee.isStopped || false;
+                
+                logs.push({
+                    date: dateStr,
+                    status: status,
+                    amount: dailyAmount,
+                    isStopped: isStopped,
+                    isClosedDay: isClosedDay
+                });
+            }
+        }
+        
+        return logs;
     }
     
     // İşçiyi kalıcı olarak sil (şifre doğrulaması ile)
@@ -1455,96 +1516,149 @@ function showHistory(employeeIndex) {
     
     document.getElementById('historyEmployeeName').textContent = employee.name;
     
+    const dailyLogsContent = document.getElementById('dailyLogsContent');
     const historyContent = document.getElementById('historyContent');
     
-    // Sadece ödeme geçmişini göster (devamsızlık gösterme)
-    if (!employee.paymentHistory || employee.paymentHistory.length === 0) {
-        historyContent.innerHTML = '<p class="text-gray-500 text-center">Henüz ödeme kaydı yok</p>';
-        openModal('historyModal');
-        return;
+    // 10 günlük günlük hesapla ve göster
+    const dailyLogs = luxwage.calculateDailyLogs(employee);
+    
+    if (dailyLogs.length === 0) {
+        dailyLogsContent.innerHTML = '<p class="text-gray-500 text-center py-4">Henüz günlük kayıt yok</p>';
+    } else {
+        let dailyLogsHTML = '<table class="w-full"><thead><tr class="bg-gray-200">';
+        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Tarih</th>';
+        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Günlük Tutar</th>';
+        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Durum</th>';
+        dailyLogsHTML += '</tr></thead><tbody>';
+        
+        dailyLogs.forEach(log => {
+            const dateObj = new Date(log.date);
+            const formattedDate = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            let rowClass = '';
+            let statusText = '';
+            let statusClass = '';
+            
+            if (log.isStopped) {
+                rowClass = 'bg-gray-100';
+                statusText = 'İş Durduruldu';
+                statusClass = 'text-gray-600 font-semibold';
+            } else if (log.isClosedDay) {
+                rowClass = 'bg-gray-50';
+                statusText = 'Kapalı Gün';
+                statusClass = 'text-gray-500';
+            } else if (log.status === 'paid') {
+                rowClass = 'bg-green-50';
+                statusText = 'Ödendi';
+                statusClass = 'text-green-600 font-semibold';
+            } else {
+                rowClass = 'bg-yellow-50';
+                statusText = 'Bekleniyor';
+                statusClass = 'text-yellow-600 font-semibold';
+            }
+            
+            dailyLogsHTML += `
+                <tr class="${rowClass} border-b border-gray-200">
+                    <td class="px-4 py-3 text-sm text-gray-800">${formattedDate}</td>
+                    <td class="px-4 py-3 text-sm font-medium ${log.amount > 0 ? 'text-gray-800' : 'text-gray-400'}">
+                        ${log.amount > 0 ? log.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL' : '-'}
+                    </td>
+                    <td class="px-4 py-3 text-sm ${statusClass}">${statusText}</td>
+                </tr>
+            `;
+        });
+        
+        dailyLogsHTML += '</tbody></table>';
+        dailyLogsContent.innerHTML = dailyLogsHTML;
     }
     
-    // Maaş tipine göre ödemeleri grupla
-    const groupedPayments = {};
-    
-    employee.paymentHistory.forEach((payment, index) => {
-        const paymentDate = new Date(payment.date);
-        let periodKey;
+    // Ödeme geçmişini göster
+    if (!employee.paymentHistory || employee.paymentHistory.length === 0) {
+        historyContent.innerHTML = '<p class="text-gray-500 text-center">Henüz ödeme kaydı yok</p>';
+    } else {
+        // Maaş tipine göre ödemeleri grupla
+        const groupedPayments = {};
         
-        if (employee.salaryType === 'daily') {
-            // Günlük: Her gün ayrı göster
-            periodKey = paymentDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-        } else if (employee.salaryType === 'weekly') {
-            // Haftalık: Hafta sonu tarihi
-            const dayOfWeek = paymentDate.getDay();
-            const daysUntilSunday = 7 - dayOfWeek;
-            const weekEnd = new Date(paymentDate);
-            weekEnd.setDate(weekEnd.getDate() + daysUntilSunday);
-            periodKey = weekEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-        } else {
-            // Aylık: Ay sonu tarihi
-            const monthEnd = new Date(paymentDate.getFullYear(), paymentDate.getMonth() + 1, 0);
-            periodKey = monthEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-        }
-        
-        if (!groupedPayments[periodKey]) {
-            groupedPayments[periodKey] = {
-                totalAmount: 0,
-                payments: [],
-                periodEnd: periodKey
-            };
-        }
-        
-        groupedPayments[periodKey].totalAmount += payment.amount;
-        groupedPayments[periodKey].payments.push({
-            ...payment,
-            index: index
+        employee.paymentHistory.forEach((payment, index) => {
+            const paymentDate = new Date(payment.date);
+            let periodKey;
+            
+            if (employee.salaryType === 'daily') {
+                // Günlük: Her gün ayrı göster
+                periodKey = paymentDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+            } else if (employee.salaryType === 'weekly') {
+                // Haftalık: Hafta sonu tarihi
+                const dayOfWeek = paymentDate.getDay();
+                const daysUntilSunday = 7 - dayOfWeek;
+                const weekEnd = new Date(paymentDate);
+                weekEnd.setDate(weekEnd.getDate() + daysUntilSunday);
+                periodKey = weekEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+            } else {
+                // Aylık: Ay sonu tarihi
+                const monthEnd = new Date(paymentDate.getFullYear(), paymentDate.getMonth() + 1, 0);
+                periodKey = monthEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+            }
+            
+            if (!groupedPayments[periodKey]) {
+                groupedPayments[periodKey] = {
+                    totalAmount: 0,
+                    payments: [],
+                    periodEnd: periodKey
+                };
+            }
+            
+            groupedPayments[periodKey].totalAmount += payment.amount;
+            groupedPayments[periodKey].payments.push({
+                ...payment,
+                index: index
+            });
         });
-    });
-    
-    // Tarihe göre sırala (yeniden eskiye)
-    const sortedPeriods = Object.keys(groupedPayments).sort((a, b) => new Date(b) - new Date(a));
-    
-    let html = '';
-    sortedPeriods.forEach(periodKey => {
-        const data = groupedPayments[periodKey];
-        const periodLabel = employee.salaryType === 'daily' 
-            ? 'Günlük' 
-            : employee.salaryType === 'weekly' 
-                ? 'Haftalık' 
-                : 'Aylık';
         
-        html += `
-            <div class="bg-blue-50 rounded-lg p-4 mb-4 border-l-4 border-blue-500">
-                <div class="flex justify-between items-center mb-2">
-                    <p class="font-bold text-gray-800">${periodLabel} - ${data.periodEnd}</p>
-                    <p class="font-bold text-blue-700">
-                        ${data.totalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                    </p>
-                </div>
-                <div class="space-y-2 mt-3">
-                    ${data.payments.map(payment => `
-                        <div class="bg-white rounded-lg p-3 border-l-4 border-green-500 flex justify-between items-center">
-                            <div>
-                                <p class="font-semibold text-gray-800 text-sm">Ödeme Alındı</p>
-                                <p class="text-xs text-gray-500">${payment.date}</p>
+        // Tarihe göre sırala (yeniden eskiye)
+        const sortedPeriods = Object.keys(groupedPayments).sort((a, b) => new Date(b) - new Date(a));
+        
+        let html = '';
+        sortedPeriods.forEach(periodKey => {
+            const data = groupedPayments[periodKey];
+            const periodLabel = employee.salaryType === 'daily' 
+                ? 'Günlük' 
+                : employee.salaryType === 'weekly' 
+                    ? 'Haftalık' 
+                    : 'Aylık';
+            
+            html += `
+                <div class="bg-blue-50 rounded-lg p-4 mb-4 border-l-4 border-blue-500">
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="font-bold text-gray-800">${periodLabel} - ${data.periodEnd}</p>
+                        <p class="font-bold text-blue-700">
+                            ${data.totalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                        </p>
+                    </div>
+                    <div class="space-y-2 mt-3">
+                        ${data.payments.map(payment => `
+                            <div class="bg-white rounded-lg p-3 border-l-4 border-green-500 flex justify-between items-center">
+                                <div>
+                                    <p class="font-semibold text-gray-800 text-sm">Ödeme Alındı</p>
+                                    <p class="text-xs text-gray-500">${payment.date}</p>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <p class="font-bold text-green-500">
+                                        ${payment.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                                    </p>
+                                    <button onclick="deletePayment(${employeeIndex}, ${payment.index})" class="text-red-500 hover:text-red-700 transition-colors p-1" title="Ödemeyi Sil">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
                             </div>
-                            <div class="flex items-center space-x-3">
-                                <p class="font-bold text-green-500">
-                                    ${payment.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                                </p>
-                                <button onclick="deletePayment(${employeeIndex}, ${payment.index})" class="text-red-500 hover:text-red-700 transition-colors p-1" title="Ödemeyi Sil">
-                                    <i class="fas fa-trash-alt"></i>
-                                </button>
-                            </div>
-                        </div>
-                    `).join('')}
+                        `).join('')}
+                    </div>
                 </div>
-            </div>
-        `;
-    });
+            `;
+        });
+        
+        historyContent.innerHTML = html;
+    }
     
-    historyContent.innerHTML = html;
     openModal('historyModal');
 };
 
