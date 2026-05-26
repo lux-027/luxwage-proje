@@ -1516,61 +1516,7 @@ function showHistory(employeeIndex) {
     
     document.getElementById('historyEmployeeName').textContent = employee.name;
     
-    const dailyLogsContent = document.getElementById('dailyLogsContent');
     const historyContent = document.getElementById('historyContent');
-    
-    // 10 günlük günlük hesapla ve göster
-    const dailyLogs = luxwage.calculateDailyLogs(employee);
-    
-    if (dailyLogs.length === 0) {
-        dailyLogsContent.innerHTML = '<p class="text-gray-500 text-center py-4">Henüz günlük kayıt yok</p>';
-    } else {
-        let dailyLogsHTML = '<table class="w-full"><thead><tr class="bg-gray-200">';
-        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Tarih</th>';
-        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Günlük Tutar</th>';
-        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Durum</th>';
-        dailyLogsHTML += '</tr></thead><tbody>';
-        
-        dailyLogs.forEach(log => {
-            const dateObj = new Date(log.date);
-            const formattedDate = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-            
-            let rowClass = '';
-            let statusText = '';
-            let statusClass = '';
-            
-            if (log.isStopped) {
-                rowClass = 'bg-gray-100';
-                statusText = 'İş Durduruldu';
-                statusClass = 'text-gray-600 font-semibold';
-            } else if (log.isClosedDay) {
-                rowClass = 'bg-gray-50';
-                statusText = 'Kapalı Gün';
-                statusClass = 'text-gray-500';
-            } else if (log.status === 'paid') {
-                rowClass = 'bg-green-50';
-                statusText = 'Ödendi';
-                statusClass = 'text-green-600 font-semibold';
-            } else {
-                rowClass = 'bg-yellow-50';
-                statusText = 'Bekleniyor';
-                statusClass = 'text-yellow-600 font-semibold';
-            }
-            
-            dailyLogsHTML += `
-                <tr class="${rowClass} border-b border-gray-200">
-                    <td class="px-4 py-3 text-sm text-gray-800">${formattedDate}</td>
-                    <td class="px-4 py-3 text-sm font-medium ${log.amount > 0 ? 'text-gray-800' : 'text-gray-400'}">
-                        ${log.amount > 0 ? log.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL' : '-'}
-                    </td>
-                    <td class="px-4 py-3 text-sm ${statusClass}">${statusText}</td>
-                </tr>
-            `;
-        });
-        
-        dailyLogsHTML += '</tbody></table>';
-        dailyLogsContent.innerHTML = dailyLogsHTML;
-    }
     
     // Ödeme geçmişini göster
     if (!employee.paymentHistory || employee.paymentHistory.length === 0) {
@@ -1667,99 +1613,60 @@ function openDailyDetails(employeeId) {
     const employee = luxwage.employees.find(emp => emp.id === employeeId);
     if (!employee) return;
     
-    // Şu an görüntülenen çalışan ID'sini kaydet
-    window.currentDailyDetailsEmployeeId = employeeId;
-    
     const dailyDetailsList = document.getElementById('dailyDetailsList');
-    const dailyWage = luxwage.calculateDailyWage(employee);
-    const today = new Date();
-    const currentHour = today.getHours();
-    const startDate = employee.startDate ? new Date(employee.startDate) : null;
-    const absenceHistory = employee.absenceHistory || [];
-    const paymentHistory = employee.paymentHistory || [];
     
-    let detailsHTML = '';
-    let cumulativeDebt = 0;
+    // 10 günlük günlük hesapla ve göster
+    const dailyLogs = luxwage.calculateDailyLogs(employee);
     
-    // Son 10 günü döngüye al (bugünden geriye doğru)
-    for (let i = 0; i < 10; i++) {
-        const date = new Date(today);
-        date.setDate(date.getDate() - i);
-        date.setHours(0, 0, 0, 0);
+    if (dailyLogs.length === 0) {
+        dailyDetailsList.innerHTML = '<p class="text-gray-500 text-center py-4">Henüz günlük kayıt yok</p>';
+    } else {
+        let dailyLogsHTML = '<table class="w-full"><thead><tr class="bg-gray-200">';
+        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Tarih</th>';
+        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Günlük Tutar</th>';
+        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Durum</th>';
+        dailyLogsHTML += '</tr></thead><tbody>';
         
-        const dateStr = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-        const isToday = i === 0;
-        const isClosedDay = luxwage.isClosedDay(date, employee);
-        
-        // İşe başlama tarihinden önce mi? (gösterme)
-        if (startDate && date < startDate) {
-            continue;
-        }
-        
-        // Kapalı gün mü?
-        if (isClosedDay) {
-            detailsHTML += `
-                <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span class="text-gray-500">${dateStr}</span>
-                    <span class="text-yellow-500 text-sm">Tatil</span>
-                </div>
+        dailyLogs.forEach(log => {
+            const dateObj = new Date(log.date);
+            const formattedDate = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+            
+            let rowClass = '';
+            let statusText = '';
+            let statusClass = '';
+            
+            if (log.isStopped) {
+                rowClass = 'bg-gray-100';
+                statusText = 'İş Durduruldu';
+                statusClass = 'text-gray-600 font-semibold';
+            } else if (log.isClosedDay) {
+                rowClass = 'bg-gray-50';
+                statusText = 'Kapalı Gün';
+                statusClass = 'text-gray-500';
+            } else if (log.status === 'paid') {
+                rowClass = 'bg-green-50';
+                statusText = 'Ödendi';
+                statusClass = 'text-green-600 font-semibold';
+            } else {
+                rowClass = 'bg-yellow-50';
+                statusText = 'Bekleniyor';
+                statusClass = 'text-yellow-600 font-semibold';
+            }
+            
+            dailyLogsHTML += `
+                <tr class="${rowClass} border-b border-gray-200">
+                    <td class="px-4 py-3 text-sm text-gray-800">${formattedDate}</td>
+                    <td class="px-4 py-3 text-sm font-medium ${log.amount > 0 ? 'text-gray-800' : 'text-gray-400'}">
+                        ${log.amount > 0 ? log.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL' : '-'}
+                    </td>
+                    <td class="px-4 py-3 text-sm ${statusClass}">${statusText}</td>
+                </tr>
             `;
-            continue;
-        }
-        
-        // Devamsızlık var mı?
-        const absence = absenceHistory.find(abs => {
-            const absenceDate = new Date(abs.date);
-            absenceDate.setHours(0, 0, 0, 0);
-            return absenceDate.getTime() === date.getTime();
         });
         
-        // Ödeme var mı?
-        const payment = paymentHistory.find(pay => {
-            const paymentDate = new Date(pay.date);
-            paymentDate.setHours(0, 0, 0, 0);
-            return paymentDate.getTime() === date.getTime();
-        });
-        
-        let dayStatus = '';
-        let dayAmount = 0;
-        
-        if (absence) {
-            dayStatus = `Gelmedi / Devamsızlık`;
-            dayAmount = -absence.deduction;
-            cumulativeDebt += dayAmount;
-        } else if (payment) {
-            dayStatus = `Ödeme Alındı`;
-            dayAmount = -Math.abs(payment.amount);
-            cumulativeDebt += dayAmount;
-        } else if (isToday && currentHour < 18) {
-            dayStatus = `Mesai devam ediyor`;
-            dayAmount = 0;
-        } else {
-            dayStatus = `Çalıştı`;
-            dayAmount = dailyWage;
-            cumulativeDebt += dayAmount;
-        }
-        
-        const statusColor = absence ? 'text-red-500' : (payment ? 'text-green-500' : (isToday && currentHour < 18 ? 'text-blue-500' : 'text-green-500'));
-        
-        detailsHTML += `
-            <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                <div class="flex-1">
-                    <span class="text-gray-500">${dateStr}</span>
-                    <span class="ml-2 ${statusColor} text-sm">${dayStatus}</span>
-                </div>
-                <div class="text-right">
-                    <span class="${dayAmount >= 0 ? 'text-red-500' : 'text-green-500'} text-sm font-semibold">
-                        ${dayAmount !== 0 ? (dayAmount > 0 ? '+' : '') + dayAmount.toFixed(2) + ' TL' : ''}
-                    </span>
-                    <div class="text-xs text-gray-400">Toplam: ${cumulativeDebt.toFixed(2)} TL</div>
-                </div>
-            </div>
-        `;
+        dailyLogsHTML += '</tbody></table>';
+        dailyDetailsList.innerHTML = dailyLogsHTML;
     }
-    
-    dailyDetailsList.innerHTML = detailsHTML;
     
     const dailyDetailsModal = document.getElementById('dailyDetailsModal');
     if (dailyDetailsModal) {
