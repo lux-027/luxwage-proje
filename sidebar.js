@@ -29,31 +29,21 @@ function logout() {
 
 // Firebase Auth State Listener
 onAuthStateChanged(auth, (user) => {
-    const authNav = document.getElementById('authNav');
-    const userNav = document.getElementById('userNav');
-    const userEmail = document.getElementById('userEmail');
+    const userEmailHeader = document.getElementById('userEmailHeader');
+    const userEmailText = userEmailHeader?.querySelector('span:last-child');
 
-    if (authNav) {
-        authNav.style.display = 'block';
-    }
-    
-    if (user) {
-        if (userNav) userNav.style.display = 'block';
-        if (userEmail) userEmail.textContent = user.email;
-    } else {
-        if (userNav) userNav.style.display = 'none';
+    if (user && userEmailHeader && userEmailText) {
+        userEmailText.textContent = user.email;
+        userEmailHeader.classList.remove('hidden');
+    } else if (userEmailHeader) {
+        userEmailHeader.classList.add('hidden');
     }
 });
 
-// Logout button event listener
-const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+// Sidebar toggle and overlay
 const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
 const sidebarOverlay = document.getElementById('sidebarOverlay');
 const sidebar = document.querySelector('.sidebar');
-
-if (sidebarLogoutBtn) {
-    sidebarLogoutBtn.addEventListener('click', logout);
-}
 
 function closeSidebar() {
     if (sidebar) sidebar.classList.remove('open');
