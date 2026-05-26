@@ -810,97 +810,97 @@ class LuxWage {
         `;
     }
     
-    // Geçmiş çalışan 6 aylık geçmişini göster
+    // Geçmiş çalışan geçmişini göster
     showPastEmployeeHistory(employeeIndex) {
         const employee = this.employees[employeeIndex];
         if (!employee) return;
         
-        const sixMonthsAgo = new Date();
-        sixMonthsAgo.setMonth(sixMonthsAgo.getMonth() - 6);
-        
         const historyContent = document.getElementById('historyContent');
-        document.getElementById('historyEmployeeName').textContent = employee.name + ' - Son 6 Ay';
+        document.getElementById('historyEmployeeName').textContent = employee.name;
         
-        if (!employee.history || employee.history.length === 0) {
-            historyContent.innerHTML = '<p class="text-gray-500 text-center">Henüz geçmiş kaydı yok</p>';
-        } else {
-            const sixMonthHistory = employee.history.filter(record => {
-                const recordDate = new Date(record.date);
-                return recordDate >= sixMonthsAgo;
-            });
-            
-            if (sixMonthHistory.length === 0) {
-                historyContent.innerHTML = '<p class="text-gray-500 text-center">Son 6 ayda kayıt bulunamadı</p>';
-            } else {
-                // Grupla by month
-                const groupedByMonth = {};
-                sixMonthHistory.forEach(record => {
-                    const date = new Date(record.date);
-                    const monthKey = date.toLocaleDateString('tr-TR', { year: 'numeric', month: 'long' });
-                    if (!groupedByMonth[monthKey]) {
-                        groupedByMonth[monthKey] = {
-                            absences: [],
-                            payments: [],
-                            totalDebt: 0
-                        };
-                    }
-                    if (record.type === 'absence') {
-                        groupedByMonth[monthKey].absences.push(record);
-                        groupedByMonth[monthKey].totalDebt += record.amount;
-                    } else if (record.type === 'payment') {
-                        groupedByMonth[monthKey].payments.push(record);
-                        groupedByMonth[monthKey].totalDebt += record.amount;
-                    }
-                });
-                
-                let html = '';
-                Object.keys(groupedByMonth).sort((a, b) => new Date(b) - new Date(a)).forEach(month => {
-                    const data = groupedByMonth[month];
-                    html += `
-                        <div class="mb-6">
-                            <h4 class="text-lg font-bold text-gray-800 mb-3 border-b pb-2">${month}</h4>
-                            <div class="grid md:grid-cols-3 gap-4 mb-3">
-                                <div class="bg-red-50 rounded-lg p-3 border-l-4 border-red-500">
-                                    <p class="text-xs text-red-600 font-medium">Devamsızlık Günleri</p>
-                                    <p class="text-xl font-bold text-red-700">${data.absences.length} gün</p>
-                                </div>
-                                <div class="bg-green-50 rounded-lg p-3 border-l-4 border-green-500">
-                                    <p class="text-xs text-green-600 font-medium">Ödeme Tutarı</p>
-                                    <p class="text-xl font-bold text-green-700">${data.payments.reduce((sum, p) => sum + Math.abs(p.amount), 0).toFixed(2)} TL</p>
-                                </div>
-                                <div class="bg-blue-50 rounded-lg p-3 border-l-4 border-blue-500">
-                                    <p class="text-xs text-blue-600 font-medium">Aylık Borç Değişimi</p>
-                                    <p class="text-xl font-bold ${data.totalDebt > 0 ? 'text-red-700' : 'text-green-700'}">${data.totalDebt > 0 ? '+' : ''}${data.totalDebt.toFixed(2)} TL</p>
-                                </div>
-                            </div>
-                            <div class="space-y-2">
-                                ${data.absences.map(record => `
-                                    <div class="bg-gray-50 rounded-lg p-3 border-l-4 border-red-500 flex justify-between items-center">
-                                        <div>
-                                            <p class="font-semibold text-gray-800 text-sm">${record.description}</p>
-                                            <p class="text-xs text-gray-500">${record.date}</p>
-                                        </div>
-                                        <p class="font-bold text-red-500">+${record.amount.toFixed(2)} TL</p>
-                                    </div>
-                                `).join('')}
-                                ${data.payments.map(record => `
-                                    <div class="bg-gray-50 rounded-lg p-3 border-l-4 border-green-500 flex justify-between items-center">
-                                        <div>
-                                            <p class="font-semibold text-gray-800 text-sm">${record.description}</p>
-                                            <p class="text-xs text-gray-500">${record.date}</p>
-                                        </div>
-                                        <p class="font-bold text-green-500">${record.amount.toFixed(2)} TL</p>
-                                    </div>
-                                `).join('')}
-                            </div>
-                        </div>
-                    `;
-                });
-                
-                historyContent.innerHTML = html;
-            }
+        // Sadece ödeme geçmişini göster (devamsızlık gösterme)
+        if (!employee.paymentHistory || employee.paymentHistory.length === 0) {
+            historyContent.innerHTML = '<p class="text-gray-500 text-center">Henüz ödeme kaydı yok</p>';
+            openModal('historyModal');
+            return;
         }
         
+        // Maaş tipine göre ödemeleri grupla
+        const groupedPayments = {};
+        
+        employee.paymentHistory.forEach((payment, index) => {
+            const paymentDate = new Date(payment.date);
+            let periodKey;
+            
+            if (employee.salaryType === 'daily') {
+                // Günlük: Her gün ayrı göster
+                periodKey = paymentDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+            } else if (employee.salaryType === 'weekly') {
+                // Haftalık: Hafta sonu tarihi
+                const dayOfWeek = paymentDate.getDay();
+                const daysUntilSunday = 7 - dayOfWeek;
+                const weekEnd = new Date(paymentDate);
+                weekEnd.setDate(weekEnd.getDate() + daysUntilSunday);
+                periodKey = weekEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+            } else {
+                // Aylık: Ay sonu tarihi
+                const monthEnd = new Date(paymentDate.getFullYear(), paymentDate.getMonth() + 1, 0);
+                periodKey = monthEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+            }
+            
+            if (!groupedPayments[periodKey]) {
+                groupedPayments[periodKey] = {
+                    totalAmount: 0,
+                    payments: [],
+                    periodEnd: periodKey
+                };
+            }
+            
+            groupedPayments[periodKey].totalAmount += payment.amount;
+            groupedPayments[periodKey].payments.push({
+                ...payment,
+                index: index
+            });
+        });
+        
+        // Tarihe göre sırala (yeniden eskiye)
+        const sortedPeriods = Object.keys(groupedPayments).sort((a, b) => new Date(b) - new Date(a));
+        
+        let html = '';
+        sortedPeriods.forEach(periodKey => {
+            const data = groupedPayments[periodKey];
+            const periodLabel = employee.salaryType === 'daily' 
+                ? 'Günlük' 
+                : employee.salaryType === 'weekly' 
+                    ? 'Haftalık' 
+                    : 'Aylık';
+            
+            html += `
+                <div class="bg-blue-50 rounded-lg p-4 mb-4 border-l-4 border-blue-500">
+                    <div class="flex justify-between items-center mb-2">
+                        <p class="font-bold text-gray-800">${periodLabel} - ${data.periodEnd}</p>
+                        <p class="font-bold text-blue-700">
+                            ${data.totalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                        </p>
+                    </div>
+                    <div class="space-y-2 mt-3">
+                        ${data.payments.map(payment => `
+                            <div class="bg-white rounded-lg p-3 border-l-4 border-green-500 flex justify-between items-center">
+                                <div>
+                                    <p class="font-semibold text-gray-800 text-sm">Ödeme Alındı</p>
+                                    <p class="text-xs text-gray-500">${payment.date}</p>
+                                </div>
+                                <p class="font-bold text-green-500">
+                                    ${payment.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                                </p>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `;
+        });
+        
+        historyContent.innerHTML = html;
         openModal('historyModal');
     }
     
@@ -1203,9 +1203,9 @@ class LuxWage {
             startDate.setHours(0, 0, 0, 0);
             departureDate.setHours(0, 0, 0, 0);
             
-            // Başlangıç tarihinden ayrılma tarihine kadar her günü döngüye al
+            // Başlangıç tarihinden ayrılma tarihine kadar her günü döngüye al (ayrılma günü dahil değil)
             const currentDate = new Date(startDate);
-            while (currentDate <= departureDate) {
+            while (currentDate < departureDate) {
                 if (!this.isClosedDay(currentDate, employee)) {
                     totalDebt += dailyWage;
                 }
@@ -1936,7 +1936,10 @@ document.addEventListener('DOMContentLoaded', function() {
         
         if (e.target && e.target.classList.contains('terminateBtn')) {
             const index = e.target.getAttribute('data-index');
-            luxwage.terminateEmployee(parseInt(index));
+            const employee = luxwage.employees[parseInt(index)];
+            if (employee && confirm(`${employee.name} adlı çalışanı işten çıkarmak istediğinize emin misiniz?`)) {
+                luxwage.terminateEmployee(parseInt(index));
+            }
         }
         
         if (e.target && e.target.classList.contains('permanentlyDeleteBtn')) {
