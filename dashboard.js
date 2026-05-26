@@ -686,6 +686,15 @@ class LuxWage {
                     </div>
                 </div>
                 
+                ${emp.isStopped ? `
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-pause-circle text-yellow-500 mr-2"></i>
+                        <span class="text-sm text-yellow-700 font-medium">İş Durduruldu - Borç/Hak Ediş Hesaplanmıyor</span>
+                    </div>
+                </div>
+                ` : ''}
+                
                 <div class="flex items-center justify-between">
                     <div class="text-sm">
                         <span class="text-gray-500">Borç: </span>
@@ -700,6 +709,10 @@ class LuxWage {
                         <button data-index="${originalIndex}" class="absenceBtn bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
                             <i class="fas fa-calendar-times mr-1"></i>
                             Devamsızlık
+                        </button>
+                        <button data-index="${originalIndex}" class="toggleWorkBtn ${emp.isStopped ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-3 py-2 rounded-lg transition-colors text-sm">
+                            <i class="fas ${emp.isStopped ? 'fa-play' : 'fa-pause'} mr-1"></i>
+                            ${emp.isStopped ? 'Devam Ettir' : 'İşi Durdur'}
                         </button>
                         <button data-index="${originalIndex}" class="paymentBtn bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm">
                             <i class="fas fa-money-check-alt mr-1"></i>
@@ -1003,6 +1016,31 @@ class LuxWage {
         }
     }
     
+    // Çalışanın iş durumunu değiştir (isStopped toggle)
+    toggleWorkStatus(employeeIndex) {
+        if (employeeIndex !== null && employeeIndex >= 0 && employeeIndex < this.employees.length) {
+            const employee = this.employees[employeeIndex];
+            const currentStatus = employee.isStopped || false;
+            const newStatus = !currentStatus;
+            
+            if (newStatus) {
+                // İş durdurulacak
+                if (confirm('Bu çalışanın işini durdurmak istiyor musunuz? Durdurduğunuz sürece borç/hak ediş hesaplanmayacaktır.')) {
+                    employee.isStopped = true;
+                    this.saveData();
+                    this.renderEmployeesPage();
+                    showNotification('Çalışanın işi durduruldu', 'warning');
+                }
+            } else {
+                // İş devam ettirilecek
+                employee.isStopped = false;
+                this.saveData();
+                this.renderEmployeesPage();
+                showNotification('Çalışanın işi devam ettirildi', 'success');
+            }
+        }
+    }
+    
     // İşçiyi kalıcı olarak sil (şifre doğrulaması ile)
     permanentlyDeleteEmployee(employeeIndex, password) {
         if (employeeIndex !== null && employeeIndex >= 0 && employeeIndex < this.employees.length) {
@@ -1193,6 +1231,29 @@ class LuxWage {
     calculateCurrentDebt(employee) {
         if (!employee.startDate) return 0;
         
+        // İş durdurulmuşsa borç artışı durdur
+        if (employee.isStopped) {
+            // Mevcut borcu göster ama yeni borç ekleme
+            const dailyWage = this.calculateDailyWage(employee);
+            let totalDebt = 0;
+            
+            // Ödemeleri çıkar
+            if (employee.paymentHistory && employee.paymentHistory.length > 0) {
+                employee.paymentHistory.forEach(payment => {
+                    totalDebt -= Math.abs(payment.amount);
+                });
+            }
+            
+            // Devamsızlıkları ekle
+            if (employee.absenceHistory && employee.absenceHistory.length > 0) {
+                employee.absenceHistory.forEach(absence => {
+                    totalDebt += absence.deduction;
+                });
+            }
+            
+            return totalDebt;
+        }
+        
         // İşten çıkarılmış çalışanlar için borç artışı durdur
         if (employee.status === 'inactive') {
             // Sabit borcu hesapla (ayrılma tarihine kadar)
@@ -1227,7 +1288,7 @@ class LuxWage {
                 });
             }
             
-            return Math.max(0, totalDebt);
+            return totalDebt;
         }
         
         const startDate = new Date(employee.startDate);
@@ -1276,7 +1337,7 @@ class LuxWage {
             });
         }
         
-        return Math.max(0, totalDebt);
+        return totalDebt;
     }
 
     // Devamsızlık kesintisini hesapla
@@ -1478,14 +1539,8 @@ function openDailyDetails(employeeId) {
         const isToday = i === 0;
         const isClosedDay = luxwage.isClosedDay(date, employee);
         
-        // İşe başlama tarihinden önce mi?
+        // İşe başlama tarihinden önce mi? (gösterme)
         if (startDate && date < startDate) {
-            detailsHTML += `
-                <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span class="text-gray-500">${dateStr}</span>
-                    <span class="text-blue-500 text-sm">Bekleniyor (+${dailyWage.toFixed(2)} TL)</span>
-                </div>
-            `;
             continue;
         }
         
@@ -1978,6 +2033,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     terminateConfirmModal.classList.remove('hidden');
                 }
             }
+        }
+        
+        if (e.target && e.target.classList.contains('toggleWorkBtn')) {
+            const index = e.target.getAttribute('data-index');
+            luxwage.toggleWorkStatus(parseInt(index));
         }
         
         if (e.target && e.target.classList.contains('permanentlyDeleteBtn')) {
