@@ -1541,17 +1541,20 @@ document.addEventListener('DOMContentLoaded', function() {
         luxwage.showPage('pastEmployees');
     });
     
-    // Sidebar logout button event listener
-    document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function() {
-        signOut(auth)
-            .then(() => {
-                showNotification('Çıkış yapıldı', 'success');
-                window.location.href = 'index.html';
-            })
-            .catch((error) => {
-                console.error('Çıkış hatası:', error);
-                showNotification('Çıkış yapılırken hata oluştu', 'error');
-            });
+    // Sidebar logout button event listener - Event Delegation
+    document.body.addEventListener('click', (e) => {
+        if (e.target.closest('#sidebarLogoutBtn')) {
+            e.preventDefault();
+            signOut(auth)
+                .then(() => {
+                    showNotification('Çıkış yapıldı', 'success');
+                    window.location.href = 'index.html';
+                })
+                .catch((error) => {
+                    console.error('Çıkış hatası:', error);
+                    showNotification('Çıkış yapılırken hata oluştu', 'error');
+                });
+        }
     });
     
     // Legal info buttons event listeners
