@@ -125,6 +125,23 @@ function closeModals() {
     }
 }
 
+// Logout fonksiyonu
+function logout() {
+    if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
+        signOut(auth)
+            .then(() => {
+                showNotification('Başarıyla çıkış yapıldı', 'success');
+                setTimeout(() => {
+                    window.location.href = 'index.html';
+                }, 1500);
+            })
+            .catch((error) => {
+                console.error('Logout error:', error);
+                showNotification('Çıkış yapılırken hata oluştu', 'error');
+            });
+    }
+}
+
 // "Hazırsanız Başlayalım" butonu için fonksiyon
 function handleStartButton() {
     if (auth.currentUser) {

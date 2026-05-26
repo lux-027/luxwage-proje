@@ -4,15 +4,21 @@
   "description": "Maaş ve Devamsızlık Takip Sistemi",
   "main": "index.html",
   "scripts": {
-    "dev": "npx http-server -p 8000 -o",
-    "build": "echo 'Build complete'",
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview",
     "start": "npx http-server -p 8000 -o"
   },
-  "keywords": ["maas", "devamsizlik", "takip", "firebase"],
+  "keywords": [
+    "maas",
+    "devamsizlik",
+    "takip",
+    "firebase"
+  ],
   "author": "LuxWage Team",
   "license": "MIT",
   "devDependencies": {
-    "http-server": "^14.1.1"
-  },
-  "dependencies": {}
+    "http-server": "^14.1.1",
+    "vite": "^8.0.14"
+  }
 }
