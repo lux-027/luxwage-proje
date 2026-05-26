@@ -1086,14 +1086,16 @@ class LuxWage {
             if (existingLog) {
                 logs.push(existingLog);
             } else {
-                // Calculate daily amount based on salary type
+                // Calculate daily amount based on salary type (same as calculateDailyWage)
                 let dailyAmount = 0;
                 if (employee.salaryType === 'daily') {
                     dailyAmount = employee.salaryAmount;
                 } else if (employee.salaryType === 'weekly') {
-                    dailyAmount = employee.salaryAmount / 7;
+                    const closedDays = employee.closedDays || [];
+                    const workingDaysPerWeek = 7 - closedDays.length;
+                    dailyAmount = employee.salaryAmount / workingDaysPerWeek;
                 } else if (employee.salaryType === 'monthly') {
-                    dailyAmount = employee.salaryAmount / 30;
+                    dailyAmount = employee.salaryAmount / 26;
                 }
                 
                 // If it's a closed day, no payment
