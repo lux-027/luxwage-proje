@@ -197,10 +197,40 @@ class LuxWage {
             });
         }
 
+        // Employee start date change - update debt estimate
+        const employeeStartDate = document.getElementById('employeeStartDate');
+        if (employeeStartDate) {
+            employeeStartDate.addEventListener('change', () => {
+                this.updateEmployeeStartDateEstimate();
+            });
+        }
+
+        // Salary type or amount change should also update the estimate
+        const salaryType = document.getElementById('salaryType');
+        const salaryAmount = document.getElementById('salaryAmount');
+        if (salaryType) {
+            salaryType.addEventListener('change', () => {
+                this.updateEmployeeStartDateEstimate();
+            });
+        }
+        if (salaryAmount) {
+            salaryAmount.addEventListener('input', () => {
+                this.updateEmployeeStartDateEstimate();
+            });
+        }
+
+        // Closed day checkboxes should update the estimate too
+        const closedDaysCheckboxes = document.querySelectorAll('input[name="closedDays"]');
+        closedDaysCheckboxes.forEach(cb => {
+            cb.addEventListener('change', () => {
+                this.updateEmployeeStartDateEstimate();
+            });
+        });
+
         // Payment amount change - calculate remaining debt
-        const paymentAmount = document.getElementById('paymentAmount');
-        if (paymentAmount) {
-            paymentAmount.addEventListener('input', () => {
+        const paymentAmountInput = document.getElementById('paymentAmount');
+        if (paymentAmountInput) {
+            paymentAmountInput.addEventListener('input', () => {
                 this.calculateRemainingDebt();
             });
         }
@@ -964,6 +994,115 @@ class LuxWage {
         `;
     }
 
+    setEmployeeStartDateToToday() {
+        const employeeStartDate = document.getElementById('employeeStartDate');
+        if (!employeeStartDate) return;
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        employeeStartDate.value = this.formatDateForInput(today);
+        this.updateEmployeeStartDateEstimate();
+    }
+
+    formatDateForInput(date) {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    }
+
+    parseDateInput(value) {
+        if (!value) return null;
+        const parts = value.split('-').map(part => parseInt(part, 10));
+        if (parts.length !== 3 || parts.some(isNaN)) return null;
+        const date = new Date(parts[0], parts[1] - 1, parts[2]);
+        date.setHours(0, 0, 0, 0);
+        return date;
+    }
+
+    getEffectiveEmployeeStartDate(selectedDate, now) {
+        const effectiveDate = new Date(selectedDate);
+        const currentHour = now.getHours();
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+
+        if (effectiveDate.getTime() === today.getTime() && currentHour >= 18) {
+            effectiveDate.setDate(effectiveDate.getDate() + 1);
+            effectiveDate.setHours(0, 0, 0, 0);
+        }
+
+        return effectiveDate;
+    }
+
+    calculateDebtForStartDate(employeeTemplate, startDate) {
+        if (!startDate) return 0;
+
+        const now = new Date();
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+        const dailyWage = this.calculateDailyWage(employeeTemplate);
+        let totalDebt = 0;
+        let currentDate = new Date(startDate);
+
+        while (currentDate <= today) {
+            if (!this.isClosedDay(currentDate, employeeTemplate)) {
+                const isToday = currentDate.getTime() === today.getTime();
+                if (isToday) {
+                    if (now.getHours() >= 18) {
+                        totalDebt += dailyWage;
+                    }
+                } else {
+                    totalDebt += dailyWage;
+                }
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+
+        return totalDebt;
+    }
+
+    updateEmployeeStartDateEstimate() {
+        const employeeStartDate = document.getElementById('employeeStartDate');
+        const info = document.getElementById('employeeStartDateInfo');
+        if (!employeeStartDate || !info) return;
+
+        const selectedDate = this.parseDateInput(employeeStartDate.value);
+        const salaryType = document.getElementById('salaryType')?.value;
+        const salaryAmountInput = document.getElementById('salaryAmount')?.value || '';
+        const salaryAmount = parseFloat(salaryAmountInput.replace(/\./g, ''));
+        const closedDaysCheckboxes = document.querySelectorAll('input[name="closedDays"]:checked');
+        const closedDays = Array.from(closedDaysCheckboxes).map(cb => parseInt(cb.value, 10));
+
+        if (!selectedDate) {
+            info.textContent = 'Başlangıç tarihi seçin.';
+            return;
+        }
+
+        if (!salaryType || isNaN(salaryAmount) || salaryAmount <= 0) {
+            info.textContent = 'Ücret ve maaş tipi seçildiğinde borç hesabı güncellenecek.';
+            return;
+        }
+
+        const now = new Date();
+        const effectiveStartDate = this.getEffectiveEmployeeStartDate(selectedDate, now);
+        const tempEmployee = {
+            salaryType,
+            salaryAmount,
+            closedDays
+        };
+        const debt = this.calculateDebtForStartDate(tempEmployee, effectiveStartDate);
+
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+
+        if (effectiveStartDate.getTime() > today.getTime()) {
+            info.textContent = 'Seçilen başlangıç tarihi bugünden sonraki tarihe ayarlandı. Şu an borç yok.';
+            return;
+        }
+
+        info.textContent = `Seçilen tarihe göre tahmini borç: ${debt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL`;
+    }
+
     // İşçi ekle
     addEmployee() {
         const name = document.getElementById('employeeName').value.trim();
@@ -981,6 +1120,19 @@ class LuxWage {
             return;
         }
         
+        const selectedDateValue = document.getElementById('employeeStartDate')?.value;
+        let selectedStartDate = selectedDateValue ? this.parseDateInput(selectedDateValue) : null;
+        const now = new Date();
+        const today = new Date(now);
+        today.setHours(0, 0, 0, 0);
+
+        if (!selectedStartDate) {
+            selectedStartDate = new Date(today);
+        }
+
+        // Eğer bugün saat 18:00'den sonra ise ve seçilen tarih bugünse, başlangıç tarihini yarına al
+        const effectiveStartDate = this.getEffectiveEmployeeStartDate(selectedStartDate, now);
+
         const employee = {
             id: Date.now(),
             name,
@@ -989,7 +1141,7 @@ class LuxWage {
             closedDays,
             salaryAmount,
             debt: 0,
-            startDate: Date.now(),
+            startDate: effectiveStartDate.getTime(),
             absenceHistory: [],
             paymentHistory: [],
             dailyLogs: []
@@ -1483,6 +1635,10 @@ function openModal(modalId) {
     const modal = document.getElementById(modalId);
     if (modal) {
         modal.style.display = 'flex';
+
+        if (modalId === 'employeeModal' && window.luxwage) {
+            window.luxwage.setEmployeeStartDateToToday();
+        }
     }
 }
 
