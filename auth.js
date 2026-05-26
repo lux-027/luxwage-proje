@@ -368,6 +368,11 @@ document.addEventListener('DOMContentLoaded', function() {
         window.location.href = 'dashboard.html';
     });
     
+    // Logout button event listener
+    document.getElementById('logoutBtn')?.addEventListener('click', function() {
+        logout();
+    });
+    
     // Login button event listener
     document.getElementById('loginBtn')?.addEventListener('click', function() {
         openLoginModal();
