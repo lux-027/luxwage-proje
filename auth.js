@@ -1,6 +1,6 @@
 // Firebase CDN Import'ları
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -110,6 +110,7 @@ function openRegisterModal() {
 function closeModals() {
     const loginModal = document.getElementById('loginModal');
     const registerModal = document.getElementById('registerModal');
+    const forgotPasswordModal = document.getElementById('forgotPasswordModal');
     
     if (loginModal) {
         loginModal.style.display = 'none';
@@ -117,6 +118,10 @@ function closeModals() {
     
     if (registerModal) {
         registerModal.style.display = 'none';
+    }
+    
+    if (forgotPasswordModal) {
+        forgotPasswordModal.style.display = 'none';
     }
 }
 
@@ -199,6 +204,28 @@ onAuthStateChanged(auth, (user) => {
 // Login Form Handler
 document.addEventListener('DOMContentLoaded', function() {
     const loginForm = document.getElementById('loginForm');
+    const loginEmail = document.getElementById('loginEmail');
+    const loginPassword = document.getElementById('loginPassword');
+    const loginErrorMsg = document.getElementById('loginErrorMsg');
+    
+    // Input event listeners to clear error on typing
+    const clearLoginError = () => {
+        if (loginErrorMsg) {
+            loginErrorMsg.classList.add('hidden');
+            loginErrorMsg.textContent = '';
+            loginPassword.classList.remove('border-red-500', 'focus:border-red-500');
+            loginPassword.classList.add('border-gray-300', 'focus:border-blue-500');
+        }
+    };
+    
+    if (loginEmail) {
+        loginEmail.addEventListener('input', clearLoginError);
+    }
+    
+    if (loginPassword) {
+        loginPassword.addEventListener('input', clearLoginError);
+    }
+    
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
@@ -216,13 +243,14 @@ document.addEventListener('DOMContentLoaded', function() {
                     const user = userCredential.user;
                     showNotification('Giriş başarılı!', 'success');
                     
-                    // Formu temizle
+                    // Formu temizle ve hatayı gizle
                     loginForm.reset();
+                    clearLoginError();
                     closeModals();
                 })
                 .catch((error) => {
                     console.error('Giriş hatası:', error);
-                    let errorMessage = 'Giriş işlemi başarısız oldu.';
+                    let errorMessage = 'E-posta veya şifre hatalı!';
                     
                     if (error.code === 'auth/user-not-found') {
                         errorMessage = 'Bu e-posta adresi kayıtlı değil.';
@@ -238,7 +266,13 @@ document.addEventListener('DOMContentLoaded', function() {
                         errorMessage = 'Ağ hatası. Lütfen internet bağlantınızı kontrol edin.';
                     }
                     
-                    showNotification(errorMessage, 'error');
+                    // Show inline error instead of toast
+                    if (loginErrorMsg) {
+                        loginErrorMsg.textContent = errorMessage;
+                        loginErrorMsg.classList.remove('hidden');
+                        loginPassword.classList.remove('border-gray-300', 'focus:border-blue-500');
+                        loginPassword.classList.add('border-red-500', 'focus:border-red-500');
+                    }
                 });
         });
     }
@@ -341,6 +375,77 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('cancelLoginBtn')?.addEventListener('click', function() {
         closeModals();
     });
+    
+    // Forgot password button event listener
+    document.getElementById('forgotPasswordBtn')?.addEventListener('click', function() {
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        if (forgotPasswordModal) {
+            forgotPasswordModal.style.display = 'flex';
+            // Copy email from login form to reset form
+            const loginEmail = document.getElementById('loginEmail');
+            const resetEmailInput = document.getElementById('resetEmailInput');
+            if (loginEmail && resetEmailInput) {
+                resetEmailInput.value = loginEmail.value;
+            }
+        }
+    });
+    
+    // Close forgot password modal button event listener
+    document.getElementById('closeForgotPasswordModalBtn')?.addEventListener('click', function() {
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        if (forgotPasswordModal) {
+            forgotPasswordModal.style.display = 'none';
+        }
+    });
+    
+    // Cancel forgot password button event listener
+    document.getElementById('cancelForgotPasswordBtn')?.addEventListener('click', function() {
+        const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+        if (forgotPasswordModal) {
+            forgotPasswordModal.style.display = 'none';
+        }
+    });
+    
+    // Forgot password form handler
+    const forgotPasswordForm = document.getElementById('forgotPasswordForm');
+    if (forgotPasswordForm) {
+        forgotPasswordForm.addEventListener('submit', function(e) {
+            e.preventDefault();
+            const email = document.getElementById('resetEmailInput').value.trim();
+            
+            if (!email) {
+                showNotification('Lütfen e-posta adresinizi girin', 'error');
+                return;
+            }
+            
+            // Firebase ile şifre sıfırlama e-postası gönder
+            sendPasswordResetEmail(auth, email)
+                .then(() => {
+                    showNotification('Şifre sıfırlama bağlantısı e-postanıza gönderildi. Lütfen gelen kutunuzu (ve Spam klasörünü) kontrol edin.', 'success');
+                    
+                    // Modalı kapat ve formu temizle
+                    const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+                    if (forgotPasswordModal) {
+                        forgotPasswordModal.style.display = 'none';
+                    }
+                    forgotPasswordForm.reset();
+                })
+                .catch((error) => {
+                    console.error('Şifre sıfırlama hatası:', error);
+                    let errorMessage = 'Şifre sıfırlama işlemi başarısız oldu.';
+                    
+                    if (error.code === 'auth/user-not-found') {
+                        errorMessage = 'Bu e-posta adresi kayıtlı değil.';
+                    } else if (error.code === 'auth/invalid-email') {
+                        errorMessage = 'Geçersiz e-posta adresi.';
+                    } else if (error.code === 'auth/network-request-failed') {
+                        errorMessage = 'Ağ hatası. Lütfen internet bağlantınızı kontrol edin.';
+                    }
+                    
+                    showNotification(errorMessage, 'error');
+                });
+        });
+    }
 });
 
 // Modal dışına tıklayınca kapatma

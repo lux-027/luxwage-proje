@@ -667,8 +667,13 @@ class LuxWage {
                     <div class="text-sm">
                         <span class="text-gray-500">Borç: </span>
                         <span class="font-bold ${this.calculateCurrentDebt(emp) > 0 ? 'text-red-500' : 'text-green-500'}">${this.calculateCurrentDebt(emp).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                        ${this.getTodayEarningInfo(emp)}
                     </div>
                     <div class="flex space-x-2">
+                        <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            Detay
+                        </button>
                         <button data-index="${index}" class="absenceBtn bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
                             <i class="fas fa-calendar-times mr-1"></i>
                             Devamsızlık
@@ -908,6 +913,32 @@ class LuxWage {
         return closedDays.includes(dayOfWeek);
     }
     
+    // Bugünün kazanç bilgisini al
+    getTodayEarningInfo(employee) {
+        if (!employee.startDate) return '';
+        
+        const today = new Date();
+        const currentHour = today.getHours();
+        const startDate = new Date(employee.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        const todayDate = new Date(today);
+        todayDate.setHours(0, 0, 0, 0);
+        
+        // Bugün işe başlama tarihinden önceyse
+        if (startDate > todayDate) return '';
+        
+        // Bugün kapalı gün ise
+        if (this.isClosedDay(today, employee)) return '';
+        
+        // Saat 18:00'den önceyse
+        if (currentHour < 18) {
+            const dailyWage = this.calculateDailyWage(employee);
+            return `<span class="text-xs text-blue-400 ml-2">(+${dailyWage.toFixed(2)} TL Bugün 18:00'de eklenecek)</span>`;
+        }
+        
+        return '';
+    }
+    
     // Mevcut borcu hesapla (günlük bazda)
     calculateCurrentDebt(employee) {
         if (!employee.startDate) return 0;
@@ -1100,6 +1131,97 @@ function showHistory(employeeIndex) {
     }
     
     openModal('historyModal');
+};
+
+// Günlük detayları göster
+function openDailyDetails(employeeId) {
+    const employee = luxwage.employees.find(emp => emp.id === employeeId);
+    if (!employee) return;
+    
+    const dailyDetailsList = document.getElementById('dailyDetailsList');
+    const dailyWage = luxwage.calculateDailyWage(employee);
+    const today = new Date();
+    const currentHour = today.getHours();
+    const startDate = employee.startDate ? new Date(employee.startDate) : null;
+    const absenceHistory = employee.absenceHistory || [];
+    
+    let detailsHTML = '';
+    
+    // Son 10 günü döngüye al
+    for (let i = 0; i < 10; i++) {
+        const date = new Date(today);
+        date.setDate(date.getDate() - i);
+        date.setHours(0, 0, 0, 0);
+        
+        const dateStr = date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+        const isToday = i === 0;
+        const isClosedDay = luxwage.isClosedDay(date, employee);
+        
+        // İşe başlama tarihinden önce mi?
+        if (startDate && date < startDate) {
+            detailsHTML += `
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span class="text-gray-500">${dateStr}</span>
+                    <span class="text-gray-400 text-sm">İşe Başlamadı</span>
+                </div>
+            `;
+            continue;
+        }
+        
+        // Kapalı gün mü?
+        if (isClosedDay) {
+            detailsHTML += `
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span class="text-gray-500">${dateStr}</span>
+                    <span class="text-yellow-500 text-sm">Tatil</span>
+                </div>
+            `;
+            continue;
+        }
+        
+        // Devamsızlık var mı?
+        const absence = absenceHistory.find(abs => {
+            const absenceDate = new Date(abs.date);
+            absenceDate.setHours(0, 0, 0, 0);
+            return absenceDate.getTime() === date.getTime();
+        });
+        
+        if (absence) {
+            detailsHTML += `
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span class="text-gray-500">${dateStr}</span>
+                    <span class="text-red-500 text-sm">Gelmedi / Devamsızlık (-${absence.deduction.toFixed(2)} TL)</span>
+                </div>
+            `;
+            continue;
+        }
+        
+        // Bugün ve saat 18:00'den önce mi?
+        if (isToday && currentHour < 18) {
+            detailsHTML += `
+                <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                    <span class="text-gray-500">${dateStr}</span>
+                    <span class="text-blue-500 text-sm">Bugün: Mesai devam ediyor (Saat 18:00'de +${dailyWage.toFixed(2)} TL eklenecek)</span>
+                </div>
+            `;
+            continue;
+        }
+        
+        // Normal çalışılan gün
+        detailsHTML += `
+            <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-gray-500">${dateStr}</span>
+                <span class="text-green-500 text-sm">Çalıştı (+${dailyWage.toFixed(2)} TL eklendi)</span>
+            </div>
+        `;
+    }
+    
+    dailyDetailsList.innerHTML = detailsHTML;
+    
+    const dailyDetailsModal = document.getElementById('dailyDetailsModal');
+    if (dailyDetailsModal) {
+        dailyDetailsModal.classList.remove('hidden');
+    }
 };
 
 // İşçi sil
@@ -1314,6 +1436,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    document.getElementById('closeDailyDetailsModalBtn')?.addEventListener('click', function() {
+        const dailyDetailsModal = document.getElementById('dailyDetailsModal');
+        if (dailyDetailsModal) {
+            dailyDetailsModal.classList.add('hidden');
+        }
+    });
+    
     // Logout modal event listeners
     document.getElementById('cancelLogoutBtn')?.addEventListener('click', function() {
         const logoutModal = document.getElementById('logoutModal');
@@ -1453,6 +1582,11 @@ document.addEventListener('DOMContentLoaded', function() {
             if (deleteModal) {
                 deleteModal.classList.remove('hidden');
             }
+        }
+        
+        if (e.target && e.target.classList.contains('detailsBtn')) {
+            const employeeId = e.target.getAttribute('data-id');
+            openDailyDetails(parseInt(employeeId));
         }
     });
     
