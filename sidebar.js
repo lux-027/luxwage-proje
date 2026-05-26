@@ -45,9 +45,43 @@ onAuthStateChanged(auth, (user) => {
 
 // Logout button event listener
 const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
+const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+const sidebarOverlay = document.getElementById('sidebarOverlay');
+const sidebar = document.querySelector('.sidebar');
+
 if (sidebarLogoutBtn) {
     sidebarLogoutBtn.addEventListener('click', logout);
 }
+
+function closeSidebar() {
+    if (sidebar) sidebar.classList.remove('open');
+    if (sidebarOverlay) sidebarOverlay.classList.remove('open');
+}
+
+function toggleSidebar() {
+    if (sidebar) sidebar.classList.toggle('open');
+    if (sidebarOverlay) sidebarOverlay.classList.toggle('open');
+}
+
+if (sidebarToggleBtn) {
+    sidebarToggleBtn.addEventListener('click', function() {
+        toggleSidebar();
+    });
+}
+
+if (sidebarOverlay) {
+    sidebarOverlay.addEventListener('click', function() {
+        closeSidebar();
+    });
+}
+
+document.querySelectorAll('.nav-item').forEach(item => {
+    item.addEventListener('click', function() {
+        if (window.innerWidth <= 768) {
+            closeSidebar();
+        }
+    });
+});
 
 // Active state for legal pages
 const suAnkiSayfa = window.location.pathname;

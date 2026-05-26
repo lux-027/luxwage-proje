@@ -1154,6 +1154,23 @@ html {
     .sidebar.open {
         left: 0;
     }
+
+    #sidebarOverlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.45);
+        opacity: 0;
+        visibility: hidden;
+        pointer-events: none;
+        transition: opacity var(--transition-normal) ease, visibility var(--transition-fast) ease;
+        z-index: 30;
+    }
+
+    #sidebarOverlay.open {
+        opacity: 1;
+        visibility: visible;
+        pointer-events: auto;
+    }
     
     .stat-card {
         margin-bottom: 1rem;

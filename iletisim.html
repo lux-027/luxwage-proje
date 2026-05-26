@@ -81,12 +81,18 @@
                     </div>
                 </div>
             </aside>
+
+            <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 z-30 opacity-0 invisible md:hidden transition-opacity duration-300"></div>
             
             <!-- Main Content -->
-            <main class="flex-1 ml-64">
+            <main class="flex-1 md:ml-64">
                 <!-- Top Header -->
                 <header class="bg-white shadow-sm border-b border-gray-200">
                     <div class="px-6 py-4 flex justify-between items-center">
+                        <button id="sidebarToggleBtn" class="md:hidden inline-flex items-center justify-center w-12 h-12 rounded-xl text-gray-600 hover:bg-blue-50 hover:text-gray-900 transition-colors">
+                            <i class="fas fa-bars text-xl"></i>
+                            <span class="sr-only">Menü</span>
+                        </button>
                         <h1 id="pageTitle" class="text-2xl font-bold text-gray-800">İletişim</h1>
                     </div>
                 </header>
