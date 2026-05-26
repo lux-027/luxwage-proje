@@ -215,6 +215,25 @@ class LuxWage {
                 e.target.value = val;
             });
         }
+        
+        // Salary amount auto-format with Turkish thousand separator
+        const salaryAmount = document.getElementById('salaryAmount');
+        if (salaryAmount) {
+            salaryAmount.addEventListener('input', (e) => {
+                let val = e.target.value.replace(/\D/g, '');
+                
+                if (val.length > 0) {
+                    const num = parseInt(val, 10);
+                    if (!isNaN(num)) {
+                        e.target.value = num.toLocaleString('tr-TR');
+                    } else {
+                        e.target.value = '';
+                    }
+                } else {
+                    e.target.value = '';
+                }
+            });
+        }
     }
 
     // LocalStorage'dan verileri yükle
@@ -306,7 +325,7 @@ class LuxWage {
         if (!homeSection) return;
         
         const totalEmployees = this.employees.length;
-        const totalDebt = this.employees.reduce((sum, emp) => sum + (emp.debt || 0), 0);
+        const totalDebt = this.employees.reduce((sum, emp) => sum + this.calculateCurrentDebt(emp), 0);
         
         homeSection.innerHTML = `
             <div class="grid md:grid-cols-3 gap-6 mb-8">
@@ -370,6 +389,16 @@ class LuxWage {
         
         // Tüm çalışanların ödeme ve devamsızlık geçmişini topla
         this.employees.forEach(emp => {
+            // İşe başlama tarihi (yeni çalışan bildirimi)
+            if (emp.startDate) {
+                activities.push({
+                    type: 'new_employee',
+                    employeeName: emp.name,
+                    message: 'Yeni çalışan sisteme başarıyla eklendi',
+                    timestamp: emp.startDate
+                });
+            }
+            
             // Ödeme geçmişi
             if (emp.paymentHistory && emp.paymentHistory.length > 0) {
                 emp.paymentHistory.forEach(payment => {
@@ -426,14 +455,26 @@ class LuxWage {
         const activitiesHTML = activities.slice(0, 10).map(activity => {
             const timeAgo = this.getTimeAgo(activity.timestamp);
             
-            if (activity.type === 'payment') {
+            if (activity.type === 'new_employee') {
+                return `
+                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-blue-100 p-3 rounded-full mr-4">
+                            <i class="fas fa-user text-blue-500"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
+                            <p class="text-sm text-gray-500">${timeAgo}</p>
+                        </div>
+                    </div>
+                `;
+            } else if (activity.type === 'payment') {
                 return `
                     <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
                         <div class="bg-green-100 p-3 rounded-full mr-4">
                             <i class="fas fa-money-bill-wave text-green-500"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-medium text-gray-800">${activity.employeeName} isimli çalışana ${activity.amount.toFixed(2)} TL ödeme yapıldı</p>
+                            <p class="font-medium text-gray-800">${activity.employeeName} isimli çalışana ${activity.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL ödeme yapıldı</p>
                             <p class="text-sm text-gray-500">${timeAgo}</p>
                         </div>
                     </div>
@@ -445,7 +486,7 @@ class LuxWage {
                             <i class="fas fa-calendar-times text-red-500"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-medium text-gray-800">${activity.employeeName} isimli çalışana devamsızlık kaydı (${activity.deduction.toFixed(2)} TL kesinti)</p>
+                            <p class="font-medium text-gray-800">${activity.employeeName} isimli çalışana devamsızlık kaydı (${activity.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL kesinti)</p>
                             <p class="text-sm text-gray-500">${timeAgo}</p>
                         </div>
                     </div>
@@ -476,8 +517,14 @@ class LuxWage {
         const startDate = new Date(employee.startDate);
         const daysSinceStart = Math.floor((now - startDate) / (1000 * 60 * 60 * 24));
         
+        // Yeni işçiler için (0 gün) ödeme uyarısı verme
+        if (daysSinceStart < 1) return null;
+        
         if (employee.salaryType === 'weekly') {
             // Haftalık çalışanlar için her 7 günde bir ödeme günü
+            // En az bir hafta (7 gün) geçmiş olmalı
+            if (daysSinceStart < 7) return null;
+            
             const weeksSinceStart = Math.floor(daysSinceStart / 7);
             const daysSinceLastPayment = daysSinceStart % 7;
             
@@ -489,6 +536,9 @@ class LuxWage {
             }
         } else if (employee.salaryType === 'monthly') {
             // Aylık çalışanlar için her 30 günde bir ödeme günü
+            // En az bir ay (30 gün) geçmiş olmalı
+            if (daysSinceStart < 30) return null;
+            
             const monthsSinceStart = Math.floor(daysSinceStart / 30);
             const daysSinceLastPayment = daysSinceStart % 30;
             
@@ -601,7 +651,7 @@ class LuxWage {
                         </div>
                     </div>
                     <div class="text-right">
-                        <p class="text-lg font-bold text-gray-800">${emp.salaryAmount} TL</p>
+                        <p class="text-lg font-bold text-gray-800">${emp.salaryAmount.toLocaleString('tr-TR')} TL</p>
                         <p class="text-sm text-gray-500">${emp.salaryType === 'weekly' ? 'Haftalık' : 'Aylık'}</p>
                     </div>
                 </div>
@@ -616,7 +666,7 @@ class LuxWage {
                 <div class="flex items-center justify-between">
                     <div class="text-sm">
                         <span class="text-gray-500">Borç: </span>
-                        <span class="font-bold ${emp.debt > 0 ? 'text-red-500' : 'text-green-500'}">${(emp.debt || 0).toFixed(2)} TL</span>
+                        <span class="font-bold ${this.calculateCurrentDebt(emp) > 0 ? 'text-red-500' : 'text-green-500'}">${this.calculateCurrentDebt(emp).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                     </div>
                     <div class="flex space-x-2">
                         <button data-index="${index}" class="absenceBtn bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
@@ -704,7 +754,8 @@ class LuxWage {
         const name = document.getElementById('employeeName').value.trim();
         const phone = document.getElementById('employeePhone').value.trim();
         const salaryType = document.getElementById('salaryType').value;
-        const salaryAmount = parseFloat(document.getElementById('salaryAmount').value);
+        const salaryAmountInput = document.getElementById('salaryAmount').value;
+        const salaryAmount = parseInt(salaryAmountInput.replace(/\./g, ''), 10);
         
         // Get selected closed days from checkboxes
         const closedDaysCheckboxes = document.querySelectorAll('input[name="closedDays"]:checked');
@@ -754,15 +805,10 @@ class LuxWage {
         const employee = this.employees[employeeIndex];
         if (!employee) return;
         
-        const record = employee.history[recordIndex];
-        if (!record || record.type !== 'payment') return;
-        
-        // Ödeme tutarını borca geri ekle
-        const paymentAmount = Math.abs(record.amount);
-        employee.debt = (employee.debt || 0) + paymentAmount;
+        if (!employee.paymentHistory || recordIndex < 0 || recordIndex >= employee.paymentHistory.length) return;
         
         // Kaydı sil
-        employee.history.splice(recordIndex, 1);
+        employee.paymentHistory.splice(recordIndex, 1);
         
         this.saveData();
         
@@ -791,12 +837,14 @@ class LuxWage {
         
         const deduction = this.calculateDailyWage(employee);
         
-        employee.debt = (employee.debt || 0) + deduction;
-        employee.history.push({
-            type: 'absence',
+        // Devamsızlık geçmişine ekle (borç dinamik olarak hesaplanacak)
+        if (!employee.absenceHistory) {
+            employee.absenceHistory = [];
+        }
+        employee.absenceHistory.push({
             date,
-            amount: deduction,
-            description: 'Devamsızlık'
+            deduction,
+            timestamp: Date.now()
         });
         
         this.saveData();
@@ -820,12 +868,14 @@ class LuxWage {
         const employee = this.employees.find(emp => emp.id === employeeId);
         if (!employee) return;
         
-        employee.debt = (employee.debt || 0) - amount;
-        employee.history.push({
-            type: 'payment',
-            date: new Date().toISOString().split('T')[0],
+        // Ödeme geçmişine ekle (borç dinamik olarak hesaplanacak)
+        if (!employee.paymentHistory) {
+            employee.paymentHistory = [];
+        }
+        employee.paymentHistory.push({
             amount: -amount,
-            description: 'Ödeme'
+            date: new Date().toISOString().split('T')[0],
+            timestamp: Date.now()
         });
         
         this.saveData();
@@ -857,6 +907,59 @@ class LuxWage {
         const dayOfWeek = date.getDay();
         return closedDays.includes(dayOfWeek);
     }
+    
+    // Mevcut borcu hesapla (günlük bazda)
+    calculateCurrentDebt(employee) {
+        if (!employee.startDate) return 0;
+        
+        const startDate = new Date(employee.startDate);
+        const today = new Date();
+        const currentHour = today.getHours();
+        today.setHours(0, 0, 0, 0);
+        startDate.setHours(0, 0, 0, 0);
+        
+        // Başlangıç tarihi bugünden sonra ise borç yok
+        if (startDate > today) return 0;
+        
+        const dailyWage = this.calculateDailyWage(employee);
+        let totalDebt = 0;
+        
+        // Başlangıç tarihinden bugüne kadar her günü döngüye al
+        const currentDate = new Date(startDate);
+        while (currentDate <= today) {
+            const isToday = currentDate.getTime() === today.getTime();
+            
+            // Gün kapalı değilse
+            if (!this.isClosedDay(currentDate, employee)) {
+                // Bugün için saat kontrolü: 18:00'den önce ise dahil etme
+                if (isToday) {
+                    if (currentHour >= 18) {
+                        totalDebt += dailyWage;
+                    }
+                } else {
+                    // Geçmiş günler için doğrudan ekle
+                    totalDebt += dailyWage;
+                }
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        // Ödemeleri çıkar
+        if (employee.paymentHistory && employee.paymentHistory.length > 0) {
+            employee.paymentHistory.forEach(payment => {
+                totalDebt -= Math.abs(payment.amount);
+            });
+        }
+        
+        // Devamsızlık kesintilerini ekle
+        if (employee.absenceHistory && employee.absenceHistory.length > 0) {
+            employee.absenceHistory.forEach(absence => {
+                totalDebt += absence.deduction;
+            });
+        }
+        
+        return Math.max(0, totalDebt);
+    }
 
     // Devamsızlık kesintisini hesapla
     calculateAbsenceDeduction() {
@@ -869,8 +972,8 @@ class LuxWage {
         document.getElementById('absenceDeduction').textContent = deduction.toFixed(2) + ' TL';
         
         const wageInfo = employee.salaryType === 'weekly' 
-            ? `Haftalık ${employee.salaryAmount} TL / 6 gün = ${deduction.toFixed(2)} TL/gün`
-            : `Aylık ${employee.salaryAmount} TL / 26 gün = ${deduction.toFixed(2)} TL/gün`;
+            ? `Haftalık ${employee.salaryAmount.toLocaleString('tr-TR')} TL / 6 gün = ${deduction.toFixed(2)} TL/gün`
+            : `Aylık ${employee.salaryAmount.toLocaleString('tr-TR')} TL / 26 gün = ${deduction.toFixed(2)} TL/gün`;
         document.getElementById('wageCalculation').textContent = wageInfo;
     }
 
@@ -879,7 +982,7 @@ class LuxWage {
         const currentDebt = parseFloat(document.getElementById('currentDebt').value) || 0;
         const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
         const remaining = Math.max(0, currentDebt - paymentAmount);
-        document.getElementById('remainingDebt').textContent = remaining.toFixed(2) + ' TL';
+        document.getElementById('remainingDebt').textContent = remaining.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL';
     }
 }
 
@@ -917,11 +1020,13 @@ function openPaymentModal(employeeIndex) {
     const employee = luxwage.employees[employeeIndex];
     if (!employee) return;
     
+    const currentDebt = luxwage.calculateCurrentDebt(employee);
+    
     document.getElementById('paymentEmployeeId').value = employee.id;
     document.getElementById('paymentEmployeeName').value = employee.name;
-    document.getElementById('currentDebt').value = (employee.debt || 0).toFixed(2);
+    document.getElementById('currentDebt').value = currentDebt.toFixed(2);
     document.getElementById('paymentAmount').value = '';
-    document.getElementById('remainingDebt').textContent = (employee.debt || 0).toFixed(2) + ' TL';
+    document.getElementById('remainingDebt').textContent = currentDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL';
     
     openModal('paymentModal');
 };
@@ -934,10 +1039,43 @@ function showHistory(employeeIndex) {
     document.getElementById('historyEmployeeName').textContent = employee.name;
     
     const historyContent = document.getElementById('historyContent');
-    if (!employee.history || employee.history.length === 0) {
+    
+    // Ödeme ve devamsızlık geçmişlerini birleştir
+    const allRecords = [];
+    
+    if (employee.paymentHistory && employee.paymentHistory.length > 0) {
+        employee.paymentHistory.forEach((payment, index) => {
+            allRecords.push({
+                type: 'payment',
+                description: 'Ödeme',
+                date: payment.date,
+                amount: payment.amount,
+                index: index,
+                historyType: 'payment'
+            });
+        });
+    }
+    
+    if (employee.absenceHistory && employee.absenceHistory.length > 0) {
+        employee.absenceHistory.forEach((absence, index) => {
+            allRecords.push({
+                type: 'absence',
+                description: 'Devamsızlık',
+                date: absence.date,
+                amount: absence.deduction,
+                index: index,
+                historyType: 'absence'
+            });
+        });
+    }
+    
+    // Tarihe göre sırala (yeniden eskiye)
+    allRecords.sort((a, b) => new Date(b.date) - new Date(a.date));
+    
+    if (allRecords.length === 0) {
         historyContent.innerHTML = '<p class="text-gray-500 text-center">Henüz geçmiş kaydı yok</p>';
     } else {
-        historyContent.innerHTML = employee.history.map((record, recordIndex) => `
+        historyContent.innerHTML = allRecords.map((record) => `
             <div class="bg-gray-50 rounded-lg p-4 border-l-4 ${record.type === 'absence' ? 'border-red-500' : 'border-green-500'}">
                 <div class="flex justify-between items-center">
                     <div>
@@ -947,11 +1085,11 @@ function showHistory(employeeIndex) {
                     <div class="flex items-center space-x-3">
                         <div class="text-right">
                             <p class="font-bold ${record.amount > 0 ? 'text-red-500' : 'text-green-500'}">
-                                ${record.amount > 0 ? '+' : ''}${record.amount.toFixed(2)} TL
+                                ${record.amount > 0 ? '+' : ''}${record.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                             </p>
                         </div>
                         ${record.type === 'payment' ? `
-                            <button onclick="deletePayment(${employeeIndex}, ${recordIndex})" class="text-red-500 hover:text-red-700 transition-colors p-1" title="Ödemeyi Sil">
+                            <button onclick="deletePayment(${employeeIndex}, ${record.index})" class="text-red-500 hover:text-red-700 transition-colors p-1" title="Ödemeyi Sil">
                                 <i class="fas fa-trash-alt"></i>
                             </button>
                         ` : ''}
@@ -1165,6 +1303,15 @@ document.addEventListener('DOMContentLoaded', function() {
     
     document.getElementById('closeLegalModalBtn')?.addEventListener('click', function() {
         closeModal('legalModal');
+    });
+    
+    document.getElementById('closePasswordModalBtn')?.addEventListener('click', function() {
+        const passwordModal = document.getElementById('changePasswordModal');
+        if (passwordModal) {
+            passwordModal.classList.add('hidden');
+            document.getElementById('modalOldPassword').value = '';
+            document.getElementById('modalNewPassword').value = '';
+        }
     });
     
     // Logout modal event listeners
