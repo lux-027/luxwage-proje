@@ -169,8 +169,29 @@ onAuthStateChanged(auth, (user) => {
     const visitorMessage = document.getElementById('visitorMessage');
     const dashboardButton = document.getElementById('dashboardButton');
     
+    // Yasal sayfaları ve dashboard dışı serbest sayfaları tanımla
+    const serbestSayfalar = [
+        'gizlilik-politikasi.html', 
+        'kullanim-sartlari.html', 
+        'hakkimizda.html', 
+        'iletisim.html', 
+        'cerez-politikasi.html'
+    ];
+    const suAnkiSayfa = window.location.pathname;
+    const yasalSayfadaMiyim = serbestSayfalar.some(page => suAnkiSayfa.includes(page));
+
     if (user) {
-        // Kullanıcı giriş yapmış
+        // Kullanıcı giriş yapmışsa ve yasal sayfalardaysa ASLA dokunma, rahatça okusun!
+        if (yasalSayfadaMiyim) {
+            return; 
+        }
+        
+        // Kullanıcı giriş yapmışsa ve SADECE ana sayfa (index.html), login veya kök dizindeyse dashboard'a yönlendir
+        if (suAnkiSayfa.includes('index.html') || suAnkiSayfa.includes('login.html') || suAnkiSayfa === '/' || suAnkiSayfa === '') {
+            window.location.href = 'dashboard.html';
+        }
+        
+        // Kullanıcı giriş yapmış - UI güncellemeleri
         if (authButtons) authButtons.style.display = 'none';
         if (userProfile) userProfile.style.display = 'flex';
         
@@ -186,20 +207,13 @@ onAuthStateChanged(auth, (user) => {
         // Landing page'i göster
         if (landingPage) landingPage.style.display = 'block';
         if (welcomeScreen) welcomeScreen.style.display = 'none';
-        
-        // BEYAZ LİSTE: Sadece index.html, login.html veya / ise dashboard'a yönlendir
-        const currentPath = window.location.pathname;
-        const isWhitelistedPage = currentPath === '/' || 
-                                   currentPath === '/index.html' || 
-                                   currentPath.endsWith('index.html') ||
-                                   currentPath === '/login.html' || 
-                                   currentPath.endsWith('login.html');
-        
-        if (isWhitelistedPage) {
-            window.location.href = 'dashboard.html';
-        }
     } else {
-        // Kullanıcı çıkış yapmış
+        // Kullanıcı giriş YAPMAMIŞSA ve dashboard'a girmeye çalışıyorsa index'e şutla
+        if (suAnkiSayfa.includes('dashboard.html')) {
+            window.location.href = 'index.html';
+        }
+        
+        // Kullanıcı çıkış yapmış - UI güncellemeleri
         if (authButtons) authButtons.style.display = 'flex';
         if (userProfile) userProfile.style.display = 'none';
         

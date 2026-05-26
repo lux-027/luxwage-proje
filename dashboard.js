@@ -112,21 +112,13 @@ function logout() {
     }
 };
 
-// Firebase Auth State Listener - Routing
+// Firebase Auth State Listener - Dashboard Only
+// Auth guard logic is now centralized in auth.js to prevent redirect conflicts
 onAuthStateChanged(auth, (user) => {
-    // Yasal sayfalar için yönlendirme muafiyeti
-    const legalPages = ['gizlilik-politikasi.html', 'kullanim-sartlari.html', 'hakkimizda.html', 'iletisim.html', 'cerez-politikasi.html'];
-    const isLegalPage = legalPages.some(page => window.location.pathname.includes(page));
-    
-    if (!user && !isLegalPage) {
-        // Kullanıcı giriş yapmamış ve yasal sayfada değil, index.html'e yönlendir
-        window.location.href = 'index.html';
-    } else {
-        // Kullanıcı giriş yapmış, hesap formunu doldur
-        const accountName = document.getElementById('accountName');
-        if (accountName && user.displayName) {
-            accountName.value = user.displayName;
-        }
+    // Kullanıcı giriş yapmış, hesap formunu doldur
+    const accountName = document.getElementById('accountName');
+    if (accountName && user && user.displayName) {
+        accountName.value = user.displayName;
     }
 });
 
