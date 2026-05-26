@@ -20,7 +20,7 @@
     <div id="dashboard" class="min-h-screen">
         <div class="flex">
             <!-- Sidebar -->
-            <aside class="w-64 bg-blue-900 text-white min-h-screen shadow-xl flex flex-col">
+            <aside class="w-64 bg-blue-900 text-white min-h-screen shadow-xl flex flex-col fixed left-0 top-0 h-screen overflow-y-auto">
                 <div class="p-6 flex-1 flex flex-col">
                     <a href="index.html" class="flex items-center gap-2 text-white hover:text-gray-200 transition-colors font-bold text-xl mb-8">
                         <span>&larr;</span>
@@ -99,7 +99,7 @@
             </aside>
             
             <!-- Main Content -->
-            <main class="flex-1">
+            <main class="flex-1 ml-64">
                 <!-- Top Header -->
                 <header class="bg-white shadow-sm border-b border-gray-200">
                     <div class="px-6 py-4 flex justify-between items-center">
@@ -547,6 +547,30 @@
                             İşten Çıkar
                         </button>
                     </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Work Stop Confirmation Modal -->
+    <div id="workStopModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all">
+            <div class="p-6">
+                <div class="text-center mb-6">
+                    <div class="bg-yellow-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-pause-circle text-yellow-500 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">İşi Durdur</h3>
+                    <p class="text-gray-600">Bu çalışanın işini durdurmak istiyor musunuz? Durdurduğunuz sürece borç/hak ediş hesaplanmayacaktır.</p>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button id="cancelWorkStopBtn" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                        İptal
+                    </button>
+                    <button id="confirmWorkStopBtn" class="flex-1 bg-yellow-500 text-white py-3 rounded-lg hover:bg-yellow-600 transition-colors font-semibold">
+                        Evet, Durdur
+                    </button>
                 </div>
             </div>
         </div>

@@ -342,8 +342,9 @@ class LuxWage {
         const homeSection = document.getElementById('homeSection');
         if (!homeSection) return;
         
-        const totalEmployees = this.employees.length;
-        const totalDebt = this.employees.reduce((sum, emp) => sum + this.calculateCurrentDebt(emp), 0);
+        const activeEmployees = this.employees.filter(emp => emp.status !== 'inactive');
+        const totalEmployees = activeEmployees.length;
+        const totalDebt = activeEmployees.reduce((sum, emp) => sum + this.calculateCurrentDebt(emp), 0);
         
         homeSection.innerHTML = `
             <div class="grid md:grid-cols-3 gap-6 mb-8">
@@ -1024,13 +1025,10 @@ class LuxWage {
             const newStatus = !currentStatus;
             
             if (newStatus) {
-                // İş durdurulacak
-                if (confirm('Bu çalışanın işini durdurmak istiyor musunuz? Durdurduğunuz sürece borç/hak ediş hesaplanmayacaktır.')) {
-                    employee.isStopped = true;
-                    this.saveData();
-                    this.renderEmployeesPage();
-                    showNotification('Çalışanın işi durduruldu', 'warning');
-                }
+                // İş durdurulacak - custom modal göster
+                this.pendingWorkStopIndex = employeeIndex;
+                const modal = document.getElementById('workStopModal');
+                if (modal) modal.classList.remove('hidden');
             } else {
                 // İş devam ettirilecek
                 employee.isStopped = false;
@@ -1039,6 +1037,25 @@ class LuxWage {
                 showNotification('Çalışanın işi devam ettirildi', 'success');
             }
         }
+    }
+
+    // İş durdurmayı onayla
+    confirmWorkStop() {
+        if (this.pendingWorkStopIndex !== null && this.pendingWorkStopIndex >= 0 && this.pendingWorkStopIndex < this.employees.length) {
+            const employee = this.employees[this.pendingWorkStopIndex];
+            employee.isStopped = true;
+            this.saveData();
+            this.renderEmployeesPage();
+            showNotification('Çalışanın işi durduruldu', 'warning');
+        }
+        this.closeWorkStopModal();
+    }
+
+    // İş durdurma modalını kapat
+    closeWorkStopModal() {
+        const modal = document.getElementById('workStopModal');
+        if (modal) modal.classList.add('hidden');
+        this.pendingWorkStopIndex = null;
     }
     
     // İşçiyi kalıcı olarak sil (şifre doğrulaması ile)
@@ -1143,6 +1160,14 @@ class LuxWage {
         showNotification(`Devamsızlık kaydedildi. Kesinti: ${deduction.toFixed(2)} TL`, 'success');
         this.renderEmployeesPage();
         this.renderHomePage();
+        
+        // Günlük detaylar modalı açıksa ve aynı çalışanı gösteriyorsa, yenile
+        if (window.currentDailyDetailsEmployeeId === employeeId) {
+            const dailyDetailsModal = document.getElementById('dailyDetailsModal');
+            if (dailyDetailsModal && !dailyDetailsModal.classList.contains('hidden')) {
+                openDailyDetails(employeeId);
+            }
+        }
     }
 
     // Ödeme ekle
@@ -1174,6 +1199,14 @@ class LuxWage {
         showNotification(`${amount.toFixed(2)} TL ödeme kaydedildi`, 'success');
         this.renderEmployeesPage();
         this.renderHomePage();
+        
+        // Günlük detaylar modalı açıksa ve aynı çalışanı gösteriyorsa, yenile
+        if (window.currentDailyDetailsEmployeeId === employeeId) {
+            const dailyDetailsModal = document.getElementById('dailyDetailsModal');
+            if (dailyDetailsModal && !dailyDetailsModal.classList.contains('hidden')) {
+                openDailyDetails(employeeId);
+            }
+        }
     }
 
     // Günlük ücret hesapla
@@ -1520,16 +1553,21 @@ function openDailyDetails(employeeId) {
     const employee = luxwage.employees.find(emp => emp.id === employeeId);
     if (!employee) return;
     
+    // Şu an görüntülenen çalışan ID'sini kaydet
+    window.currentDailyDetailsEmployeeId = employeeId;
+    
     const dailyDetailsList = document.getElementById('dailyDetailsList');
     const dailyWage = luxwage.calculateDailyWage(employee);
     const today = new Date();
     const currentHour = today.getHours();
     const startDate = employee.startDate ? new Date(employee.startDate) : null;
     const absenceHistory = employee.absenceHistory || [];
+    const paymentHistory = employee.paymentHistory || [];
     
     let detailsHTML = '';
+    let cumulativeDebt = 0;
     
-    // Son 10 günü döngüye al
+    // Son 10 günü döngüye al (bugünden geriye doğru)
     for (let i = 0; i < 10; i++) {
         const date = new Date(today);
         date.setDate(date.getDate() - i);
@@ -1562,32 +1600,47 @@ function openDailyDetails(employeeId) {
             return absenceDate.getTime() === date.getTime();
         });
         
+        // Ödeme var mı?
+        const payment = paymentHistory.find(pay => {
+            const paymentDate = new Date(pay.date);
+            paymentDate.setHours(0, 0, 0, 0);
+            return paymentDate.getTime() === date.getTime();
+        });
+        
+        let dayStatus = '';
+        let dayAmount = 0;
+        
         if (absence) {
-            detailsHTML += `
-                <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span class="text-gray-500">${dateStr}</span>
-                    <span class="text-red-500 text-sm">Gelmedi / Devamsızlık (-${absence.deduction.toFixed(2)} TL)</span>
-                </div>
-            `;
-            continue;
+            dayStatus = `Gelmedi / Devamsızlık`;
+            dayAmount = -absence.deduction;
+            cumulativeDebt += dayAmount;
+        } else if (payment) {
+            dayStatus = `Ödeme Alındı`;
+            dayAmount = -Math.abs(payment.amount);
+            cumulativeDebt += dayAmount;
+        } else if (isToday && currentHour < 18) {
+            dayStatus = `Mesai devam ediyor`;
+            dayAmount = 0;
+        } else {
+            dayStatus = `Çalıştı`;
+            dayAmount = dailyWage;
+            cumulativeDebt += dayAmount;
         }
         
-        // Bugün ve saat 18:00'den önce mi?
-        if (isToday && currentHour < 18) {
-            detailsHTML += `
-                <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                    <span class="text-gray-500">${dateStr}</span>
-                    <span class="text-blue-500 text-sm">Bugün: Mesai devam ediyor (Saat 18:00'de +${dailyWage.toFixed(2)} TL eklenecek)</span>
-                </div>
-            `;
-            continue;
-        }
+        const statusColor = absence ? 'text-red-500' : (payment ? 'text-green-500' : (isToday && currentHour < 18 ? 'text-blue-500' : 'text-green-500'));
         
-        // Normal çalışılan gün
         detailsHTML += `
             <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                <span class="text-gray-500">${dateStr}</span>
-                <span class="text-green-500 text-sm">Çalıştı (+${dailyWage.toFixed(2)} TL eklendi)</span>
+                <div class="flex-1">
+                    <span class="text-gray-500">${dateStr}</span>
+                    <span class="ml-2 ${statusColor} text-sm">${dayStatus}</span>
+                </div>
+                <div class="text-right">
+                    <span class="${dayAmount >= 0 ? 'text-red-500' : 'text-green-500'} text-sm font-semibold">
+                        ${dayAmount !== 0 ? (dayAmount > 0 ? '+' : '') + dayAmount.toFixed(2) + ' TL' : ''}
+                    </span>
+                    <div class="text-xs text-gray-400">Toplam: ${cumulativeDebt.toFixed(2)} TL</div>
+                </div>
             </div>
         `;
     }
@@ -1826,6 +1879,7 @@ document.addEventListener('DOMContentLoaded', function() {
         const dailyDetailsModal = document.getElementById('dailyDetailsModal');
         if (dailyDetailsModal) {
             dailyDetailsModal.classList.add('hidden');
+            window.currentDailyDetailsEmployeeId = null;
         }
     });
     
@@ -1885,6 +1939,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }
             employeeIdToTerminate = null;
         }
+    });
+    
+    // Work stop modal event listeners
+    document.getElementById('cancelWorkStopBtn')?.addEventListener('click', function() {
+        luxwage.closeWorkStopModal();
+    });
+    
+    document.getElementById('confirmWorkStopBtn')?.addEventListener('click', function() {
+        luxwage.confirmWorkStop();
     });
     
     // Logout modal event listeners
