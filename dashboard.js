@@ -18,6 +18,7 @@ const auth = getAuth(app);
 
 // Global variable for employee deletion
 let employeeIdToDelete = null;
+let employeeIdToTerminate = null;
 
 // Toast Notification Sistemi
 function showNotification(message, type = 'info') {
@@ -1482,7 +1483,7 @@ function openDailyDetails(employeeId) {
             detailsHTML += `
                 <div class="flex justify-between items-center py-2 border-b border-gray-100">
                     <span class="text-gray-500">${dateStr}</span>
-                    <span class="text-gray-400 text-sm">İşe Başlamadı</span>
+                    <span class="text-blue-500 text-sm">Bekleniyor (+${dailyWage.toFixed(2)} TL)</span>
                 </div>
             `;
             continue;
@@ -1550,6 +1551,7 @@ function deleteEmployee(employeeIndex) {
         luxwage.employees.splice(employeeIndex, 1);
         luxwage.saveData();
         luxwage.renderEmployeesPage();
+        luxwage.renderHomePage();
         showNotification('İşçi silindi', 'success');
     }
 };
@@ -1802,6 +1804,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Termination confirm modal event listeners
+    document.getElementById('closeTerminateConfirmModalBtn')?.addEventListener('click', function() {
+        const terminateConfirmModal = document.getElementById('terminateConfirmModal');
+        if (terminateConfirmModal) {
+            terminateConfirmModal.classList.add('hidden');
+        }
+        employeeIdToTerminate = null;
+    });
+    
+    document.getElementById('cancelTerminateConfirmBtn')?.addEventListener('click', function() {
+        const terminateConfirmModal = document.getElementById('terminateConfirmModal');
+        if (terminateConfirmModal) {
+            terminateConfirmModal.classList.add('hidden');
+        }
+        employeeIdToTerminate = null;
+    });
+    
+    document.getElementById('confirmTerminateConfirmBtn')?.addEventListener('click', function() {
+        if (employeeIdToTerminate !== null) {
+            luxwage.terminateEmployee(employeeIdToTerminate);
+            const terminateConfirmModal = document.getElementById('terminateConfirmModal');
+            if (terminateConfirmModal) {
+                terminateConfirmModal.classList.add('hidden');
+            }
+            employeeIdToTerminate = null;
+        }
+    });
+    
     // Logout modal event listeners
     document.getElementById('cancelLogoutBtn')?.addEventListener('click', function() {
         const logoutModal = document.getElementById('logoutModal');
@@ -1937,8 +1967,16 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target && e.target.classList.contains('terminateBtn')) {
             const index = e.target.getAttribute('data-index');
             const employee = luxwage.employees[parseInt(index)];
-            if (employee && confirm(`${employee.name} adlı çalışanı işten çıkarmak istediğinize emin misiniz?`)) {
-                luxwage.terminateEmployee(parseInt(index));
+            if (employee) {
+                employeeIdToTerminate = parseInt(index);
+                const terminateConfirmMessage = document.getElementById('terminateConfirmMessage');
+                if (terminateConfirmMessage) {
+                    terminateConfirmMessage.textContent = `${employee.name} adlı çalışanı işten çıkarmak istediğinize emin misiniz?`;
+                }
+                const terminateConfirmModal = document.getElementById('terminateConfirmModal');
+                if (terminateConfirmModal) {
+                    terminateConfirmModal.classList.remove('hidden');
+                }
             }
         }
         
