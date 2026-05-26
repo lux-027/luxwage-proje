@@ -29,16 +29,18 @@ function logout() {
 
 // Firebase Auth State Listener
 onAuthStateChanged(auth, (user) => {
-    const authButtons = document.getElementById('authNav');
+    const authNav = document.getElementById('authNav');
     const userNav = document.getElementById('userNav');
     const userEmail = document.getElementById('userEmail');
+
+    if (authNav) {
+        authNav.style.display = 'block';
+    }
     
     if (user) {
-        if (authButtons) authButtons.style.display = 'none';
         if (userNav) userNav.style.display = 'block';
         if (userEmail) userEmail.textContent = user.email;
     } else {
-        if (authButtons) authButtons.style.display = 'block';
         if (userNav) userNav.style.display = 'none';
     }
 });
