@@ -10,121 +10,178 @@
     
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS - Google Material Design -->
+    <link rel="stylesheet" href="style-material.css">
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body>
     
-    <!-- Header -->
-    <header class="bg-blue-900 text-white shadow-lg">
-        <div class="max-w-4xl mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
-                <a href="dashboard.html" class="flex items-center gap-2 text-white hover:text-gray-200 transition-colors font-bold text-xl">
-                    <span>&larr;</span>
-                    <span>LuxWage</span>
-                </a>
-            </div>
-        </div>
-    </header>
-    
-    <!-- Main Content -->
-    <main class="max-w-4xl mx-auto px-6 py-12">
-        <div class="bg-white rounded-xl shadow-lg p-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-6">
-                <i class="fas fa-cookie text-blue-500 mr-3"></i>
-                Çerez Politikası
-            </h1>
+    <!-- Dashboard -->
+    <div id="dashboard" class="min-h-screen">
+        <div class="flex">
+            <!-- Sidebar -->
+            <aside class="w-64 bg-blue-900 text-white min-h-screen shadow-xl flex flex-col">
+                <div class="p-6 flex-1 flex flex-col">
+                    <a href="dashboard.html" class="flex items-center gap-2 text-white hover:text-gray-200 transition-colors font-bold text-xl mb-8">
+                        <span>&larr;</span>
+                        <span>LuxWage</span>
+                    </a>
+                    
+                    <nav class="space-y-2 mb-8" id="authNav">
+                        <a href="dashboard.html" id="homePageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                            <i class="fas fa-home w-5 mr-3"></i>
+                            Ana Sayfa
+                        </a>
+                        <a href="dashboard.html" id="employeesPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                            <i class="fas fa-users w-5 mr-3"></i>
+                            Çalışanlarım
+                        </a>
+                        <a href="dashboard.html" id="pastEmployeesPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                            <i class="fas fa-archive w-5 mr-3"></i>
+                            Geçmiş Çalışanlar
+                        </a>
+                        <a href="dashboard.html" id="accountPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                            <i class="fas fa-user-cog w-5 mr-3"></i>
+                            Hesabım
+                        </a>
+                    </nav>
+                    
+                    <!-- Yasal Bilgiler -->
+                    <div class="border-t border-blue-700 pt-4 mt-auto">
+                        <h4 class="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-3">Yasal Bilgiler</h4>
+                        <nav class="space-y-1">
+                            <a href="gizlilik-politikasi.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
+                                <i class="fas fa-shield-alt w-4 mr-2"></i>
+                                Gizlilik Politikası
+                            </a>
+                            <a href="kullanim-sartlari.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
+                                <i class="fas fa-file-contract w-4 mr-2"></i>
+                                Kullanım Şartları
+                            </a>
+                            <a href="hakkimizda.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
+                                <i class="fas fa-info-circle w-4 mr-2"></i>
+                                Hakkımızda
+                            </a>
+                            <a href="iletisim.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
+                                <i class="fas fa-envelope w-4 mr-2"></i>
+                                İletişim
+                            </a>
+                            <a href="cerez-politikasi.html" class="flex items-center px-3 py-2 text-xs text-white bg-white/10 rounded transition-all duration-300">
+                                <i class="fas fa-cookie w-4 mr-2"></i>
+                                Çerez Politikası
+                            </a>
+                        </nav>
+                        
+                        <div class="mt-4 pt-4 border-t border-blue-700">
+                            <p class="text-xs text-blue-400 text-center">
+                                © 2026 LuxWage<br>
+                                Tüm hakları saklıdır.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
             
-            <div class="prose prose-lg max-w-none text-gray-700 space-y-6">
-                <p class="text-sm text-gray-500 mb-8">Son güncelleme: 23 Mayıs 2026</p>
+            <!-- Main Content -->
+            <main class="flex-1">
+                <!-- Top Header -->
+                <header class="bg-white shadow-sm border-b border-gray-200">
+                    <div class="px-6 py-4 flex justify-between items-center">
+                        <h1 id="pageTitle" class="text-2xl font-bold text-gray-800">Çerez Politikası</h1>
+                    </div>
+                </header>
                 
-                <h2 class="text-xl font-bold text-gray-800">1. Çerez Nedir?</h2>
-                <p>Çerezler, web siteleri tarafından tarayıcınıza yerleştirilen ve ziyaret deneyiminizi iyileştirmek için kullanılan küçük metin dosyalarıdır. Çerezler, web sitesinin sizi hatırlamasını, tercihlerinizi kaydetmesini ve size kişiselleştirilmiş içerik sunmasını sağlar.</p>
-                
-                <h2 class="text-xl font-bold text-gray-800">2. LuxWage Çerez Türleri</h2>
-                <p>LuxWage web uygulamasında aşağıdaki çerez türlerini kullanıyoruz:</p>
-                
-                <h3 class="text-lg font-bold text-gray-800">2.1. Gerekli Çerezler</h3>
-                <p>Bu çerezler, web sitesinin temel işlevlerini çalıştırmak için gereklidir. Bunlar olmadan web sitesi düzgün çalışmaz. Bu çerezler:</p>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li>Kullanıcı oturumunu korur</li>
-                    <li>Güvenlik özelliklerini sağlar</li>
-                    <li>Veri senkronizasyonunu sağlar</li>
-                </ul>
-                
-                <h3 class="text-lg font-bold text-gray-800">2.2. Performans Çerezleri</h3>
-                <p>Bu çerezler, web sitesinin performansını iyileştirmek için kullanılır. Bunlar:</p>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li>Sayfa yükleme hızını ölçer</li>
-                    <li>Kullanıcı davranışlarını analiz eder</li>
-                    <li>Hataları tespit eder</li>
-                </ul>
-                
-                <h3 class="text-lg font-bold text-gray-800">2.3. İşlevsellik Çerezleri</h3>
-                <p>Bu çerezler, kullanıcı tercihlerini hatırlamak için kullanılır. Bunlar:</p>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li>Dil tercihlerini kaydeder</li>
-                    <li>Tema ayarlarını hatırlar</li>
-                    <li>Son ziyaret edilen sayfaları kaydeder</li>
-                </ul>
-                
-                <h3 class="text-lg font-bold text-gray-800">2.4. Reklam Çerezleri</h3>
-                <p>LuxWage, hizmetini finanse etmek için Google AdSense gibi üçüncü taraf reklam ağlarını kullanabilir. Bu ağlar şu çerezleri kullanabilir:</p>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li>Kullanıcı ilgi alanlarını analiz eder</li>
-                    <li>Kişiselleştirilmiş reklamlar sunar</li>
-                    <li>Reklam performansını ölçer</li>
-                </ul>
-                
-                <h2 class="text-xl font-bold text-gray-800">3. Üçüncü Taraf Çerezleri</h2>
-                <p>LuxWage, aşağıdaki üçüncü taraf hizmetleri çerez kullanabilir:</p>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li><strong>Firebase:</strong> Kullanıcı kimlik doğrulaması ve veri depolama için</li>
-                    <li><strong>Google AdSense:</strong> Reklam gösterimi ve analitik için</li>
-                    <li><strong>Google Analytics:</strong> Site kullanım istatistikleri için</li>
-                </ul>
-                <p>Bu üçüncü taraf hizmetlerin kendi çerez politikaları vardır ve bu politikalar hakkında daha fazla bilgi için ilgili web sitelerini ziyaret edebilirsiniz.</p>
-                
-                <h2 class="text-xl font-bold text-gray-800">4. Çerez Kontrolü</h2>
-                <p>Çerezleri kontrol etmek için aşağıdaki seçeneklere sahipsiniz:</p>
-                
-                <h3 class="text-lg font-bold text-gray-800">4.1. Tarayıcı Ayarları</h3>
-                <p>Çoğu tarayıcıda çerezleri kabul etmeyi, reddetmeyi veya silmeyi seçebilirsiniz. Tarayıcınızın ayarlarından çerez tercihlerinizi değiştirebilirsiniz. Ancak, çerezleri devre dışı bırakırsanız, web sitesinin bazı özellikleri düzgün çalışmayabilir.</p>
-                
-                <h3 class="text-lg font-bold text-gray-800">4.2. Çerez Onay Banner'ı</h3>
-                <p>LuxWage, KVKK ve GDPR uyumlu olarak çerez kullanımı hakkında kullanıcıları bilgilendiren bir onay banner'ı kullanabilir. Bu banner üzerinden çerez tercihlerinizi yönetebilirsiniz.</p>
-                
-                <h2 class="text-xl font-bold text-gray-800">5. Çerezlerin Saklanma Süresi</h2>
-                <p>Çerezlerin saklanma süresi türüne göre değişir:</p>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li><strong>Oturum Çerezleri:</strong> Tarayıcıyı kapattığınızda silinir</li>
-                    <li><strong>Kalıcı Çerezler:</strong> Belirli bir süre (genellikle 1 yıl) boyunca saklanır</li>
-                    <li><strong>Reklam Çerezleri:</strong> Genellikle 30 gün ile 2 yıl arasında saklanır</li>
-                </ul>
-                
-                <h2 class="text-xl font-bold text-gray-800">6. Çerez Silme</h2>
-                <p>Tarayıcınızın ayarlarından çerezleri silebilirsiniz. Çerezleri silerseniz, web sitesindeki bazı tercihlerinizi kaybedebilirsiniz ve tekrar giriş yapmanız gerekebilir.</p>
-                
-                <h2 class="text-xl font-bold text-gray-800">7. Çerez Politikası Değişiklikleri</h2>
-                <p>Bu Çerez Politikası'nı zaman zaman güncelleyebiliriz. Değişiklikler, bu sayfada yayınlandığı tarihte yürürlüğe girer. Önemli değişiklikler hakkında kullanıcıları e-posta veya uygulama içi bildirimlerle bilgilendireceğiz.</p>
-                
-                <h2 class="text-xl font-bold text-gray-800">8. KVKK ve GDPR Uyumu</h2>
-                <p>LuxWage, Türk Kişisel Verilerin Korunması Kanunu (KVKK) ve Avrupa Birliği Genel Veri Koruma Tüzüğü (GDPR) kapsamında çerez kullanımını yönetir. Çerezler aracılığıyla toplanan kişisel veriler, Gizlilik Politikamızda belirtilen ilkeler doğrultusunda işlenir.</p>
-                
-                <h2 class="text-xl font-bold text-gray-800">9. İletişim</h2>
-                <p>Çerez politikamızla ilgili sorularınız için:</p>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li>E-posta: luxwage@gmail.com</li>
-                    <li>Web sitesi: www.luxwage.com</li>
-                </ul>
-            </div>
+                <!-- Page Content -->
+                <div class="p-6">
+                    <div class="bg-white rounded-xl shadow-lg p-8">
+                        <div class="prose prose-lg max-w-none text-gray-700 space-y-6">
+                            <p class="text-sm text-gray-500 mb-8">Son güncelleme: 23 Mayıs 2026</p>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">1. Çerez Nedir?</h2>
+                            <p>Çerezler, web siteleri tarafından tarayıcınıza yerleştirilen ve ziyaret deneyiminizi iyileştirmek için kullanılan küçük metin dosyalarıdır. Çerezler, web sitesinin sizi hatırlamasını, tercihlerinizi kaydetmesini ve size kişiselleştirilmiş içerik sunmasını sağlar.</p>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">2. LuxWage Çerez Türleri</h2>
+                            <p>LuxWage web uygulamasında aşağıdaki çerez türlerini kullanıyoruz:</p>
+                            
+                            <h3 class="text-lg font-bold text-gray-800">2.1. Gerekli Çerezler</h3>
+                            <p>Bu çerezler, web sitesinin temel işlevlerini çalıştırmak için gereklidir. Bunlar olmadan web sitesi düzgün çalışmaz. Bu çerezler:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>Kullanıcı oturumunu korur</li>
+                                <li>Güvenlik özelliklerini sağlar</li>
+                                <li>Veri senkronizasyonunu sağlar</li>
+                            </ul>
+                            
+                            <h3 class="text-lg font-bold text-gray-800">2.2. Performans Çerezleri</h3>
+                            <p>Bu çerezler, web sitesinin performansını iyileştirmek için kullanılır. Bunlar:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>Sayfa yükleme hızını ölçer</li>
+                                <li>Kullanıcı davranışlarını analiz eder</li>
+                                <li>Hataları tespit eder</li>
+                            </ul>
+                            
+                            <h3 class="text-lg font-bold text-gray-800">2.3. İşlevsellik Çerezleri</h3>
+                            <p>Bu çerezler, kullanıcı tercihlerini hatırlamak için kullanılır. Bunlar:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>Dil tercihlerini kaydeder</li>
+                                <li>Tema ayarlarını hatırlar</li>
+                                <li>Son ziyaret edilen sayfaları kaydeder</li>
+                            </ul>
+                            
+                            <h3 class="text-lg font-bold text-gray-800">2.4. Reklam Çerezleri</h3>
+                            <p>LuxWage, hizmetini finanse etmek için Google AdSense gibi üçüncü taraf reklam ağlarını kullanabilir. Bu ağlar şu çerezleri kullanabilir:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>Kullanıcı ilgi alanlarını analiz eder</li>
+                                <li>Kişiselleştirilmiş reklamlar sunar</li>
+                                <li>Reklam performansını ölçer</li>
+                            </ul>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">3. Üçüncü Taraf Çerezleri</h2>
+                            <p>LuxWage, aşağıdaki üçüncü taraf hizmetleri çerez kullanabilir:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li><strong>Firebase:</strong> Kullanıcı kimlik doğrulaması ve veri depolama için</li>
+                                <li><strong>Google AdSense:</strong> Reklam gösterimi ve analitik için</li>
+                                <li><strong>Google Analytics:</strong> Site kullanım istatistikleri için</li>
+                            </ul>
+                            <p>Bu üçüncü taraf hizmetlerin kendi çerez politikaları vardır ve bu politikalar hakkında daha fazla bilgi için ilgili web sitelerini ziyaret edebilirsiniz.</p>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">4. Çerez Kontrolü</h2>
+                            <p>Çerezleri kontrol etmek için aşağıdaki seçeneklere sahipsiniz:</p>
+                            
+                            <h3 class="text-lg font-bold text-gray-800">4.1. Tarayıcı Ayarları</h3>
+                            <p>Çoğu tarayıcıda çerezleri kabul etmeyi, reddetmeyi veya silmeyi seçebilirsiniz. Tarayıcınızın ayarlarından çerez tercihlerinizi değiştirebilirsiniz. Ancak, çerezleri devre dışı bırakırsanız, web sitesinin bazı özellikleri düzgün çalışmayabilir.</p>
+                            
+                            <h3 class="text-lg font-bold text-gray-800">4.2. Çerez Onay Banner'ı</h3>
+                            <p>LuxWage, KVKK ve GDPR uyumlu olarak çerez kullanımı hakkında kullanıcıları bilgilendiren bir onay banner'ı kullanabilir. Bu banner üzerinden çerez tercihlerinizi yönetebilirsiniz.</p>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">5. Çerezlerin Saklanma Süresi</h2>
+                            <p>Çerezlerin saklanma süresi türüne göre değişir:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li><strong>Oturum Çerezleri:</strong> Tarayıcıyı kapattığınızda silinir</li>
+                                <li><strong>Kalıcı Çerezler:</strong> Belirli bir süre (genellikle 1 yıl) boyunca saklanır</li>
+                                <li><strong>Reklam Çerezleri:</strong> Genellikle 30 gün ile 2 yıl arasında saklanır</li>
+                            </ul>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">6. Çerez Silme</h2>
+                            <p>Tarayıcınızın ayarlarından çerezleri silebilirsiniz. Çerezleri silerseniz, web sitesindeki bazı tercihlerinizi kaybedebilirsiniz ve tekrar giriş yapmanız gerekebilir.</p>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">7. Çerez Politikası Değişiklikleri</h2>
+                            <p>Bu Çerez Politikası'nı zaman zaman güncelleyebiliriz. Değişiklikler, bu sayfada yayınlandığı tarihte yürürlüğe girer. Önemli değişiklikler hakkında kullanıcıları e-posta veya uygulama içi bildirimlerle bilgilendireceğiz.</p>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">8. KVKK ve GDPR Uyumu</h2>
+                            <p>LuxWage, Türk Kişisel Verilerin Korunması Kanunu (KVKK) ve Avrupa Birliği Genel Veri Koruma Tüzüğü (GDPR) kapsamında çerez kullanımını yönetir. Çerezler aracılığıyla toplanan kişisel veriler, Gizlilik Politikamızda belirtilen ilkeler doğrultusunda işlenir.</p>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">9. İletişim</h2>
+                            <p>Çerez politikamızla ilgili sorularınız için:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>E-posta: luxwage@gmail.com</li>
+                                <li>Web sitesi: www.luxwage.com</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
-    </main>
-    
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-6 mt-12">
-        <div class="max-w-4xl mx-auto px-6 text-center">
-            <p class="text-gray-400">© 2026 LuxWage. Tüm hakları saklıdır.</p>
-        </div>
-    </footer>
+    </div>
     
 </body>
 </html>

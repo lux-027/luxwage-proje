@@ -10,107 +10,164 @@
     
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <!-- Custom CSS - Google Material Design -->
+    <link rel="stylesheet" href="style-material.css">
 </head>
-<body class="bg-gray-100 min-h-screen">
+<body>
     
-    <!-- Header -->
-    <header class="bg-blue-900 text-white shadow-lg">
-        <div class="max-w-4xl mx-auto px-6 py-4">
-            <div class="flex items-center justify-between">
-                <a href="dashboard.html" class="flex items-center gap-2 text-white hover:text-gray-200 transition-colors font-bold text-xl">
-                    <span>&larr;</span>
-                    <span>LuxWage</span>
-                </a>
-            </div>
-        </div>
-    </header>
-    
-    <!-- Main Content -->
-    <main class="max-w-4xl mx-auto px-6 py-12">
-        <div class="bg-white rounded-xl shadow-lg p-8">
-            <h1 class="text-3xl font-bold text-gray-800 mb-6">
-                <i class="fas fa-info-circle text-blue-500 mr-3"></i>
-                Hakkımızda
-            </h1>
+    <!-- Dashboard -->
+    <div id="dashboard" class="min-h-screen">
+        <div class="flex">
+            <!-- Sidebar -->
+            <aside class="w-64 bg-blue-900 text-white min-h-screen shadow-xl flex flex-col">
+                <div class="p-6 flex-1 flex flex-col">
+                    <a href="dashboard.html" class="flex items-center gap-2 text-white hover:text-gray-200 transition-colors font-bold text-xl mb-8">
+                        <span>&larr;</span>
+                        <span>LuxWage</span>
+                    </a>
+                    
+                    <nav class="space-y-2 mb-8" id="authNav">
+                        <a href="dashboard.html" id="homePageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                            <i class="fas fa-home w-5 mr-3"></i>
+                            Ana Sayfa
+                        </a>
+                        <a href="dashboard.html" id="employeesPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                            <i class="fas fa-users w-5 mr-3"></i>
+                            Çalışanlarım
+                        </a>
+                        <a href="dashboard.html" id="pastEmployeesPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                            <i class="fas fa-archive w-5 mr-3"></i>
+                            Geçmiş Çalışanlar
+                        </a>
+                        <a href="dashboard.html" id="accountPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                            <i class="fas fa-user-cog w-5 mr-3"></i>
+                            Hesabım
+                        </a>
+                    </nav>
+                    
+                    <!-- Yasal Bilgiler -->
+                    <div class="border-t border-blue-700 pt-4 mt-auto">
+                        <h4 class="text-xs font-semibold text-blue-300 uppercase tracking-wider mb-3">Yasal Bilgiler</h4>
+                        <nav class="space-y-1">
+                            <a href="gizlilik-politikasi.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
+                                <i class="fas fa-shield-alt w-4 mr-2"></i>
+                                Gizlilik Politikası
+                            </a>
+                            <a href="kullanim-sartlari.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
+                                <i class="fas fa-file-contract w-4 mr-2"></i>
+                                Kullanım Şartları
+                            </a>
+                            <a href="hakkimizda.html" class="flex items-center px-3 py-2 text-xs text-white bg-white/10 rounded transition-all duration-300">
+                                <i class="fas fa-info-circle w-4 mr-2"></i>
+                                Hakkımızda
+                            </a>
+                            <a href="iletisim.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
+                                <i class="fas fa-envelope w-4 mr-2"></i>
+                                İletişim
+                            </a>
+                            <a href="cerez-politikasi.html" class="flex items-center px-3 py-2 text-xs text-gray-300 hover:bg-white/10 hover:text-white rounded transition-all duration-300">
+                                <i class="fas fa-cookie w-4 mr-2"></i>
+                                Çerez Politikası
+                            </a>
+                        </nav>
+                        
+                        <div class="mt-4 pt-4 border-t border-blue-700">
+                            <p class="text-xs text-blue-400 text-center">
+                                © 2026 LuxWage<br>
+                                Tüm hakları saklıdır.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </aside>
             
-            <div class="prose prose-lg max-w-none text-gray-700 space-y-6">
-                <h2 class="text-xl font-bold text-gray-800">Kuruluş Hikayemiz</h2>
-                <p>LuxWage, 2026 yılında işletmelerin çalışan maaş ve devamsızlık takibi konusundaki zorlukları çözmek amacıyla kurulmuş yenilikçi bir teknoloji şirketidir. Küçük ve orta ölçekli işletmelerin (KOBİ) finansal yönetim süreçlerini dijitalleştirmek ve basitleştirmek için modern web tabanlı çözümler geliştiriyoruz.</p>
+            <!-- Main Content -->
+            <main class="flex-1">
+                <!-- Top Header -->
+                <header class="bg-white shadow-sm border-b border-gray-200">
+                    <div class="px-6 py-4 flex justify-between items-center">
+                        <h1 id="pageTitle" class="text-2xl font-bold text-gray-800">Hakkımızda</h1>
+                    </div>
+                </header>
                 
-                <h2 class="text-xl font-bold text-gray-800">Vizyonumuz</h2>
-                <p>Türkiye'deki her işletmenin çalışan yönetim süreçlerini kolaylaştırmak, hata oranını en aza indirmek ve finansal şeffaflığı artırmak. Teknolojiyi kullanarak işletmelerin verimliliğini artırmak ve onlara daha fazla büyüme fırsatı sunmak.</p>
-                
-                <h2 class="text-xl font-bold text-gray-800">Misyonumuz</h2>
-                <p>Kullanıcı dostu, güvenilir ve erişilebilir çalışan yönetim çözümleri sunarak işletmelerin operasyonel yükünü hafifletmek. Müşterilerimizin ihtiyaçlarını anlamak ve onlara en iyi deneyimi sunmak için sürekli yenilik yapmak.</p>
-                
-                <h2 class="text-xl font-bold text-gray-800">Değerlerimiz</h2>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li><strong>Güvenilirlik:</strong> Kullanıcı verilerinin güvenliğini en üst düzeyde önemsiyoruz</li>
-                    <li><strong>İnovasyon:</strong> Sürekli yeni teknolojiler ve çözümler geliştiriyoruz</li>
-                    <li><strong>Kullanıcı Odaklılık:</strong> Müşteri geri bildirimlerini dinliyor ve ürünlerimizi buna göre geliştiriyoruz</li>
-                    <li><strong>Şeffaflık:</strong> İş süreçlerimizde ve fiyatlandırmamızda açık ve netiz</li>
-                    <li><strong>Kalite:</strong> Ürünlerimizin kalitesinden ödün vermiyoruz</li>
-                </ul>
-                
-                <h2 class="text-xl font-bold text-gray-800">Hizmetlerimiz</h2>
-                <p>LuxWage olarak şu hizmetleri sunuyoruz:</p>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li>Çalışan maaş takibi ve hesaplama</li>
-                    <li>Devamsızlık kaydı ve kesinti hesaplama</li>
-                    <li>Ödeme geçmişi yönetimi</li>
-                    <li>Raporlama ve analiz araçları</li>
-                    <li>Mobil uyumlu web arayüzü</li>
-                    <li>Veri güvenliği ve yedekleme</li>
-                </ul>
-                
-                <h2 class="text-xl font-bold text-gray-800">Teknolojimiz</h2>
-                <p>LuxWage, en modern web teknolojilerini kullanarak geliştirilmiştir:</p>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li>Firebase Authentication ile güvenli kullanıcı yönetimi</li>
-                    <li>Cloud Firestore ile gerçek zamanlı veri senkronizasyonu</li>
-                    <li>Tailwind CSS ile modern ve responsive tasarım</li>
-                    <li>JavaScript ES6+ ile performanslı uygulama</li>
-                </ul>
-                
-                <h2 class="text-xl font-bold text-gray-800">Hedef Kitlemiz</h2>
-                <p>Hizmetlerimiz özellikle şu işletmeler için tasarlanmıştır:</p>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li>Küçük ve orta ölçekli işletmeler</li>
-                    <li>Restoranlar ve kafeler</li>
-                    <li>Perakende mağazaları</li>
-                    <li>Hizmet sektörü işletmeleri</li>
-                    <li>Freelancer ve serbest meslek sahipleri</li>
-                </ul>
-                
-                <h2 class="text-xl font-bold text-gray-800">Gelecek Planlarımız</h2>
-                <p>LuxWage olarak gelecekte şu özellikleri eklemeyi planlıyoruz:</p>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li>Mobil uygulama (iOS ve Android)</li>
-                    <li>Gelişmiş raporlama ve analiz özellikleri</li>
-                    <li>Çoklu dil desteği</li>
-                    <li>Entegrasyon özellikleri (muhasabe yazılımları vb.)</li>
-                    <li>İşletme arası iletişim ve işbirliği araçları</li>
-                </ul>
-                
-                <h2 class="text-xl font-bold text-gray-800">İletişim</h2>
-                <p>Bizimle iletişime geçmek için:</p>
-                <ul class="list-disc pl-6 space-y-2">
-                    <li>E-posta: luxwage@gmail.com</li>
-                    <li>Web sitesi: www.luxwage.com</li>
-                    <li>Adres: İstanbul, Türkiye</li>
-                </ul>
-                
-                <p class="mt-8 text-gray-600 italic">LuxWage, çalışan yönetiminin geleceğini inşa ediyor.</p>
-            </div>
+                <!-- Page Content -->
+                <div class="p-6">
+                    <div class="bg-white rounded-xl shadow-lg p-8">
+                        <div class="prose prose-lg max-w-none text-gray-700 space-y-6">
+                            <h2 class="text-xl font-bold text-gray-800">Kuruluş Hikayemiz</h2>
+                            <p>LuxWage, 2026 yılında işletmelerin çalışan maaş ve devamsızlık takibi konusundaki zorlukları çözmek amacıyla kurulmuş yenilikçi bir teknoloji şirketidir. Küçük ve orta ölçekli işletmelerin (KOBİ) finansal yönetim süreçlerini dijitalleştirmek ve basitleştirmek için modern web tabanlı çözümler geliştiriyoruz.</p>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">Vizyonumuz</h2>
+                            <p>Türkiye'deki her işletmenin çalışan yönetim süreçlerini kolaylaştırmak, hata oranını en aza indirmek ve finansal şeffaflığı artırmak. Teknolojiyi kullanarak işletmelerin verimliliğini artırmak ve onlara daha fazla büyüme fırsatı sunmak.</p>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">Misyonumuz</h2>
+                            <p>Kullanıcı dostu, güvenilir ve erişilebilir çalışan yönetim çözümleri sunarak işletmelerin operasyonel yükünü hafifletmek. Müşterilerimizin ihtiyaçlarını anlamak ve onlara en iyi deneyimi sunmak için sürekli yenilik yapmak.</p>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">Değerlerimiz</h2>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li><strong>Güvenilirlik:</strong> Kullanıcı verilerinin güvenliğini en üst düzeyde önemsiyoruz</li>
+                                <li><strong>İnovasyon:</strong> Sürekli yeni teknolojiler ve çözümler geliştiriyoruz</li>
+                                <li><strong>Kullanıcı Odaklılık:</strong> Müşteri geri bildirimlerini dinliyor ve ürünlerimizi buna göre geliştiriyoruz</li>
+                                <li><strong>Şeffaflık:</strong> İş süreçlerimizde ve fiyatlandırmamızda açık ve netiz</li>
+                                <li><strong>Kalite:</strong> Ürünlerimizin kalitesinden ödün vermiyoruz</li>
+                            </ul>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">Hizmetlerimiz</h2>
+                            <p>LuxWage olarak şu hizmetleri sunuyoruz:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>Çalışan maaş takibi ve hesaplama</li>
+                                <li>Devamsızlık kaydı ve kesinti hesaplama</li>
+                                <li>Ödeme geçmişi yönetimi</li>
+                                <li>Raporlama ve analiz araçları</li>
+                                <li>Mobil uyumlu web arayüzü</li>
+                                <li>Veri güvenliği ve yedekleme</li>
+                            </ul>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">Teknolojimiz</h2>
+                            <p>LuxWage, en modern web teknolojilerini kullanarak geliştirilmiştir:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>Firebase Authentication ile güvenli kullanıcı yönetimi</li>
+                                <li>Cloud Firestore ile gerçek zamanlı veri senkronizasyonu</li>
+                                <li>Tailwind CSS ile modern ve responsive tasarım</li>
+                                <li>JavaScript ES6+ ile performanslı uygulama</li>
+                            </ul>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">Hedef Kitlemiz</h2>
+                            <p>Hizmetlerimiz özellikle şu işletmeler için tasarlanmıştır:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>Küçük ve orta ölçekli işletmeler</li>
+                                <li>Restoranlar ve kafeler</li>
+                                <li>Perakende mağazaları</li>
+                                <li>Hizmet sektörü işletmeleri</li>
+                                <li>Freelancer ve serbest meslek sahipleri</li>
+                            </ul>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">Gelecek Planlarımız</h2>
+                            <p>LuxWage olarak gelecekte şu özellikleri eklemeyi planlıyoruz:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>Mobil uygulama (iOS ve Android)</li>
+                                <li>Gelişmiş raporlama ve analiz özellikleri</li>
+                                <li>Çoklu dil desteği</li>
+                                <li>Entegrasyon özellikleri (muhasabe yazılımları vb.)</li>
+                                <li>İşletme arası iletişim ve işbirliği araçları</li>
+                            </ul>
+                            
+                            <h2 class="text-xl font-bold text-gray-800">İletişim</h2>
+                            <p>Bizimle iletişime geçmek için:</p>
+                            <ul class="list-disc pl-6 space-y-2">
+                                <li>E-posta: luxwage@gmail.com</li>
+                                <li>Web sitesi: www.luxwage.com</li>
+                                <li>Adres: İstanbul, Türkiye</li>
+                            </ul>
+                            
+                            <p class="mt-8 text-gray-600 italic">LuxWage, çalışan yönetiminin geleceğini inşa ediyor.</p>
+                        </div>
+                    </div>
+                </div>
+            </main>
         </div>
-    </main>
-    
-    <!-- Footer -->
-    <footer class="bg-gray-800 text-white py-6 mt-12">
-        <div class="max-w-4xl mx-auto px-6 text-center">
-            <p class="text-gray-400">© 2026 LuxWage. Tüm hakları saklıdır.</p>
-        </div>
-    </footer>
+    </div>
     
 </body>
 </html>
