@@ -169,29 +169,19 @@ onAuthStateChanged(auth, (user) => {
     const visitorMessage = document.getElementById('visitorMessage');
     const dashboardButton = document.getElementById('dashboardButton');
     
-    // Yasal sayfaları ve dashboard dışı serbest sayfaları tanımla
-    const serbestSayfalar = [
-        'gizlilik-politikasi.html', 
-        'kullanim-sartlari.html', 
-        'hakkimizda.html', 
-        'iletisim.html', 
-        'cerez-politikasi.html'
-    ];
-    const suAnkiSayfa = window.location.pathname;
-    const yasalSayfadaMiyim = serbestSayfalar.some(page => suAnkiSayfa.includes(page));
-
+    // Basit auth guard mantığı
+    const currentPath = window.location.pathname;
+    
+    if (!user && currentPath.includes('dashboard')) {
+        // Kullanıcı giriş yapmamışsa ve dashboard'daysa index'e yönlendir
+        window.location.href = 'index.html';
+    } else if (user && (currentPath.includes('index') || currentPath.includes('login'))) {
+        // Kullanıcı giriş yapmışsa ve index veya login'deyse dashboard'a yönlendir
+        window.location.href = 'dashboard.html';
+    }
+    
     if (user) {
-        // Kullanıcı giriş yapmışsa ve yasal sayfalardaysa ASLA dokunma, rahatça okusun!
-        if (yasalSayfadaMiyim) {
-            return; 
-        }
-        
-        // Kullanıcı giriş yapmışsa ve SADECE ana sayfa (index.html), login veya kök dizindeyse dashboard'a yönlendir
-        if (suAnkiSayfa.includes('index.html') || suAnkiSayfa.includes('login.html') || suAnkiSayfa === '/' || suAnkiSayfa === '') {
-            window.location.href = 'dashboard.html';
-        }
-        
-        // Kullanıcı giriş yapmış - UI güncellemeleri
+        // Kullanıcı giriş yapmış
         if (authButtons) authButtons.style.display = 'none';
         if (userProfile) userProfile.style.display = 'flex';
         
@@ -208,12 +198,7 @@ onAuthStateChanged(auth, (user) => {
         if (landingPage) landingPage.style.display = 'block';
         if (welcomeScreen) welcomeScreen.style.display = 'none';
     } else {
-        // Kullanıcı giriş YAPMAMIŞSA ve dashboard'a girmeye çalışıyorsa index'e şutla
-        if (suAnkiSayfa.includes('dashboard.html')) {
-            window.location.href = 'index.html';
-        }
-        
-        // Kullanıcı çıkış yapmış - UI güncellemeleri
+        // Kullanıcı çıkış yapmış
         if (authButtons) authButtons.style.display = 'flex';
         if (userProfile) userProfile.style.display = 'none';
         

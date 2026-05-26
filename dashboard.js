@@ -112,9 +112,16 @@ function logout() {
     }
 };
 
-// Firebase Auth State Listener - Dashboard Only
-// Auth guard logic is now centralized in auth.js to prevent redirect conflicts
+// Firebase Auth State Listener - Dashboard
 onAuthStateChanged(auth, (user) => {
+    // Basit auth guard mantığı
+    const currentPath = window.location.pathname;
+    
+    if (!user && currentPath.includes('dashboard')) {
+        // Kullanıcı giriş yapmamışsa ve dashboard'daysa index'e yönlendir
+        window.location.href = 'index.html';
+    }
+    
     // Kullanıcı giriş yapmış, hesap formunu doldur
     const accountName = document.getElementById('accountName');
     if (accountName && user && user.displayName) {
@@ -1502,11 +1509,6 @@ document.addEventListener('DOMContentLoaded', function() {
         if (logoutModal) {
             logoutModal.classList.remove('hidden');
         }
-    });
-    
-    // Home button event listener
-    document.getElementById('homeBtn')?.addEventListener('click', function() {
-        window.location.href = 'index.html';
     });
     
     // Home page button event listener
