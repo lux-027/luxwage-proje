@@ -48,3 +48,29 @@ const sidebarLogoutBtn = document.getElementById('sidebarLogoutBtn');
 if (sidebarLogoutBtn) {
     sidebarLogoutBtn.addEventListener('click', logout);
 }
+
+// Active state for legal pages
+const suAnkiSayfa = window.location.pathname;
+
+// Remove active class from all legal links first
+document.querySelectorAll('[data-page]').forEach(link => {
+    link.classList.remove('bg-blue-600', 'text-white');
+});
+
+// Add active class based on current page
+if (suAnkiSayfa.includes('gizlilik-politikasi')) {
+    const activeLink = document.querySelector('[data-page="gizlilik"]');
+    if (activeLink) activeLink.classList.add('bg-blue-600', 'text-white');
+} else if (suAnkiSayfa.includes('kullanim-sartlari')) {
+    const activeLink = document.querySelector('[data-page="kullanim"]');
+    if (activeLink) activeLink.classList.add('bg-blue-600', 'text-white');
+} else if (suAnkiSayfa.includes('hakkimizda')) {
+    const activeLink = document.querySelector('[data-page="hakkimizda"]');
+    if (activeLink) activeLink.classList.add('bg-blue-600', 'text-white');
+} else if (suAnkiSayfa.includes('iletisim')) {
+    const activeLink = document.querySelector('[data-page="iletisim"]');
+    if (activeLink) activeLink.classList.add('bg-blue-600', 'text-white');
+} else if (suAnkiSayfa.includes('cerez-politikasi')) {
+    const activeLink = document.querySelector('[data-page="cerez"]');
+    if (activeLink) activeLink.classList.add('bg-blue-600', 'text-white');
+}
