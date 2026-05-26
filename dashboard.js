@@ -281,12 +281,14 @@ class LuxWage {
         const homeSection = document.getElementById('homeSection');
         const employeesSection = document.getElementById('employeesSection');
         const accountSection = document.getElementById('accountSection');
+        const pastEmployeesSection = document.getElementById('pastEmployeesSection');
         const pageTitle = document.getElementById('pageTitle');
         
         // Hide all sections
         if (homeSection) homeSection.style.display = 'none';
         if (employeesSection) employeesSection.style.display = 'none';
         if (accountSection) accountSection.style.display = 'none';
+        if (pastEmployeesSection) pastEmployeesSection.style.display = 'none';
         
         // Nav item'larını güncelle
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -315,6 +317,11 @@ class LuxWage {
                 if (pageTitle) pageTitle.textContent = 'Hesabım';
                 if (accountSection) accountSection.style.display = 'block';
                 this.renderAccountPage();
+                break;
+            case 'pastEmployees':
+                if (pageTitle) pageTitle.textContent = 'Geçmiş Çalışanlar';
+                if (pastEmployeesSection) pastEmployeesSection.style.display = 'block';
+                this.renderPastEmployeesPage();
                 break;
         }
     }
@@ -614,7 +621,10 @@ class LuxWage {
         const employeesSection = document.getElementById('employeesSection');
         if (!employeesSection) return;
         
-        if (this.employees.length === 0) {
+        // Sadece aktif çalışanları filtrele
+        const activeEmployees = this.employees.filter(emp => emp.status !== 'inactive');
+        
+        if (activeEmployees.length === 0) {
             employeesSection.innerHTML = `
                 <div class="bg-white rounded-xl shadow-lg p-8 text-center">
                     <i class="fas fa-users text-gray-300 text-6xl mb-4"></i>
@@ -629,7 +639,9 @@ class LuxWage {
             return;
         }
         
-        let employeesHTML = this.employees.map((emp, index) => {
+        let employeesHTML = activeEmployees.map((emp, index) => {
+            // Original index in the full employees array
+            const originalIndex = this.employees.indexOf(emp);
             const startDate = emp.startDate ? new Date(emp.startDate) : null;
             const startDateStr = startDate ? startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belirtilmemiş';
             const workingDuration = emp.startDate ? this.calculateWorkingDuration(emp.startDate) : 'Belirtilmemiş';
@@ -674,21 +686,21 @@ class LuxWage {
                             <i class="fas fa-info-circle mr-1"></i>
                             Detay
                         </button>
-                        <button data-index="${index}" class="absenceBtn bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
+                        <button data-index="${originalIndex}" class="absenceBtn bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
                             <i class="fas fa-calendar-times mr-1"></i>
                             Devamsızlık
                         </button>
-                        <button data-index="${index}" class="paymentBtn bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm">
+                        <button data-index="${originalIndex}" class="paymentBtn bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm">
                             <i class="fas fa-money-check-alt mr-1"></i>
                             Ödeme
                         </button>
-                        <button data-index="${index}" class="historyBtn bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                        <button data-index="${originalIndex}" class="historyBtn bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
                             <i class="fas fa-history mr-1"></i>
                             Geçmiş
                         </button>
-                        <button data-index="${index}" class="deleteBtn bg-gray-500 text-white px-3 py-2 rounded-lg hover:bg-gray-600 transition-colors text-sm">
-                            <i class="fas fa-trash mr-1"></i>
-                            Sil
+                        <button data-index="${originalIndex}" class="terminateBtn bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm">
+                            <i class="fas fa-door-open mr-1"></i>
+                            İşten Çıkar
                         </button>
                     </div>
                 </div>
@@ -709,6 +721,81 @@ class LuxWage {
         `;
     }
 
+    // Geçmiş çalışanlar sayfasını render et
+    renderPastEmployeesPage() {
+        const pastEmployeesSection = document.getElementById('pastEmployeesSection');
+        if (!pastEmployeesSection) return;
+        
+        // Sadece pasif çalışanları filtrele
+        const inactiveEmployees = this.employees.filter(emp => emp.status === 'inactive');
+        
+        if (inactiveEmployees.length === 0) {
+            pastEmployeesSection.innerHTML = `
+                <div class="text-center py-12">
+                    <i class="fas fa-archive text-gray-300 text-6xl mb-4"></i>
+                    <h3 class="text-xl font-bold text-gray-800 mb-2">Henüz geçmiş çalışan yok</h3>
+                    <p class="text-gray-500">İşten çıkarılan çalışanlar burada görüntülenecek</p>
+                </div>
+            `;
+            return;
+        }
+        
+        let employeesHTML = inactiveEmployees.map((emp, index) => {
+            const originalIndex = this.employees.indexOf(emp);
+            const departureDate = emp.departureDate ? new Date(emp.departureDate) : null;
+            const departureDateStr = departureDate ? departureDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belirtilmemiş';
+            const fixedDebt = this.calculateCurrentDebt(emp);
+            
+            return `
+            <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-gray-400">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="flex items-center">
+                        <div class="bg-gray-100 p-3 rounded-full mr-4">
+                            <i class="fas fa-user-slash text-gray-500 text-xl"></i>
+                        </div>
+                        <div>
+                            <h3 class="font-bold text-gray-800">${emp.name}</h3>
+                            <p class="text-gray-500 text-sm">${emp.phone}</p>
+                            <div class="flex items-center mt-1 text-xs text-gray-400">
+                                <i class="fas fa-calendar-times mr-1"></i>
+                                <span>Ayrılma Tarihi: ${departureDateStr}</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-lg font-bold text-gray-800">${emp.salaryAmount.toLocaleString('tr-TR')} TL</p>
+                        <p class="text-sm text-gray-500">${emp.salaryType === 'weekly' ? 'Haftalık' : 'Aylık'}</p>
+                    </div>
+                </div>
+                
+                <div class="bg-gray-50 rounded-lg p-3 mb-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-coins text-gray-500 mr-2"></i>
+                        <span class="text-sm text-gray-700 font-medium">Kalan Borç (Sabit): ${fixedDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                    </div>
+                </div>
+                
+                <div class="flex space-x-2">
+                    <button data-id="${originalIndex}" class="permanentlyDeleteBtn bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
+                        <i class="fas fa-trash mr-1"></i>
+                        Veritabanından Tamamen Sil
+                    </button>
+                </div>
+            </div>
+            `;
+        }).join('');
+        
+        pastEmployeesSection.innerHTML = `
+            <div class="mb-4">
+                <h2 class="text-2xl font-bold text-gray-800 mb-2">Geçmiş Çalışanlar</h2>
+                <p class="text-gray-500 text-sm">İşten çıkarılan çalışanların arşivi</p>
+            </div>
+            <div class="grid gap-4">
+                ${employeesHTML}
+            </div>
+        `;
+    }
+    
     // Hesap sayfasını render et
     renderAccountPage() {
         const accountSection = document.getElementById('accountSection');
@@ -792,6 +879,57 @@ class LuxWage {
         
         showNotification('İşçi başarıyla eklendi', 'success');
         this.renderEmployeesPage();
+    }
+    
+    // İşçiyi işten çıkar (status: inactive)
+    terminateEmployee(employeeIndex) {
+        if (employeeIndex !== null && employeeIndex >= 0 && employeeIndex < this.employees.length) {
+            const employee = this.employees[employeeIndex];
+            employee.status = 'inactive';
+            employee.departureDate = Date.now();
+            this.saveData();
+            this.renderEmployeesPage();
+            this.renderHomePage();
+            showNotification('Çalışan işten çıkarıldı', 'success');
+        }
+    }
+    
+    // İşçiyi kalıcı olarak sil (şifre doğrulaması ile)
+    permanentlyDeleteEmployee(employeeIndex, password) {
+        if (employeeIndex !== null && employeeIndex >= 0 && employeeIndex < this.employees.length) {
+            const user = auth.currentUser;
+            if (!user) {
+                showNotification('Kullanıcı oturumu bulunamadı', 'error');
+                return;
+            }
+            
+            const credential = EmailAuthProvider.credential(user.email, password);
+            
+            reauthenticateWithCredential(user, credential)
+                .then(() => {
+                    // Şifre doğru, çalışanı sil
+                    this.employees.splice(employeeIndex, 1);
+                    this.saveData();
+                    this.renderPastEmployeesPage();
+                    this.renderHomePage();
+                    showNotification('Çalışan kalıcı olarak silindi', 'success');
+                    
+                    // Modalı kapat
+                    const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+                    if (deleteConfirmModal) {
+                        deleteConfirmModal.classList.add('hidden');
+                    }
+                    document.getElementById('deleteAuthPassword').value = '';
+                })
+                .catch((error) => {
+                    console.error('Şifre doğrulama hatası:', error);
+                    if (error.code === 'auth/wrong-password') {
+                        showNotification('Hatalı şifre, silme işlemi reddedildi!', 'error');
+                    } else {
+                        showNotification('Şifre doğrulama hatası', 'error');
+                    }
+                });
+        }
     }
     
     // İşçi sil
@@ -942,6 +1080,43 @@ class LuxWage {
     // Mevcut borcu hesapla (günlük bazda)
     calculateCurrentDebt(employee) {
         if (!employee.startDate) return 0;
+        
+        // İşten çıkarılmış çalışanlar için borç artışı durdur
+        if (employee.status === 'inactive') {
+            // Sabit borcu hesapla (ayrılma tarihine kadar)
+            const departureDate = employee.departureDate ? new Date(employee.departureDate) : new Date();
+            const startDate = new Date(employee.startDate);
+            const dailyWage = this.calculateDailyWage(employee);
+            let totalDebt = 0;
+            
+            startDate.setHours(0, 0, 0, 0);
+            departureDate.setHours(0, 0, 0, 0);
+            
+            // Başlangıç tarihinden ayrılma tarihine kadar her günü döngüye al
+            const currentDate = new Date(startDate);
+            while (currentDate <= departureDate) {
+                if (!this.isClosedDay(currentDate, employee)) {
+                    totalDebt += dailyWage;
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            // Ödemeleri çıkar
+            if (employee.paymentHistory && employee.paymentHistory.length > 0) {
+                employee.paymentHistory.forEach(payment => {
+                    totalDebt -= Math.abs(payment.amount);
+                });
+            }
+            
+            // Devamsızlıkları ekle
+            if (employee.absenceHistory && employee.absenceHistory.length > 0) {
+                employee.absenceHistory.forEach(absence => {
+                    totalDebt += absence.deduction;
+                });
+            }
+            
+            return Math.max(0, totalDebt);
+        }
         
         const startDate = new Date(employee.startDate);
         const today = new Date();
@@ -1360,12 +1535,23 @@ document.addEventListener('DOMContentLoaded', function() {
         luxwage.showPage('account');
     });
     
+    // Past employees page button event listener
+    document.getElementById('pastEmployeesTab')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        luxwage.showPage('pastEmployees');
+    });
+    
     // Sidebar logout button event listener
     document.getElementById('sidebarLogoutBtn')?.addEventListener('click', function() {
-        const logoutModal = document.getElementById('logoutModal');
-        if (logoutModal) {
-            logoutModal.classList.remove('hidden');
-        }
+        signOut(auth)
+            .then(() => {
+                showNotification('Çıkış yapıldı', 'success');
+                window.location.href = 'index.html';
+            })
+            .catch((error) => {
+                console.error('Çıkış hatası:', error);
+                showNotification('Çıkış yapılırken hata oluştu', 'error');
+            });
     });
     
     // Legal info buttons event listeners
@@ -1440,6 +1626,36 @@ document.addEventListener('DOMContentLoaded', function() {
         const dailyDetailsModal = document.getElementById('dailyDetailsModal');
         if (dailyDetailsModal) {
             dailyDetailsModal.classList.add('hidden');
+        }
+    });
+    
+    // Delete confirm modal event listeners
+    document.getElementById('closeDeleteConfirmModalBtn')?.addEventListener('click', function() {
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        if (deleteConfirmModal) {
+            deleteConfirmModal.classList.add('hidden');
+        }
+        document.getElementById('deleteAuthPassword').value = '';
+        employeeIdToDelete = null;
+    });
+    
+    document.getElementById('cancelDeleteConfirmBtn')?.addEventListener('click', function() {
+        const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+        if (deleteConfirmModal) {
+            deleteConfirmModal.classList.add('hidden');
+        }
+        document.getElementById('deleteAuthPassword').value = '';
+        employeeIdToDelete = null;
+    });
+    
+    document.getElementById('confirmDeleteConfirmBtn')?.addEventListener('click', function() {
+        const password = document.getElementById('deleteAuthPassword').value;
+        if (!password) {
+            showNotification('Lütfen şifrenizi girin', 'error');
+            return;
+        }
+        if (employeeIdToDelete !== null) {
+            luxwage.permanentlyDeleteEmployee(employeeIdToDelete, password);
         }
     });
     
@@ -1575,12 +1791,17 @@ document.addEventListener('DOMContentLoaded', function() {
             showHistory(parseInt(index));
         }
         
-        if (e.target && e.target.classList.contains('deleteBtn')) {
+        if (e.target && e.target.classList.contains('terminateBtn')) {
             const index = e.target.getAttribute('data-index');
+            luxwage.terminateEmployee(parseInt(index));
+        }
+        
+        if (e.target && e.target.classList.contains('permanentlyDeleteBtn')) {
+            const index = e.target.getAttribute('data-id');
             employeeIdToDelete = parseInt(index);
-            const deleteModal = document.getElementById('deleteEmployeeModal');
-            if (deleteModal) {
-                deleteModal.classList.remove('hidden');
+            const deleteConfirmModal = document.getElementById('deleteConfirmModal');
+            if (deleteConfirmModal) {
+                deleteConfirmModal.classList.remove('hidden');
             }
         }
         

@@ -40,6 +40,10 @@
                             <i class="fas fa-user-cog w-5 mr-3"></i>
                             Hesabım
                         </a>
+                        <a href="#" id="pastEmployeesTab" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                            <i class="fas fa-archive w-5 mr-3"></i>
+                            Geçmiş Çalışanlar
+                        </a>
                     </nav>
                     
                     <nav class="space-y-2" id="userNav" style="display: none;">
@@ -128,6 +132,11 @@
                     <div id="accountSection" style="display: none;">
                         <!-- Account form will be loaded here -->
                     </div>
+                    
+                    <!-- Past Employees Section -->
+                    <div id="pastEmployeesSection" style="display: none;">
+                        <!-- Past employees list will be loaded here -->
+                    </div>
                 </div>
             </main>
         </div>
@@ -161,8 +170,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Maaş Tipi</label>
                         <select id="salaryType" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                            <option value="">Seçiniz</option>
-                            <option value="weekly">Haftalık</option>
+                            <option value="weekly" selected>Haftalık</option>
                             <option value="monthly">Aylık</option>
                         </select>
                     </div>
@@ -476,6 +484,41 @@
                 
                 <div id="dailyDetailsList" class="space-y-2 max-h-96 overflow-y-auto">
                     <!-- Daily details will be loaded here -->
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Delete Confirm Modal -->
+    <div id="deleteConfirmModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all">
+            <div class="p-6">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-bold text-gray-800">
+                        <i class="fas fa-exclamation-triangle text-red-500 mr-2"></i>
+                        Kalıcı Silme Onayı
+                    </h3>
+                    <button id="closeDeleteConfirmModalBtn" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+                
+                <div class="space-y-4">
+                    <p class="text-gray-600">Bu personeli kalıcı olarak silmek için lütfen GİRİŞ ŞİFRENİZİ giriniz.</p>
+                    
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Şifre</label>
+                        <input type="password" id="deleteAuthPassword" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button id="cancelDeleteConfirmBtn" class="flex-1 bg-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-400 transition-colors font-semibold">
+                            İptal
+                        </button>
+                        <button id="confirmDeleteConfirmBtn" class="flex-1 bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors font-semibold">
+                            Onayla
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
