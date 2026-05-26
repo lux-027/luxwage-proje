@@ -189,9 +189,6 @@ onAuthStateChanged(auth, (user) => {
     if (!user && suAnkiSayfa.includes('dashboard')) {
         // Kullanıcı giriş yapmamışsa ve dashboard'daysa index'e yönlendir
         window.location.href = 'index.html';
-    } else if (user && (suAnkiSayfa.includes('index.html') || suAnkiSayfa.includes('login.html') || suAnkiSayfa === '/' || suAnkiSayfa === '')) {
-        // Kullanıcı giriş yapmışsa ve sadece index/login/kök dizindeyse dashboard'a yönlendir
-        window.location.href = 'dashboard.html';
     }
     
     if (user) {

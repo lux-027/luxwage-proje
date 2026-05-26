@@ -131,11 +131,7 @@ onAuthStateChanged(auth, (user) => {
     }
 
     if (user) {
-        // Kullanıcı giriş YAPMIŞSA ve SADECE ana sayfa (index.html), login veya kök dizindeyse dashboard'a yönlendir
-        if (suAnkiSayfa.includes('index.html') || suAnkiSayfa.includes('login.html') || suAnkiSayfa === '/' || suAnkiSayfa === '') {
-            window.location.href = 'dashboard.html';
-        }
-        // Bunun dışındaki TÜM durumlarda (dashboard'da kalıyorsa, yasal sayfalara gidiyorsa vb.) ASLA bir yönlendirme kodu çalıştırma, dokunma!
+        // Kullanıcı giriş yapmış - hiçbir yönlendirme yapma, kullanıcı neredeyse orada kalsın
     } else {
         // Kullanıcı giriş YAPMAMIŞSA ve dashboard'a girmeye çalışıyorsa index'e fırlat
         if (suAnkiSayfa.includes('dashboard.html')) {
