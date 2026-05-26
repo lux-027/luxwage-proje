@@ -252,6 +252,33 @@
         </div>
     </div>
     
+    <!-- Logout Confirmation Modal -->
+    <div id="logoutModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h3 class="text-xl font-bold text-gray-800">
+                    <i class="fas fa-sign-out-alt text-red-500 mr-2"></i>
+                    Çıkış Yap
+                </h3>
+                <button id="closeLogoutModalBtn" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            
+            <p class="text-gray-600 mb-6">Çıkış yapmak istediğinize emin misiniz?</p>
+            
+            <div class="flex space-x-3">
+                <button type="button" id="cancelLogoutBtn" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">
+                    İptal
+                </button>
+                <button type="button" id="confirmLogoutBtn" class="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors">
+                    <i class="fas fa-sign-out-alt mr-2"></i>
+                    Çıkış Yap
+                </button>
+            </div>
+        </div>
+    </div>
+    
     <!-- Notification Container -->
     <div id="notificationContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
     

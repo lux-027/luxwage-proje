@@ -111,6 +111,7 @@ function closeModals() {
     const loginModal = document.getElementById('loginModal');
     const registerModal = document.getElementById('registerModal');
     const forgotPasswordModal = document.getElementById('forgotPasswordModal');
+    const logoutModal = document.getElementById('logoutModal');
     
     if (loginModal) {
         loginModal.style.display = 'none';
@@ -123,23 +124,37 @@ function closeModals() {
     if (forgotPasswordModal) {
         forgotPasswordModal.style.display = 'none';
     }
+    
+    if (logoutModal) {
+        logoutModal.style.display = 'none';
+    }
 }
 
 // Logout fonksiyonu
 function logout() {
-    if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
-        signOut(auth)
-            .then(() => {
-                showNotification('Başarıyla çıkış yapıldı', 'success');
-                setTimeout(() => {
-                    window.location.href = 'index.html';
-                }, 1500);
-            })
-            .catch((error) => {
-                console.error('Logout error:', error);
-                showNotification('Çıkış yapılırken hata oluştu', 'error');
-            });
+    const logoutModal = document.getElementById('logoutModal');
+    if (logoutModal) {
+        logoutModal.style.display = 'flex';
     }
+}
+
+// Çıkış işlemini gerçekleştir
+function performLogout() {
+    signOut(auth)
+        .then(() => {
+            showNotification('Başarıyla çıkış yapıldı', 'success');
+            const logoutModal = document.getElementById('logoutModal');
+            if (logoutModal) {
+                logoutModal.style.display = 'none';
+            }
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        })
+        .catch((error) => {
+            console.error('Logout error:', error);
+            showNotification('Çıkış yapılırken hata oluştu', 'error');
+        });
 }
 
 // "Hazırsanız Başlayalım" butonu için fonksiyon
@@ -448,6 +463,27 @@ document.addEventListener('DOMContentLoaded', function() {
         if (forgotPasswordModal) {
             forgotPasswordModal.style.display = 'none';
         }
+    });
+    
+    // Close logout modal button event listener
+    document.getElementById('closeLogoutModalBtn')?.addEventListener('click', function() {
+        const logoutModal = document.getElementById('logoutModal');
+        if (logoutModal) {
+            logoutModal.style.display = 'none';
+        }
+    });
+    
+    // Cancel logout button event listener
+    document.getElementById('cancelLogoutBtn')?.addEventListener('click', function() {
+        const logoutModal = document.getElementById('logoutModal');
+        if (logoutModal) {
+            logoutModal.style.display = 'none';
+        }
+    });
+    
+    // Confirm logout button event listener
+    document.getElementById('confirmLogoutBtn')?.addEventListener('click', function() {
+        performLogout();
     });
     
     // Forgot password form handler
