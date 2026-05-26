@@ -1063,12 +1063,19 @@ class LuxWage {
     calculateDailyLogs(employee) {
         const logs = [];
         const today = new Date();
+        const startDate = employee.startDate ? new Date(employee.startDate) : new Date(today);
         
-        for (let i = 0; i < 10; i++) {
-            const date = new Date(today);
-            date.setDate(date.getDate() - i);
-            const dateStr = date.toISOString().split('T')[0];
-            const dayOfWeek = date.getDay();
+        // Başlangıç tarihini bugünün başlangıcı olarak ayarla
+        startDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        
+        // Başlangıç tarihinden bugüne kadar olan günleri hesapla (maksimum 10 gün)
+        let currentDate = new Date(startDate);
+        let dayCount = 0;
+        
+        while (currentDate <= today && dayCount < 10) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const dayOfWeek = currentDate.getDay();
             
             // Check if this day is a closed day
             const isClosedDay = employee.closedDays && employee.closedDays.includes(dayOfWeek);
@@ -1114,9 +1121,14 @@ class LuxWage {
                     isClosedDay: isClosedDay
                 });
             }
+            
+            // Bir sonraki güne geç
+            currentDate.setDate(currentDate.getDate() + 1);
+            dayCount++;
         }
         
-        return logs;
+        // En yeni gün en üstte olacak şekilde ters çevir
+        return logs.reverse();
     }
     
     // İşçiyi kalıcı olarak sil (şifre doğrulaması ile)
