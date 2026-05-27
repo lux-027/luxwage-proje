@@ -393,7 +393,7 @@ class LuxWage {
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-sm">Toplam Borç</p>
-                            <p class="text-3xl font-bold text-gray-800">${totalDebt.toFixed(2)} TL</p>
+                            <p class="text-3xl font-bold text-gray-800">${totalDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
                         </div>
                         <div class="bg-red-100 p-3 rounded-full">
                             <i class="fas fa-money-bill-wave text-red-500 text-2xl"></i>
@@ -731,7 +731,7 @@ class LuxWage {
                 ` : ''}
                 
                 <div class="flex items-center justify-between">
-                    <div class="mt-4 p-4 bg-[#1a1a1a] rounded-xl border border-slate-700 shadow-lg">
+                    <div class="mt-4 p-4 bg-white/5 backdrop-blur-md rounded-xl border border-slate-700 shadow-lg">
                         <div class="flex justify-between items-center mb-3">
                             <span class="text-slate-400 text-sm">Toplam Borç</span>
                             <span class="text-emerald-400 font-bold text-lg">${this.calculateCurrentDebt(emp).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
