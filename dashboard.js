@@ -691,6 +691,7 @@ class LuxWage {
             const startDate = emp.startDate ? new Date(emp.startDate) : null;
             const startDateStr = startDate ? startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belirtilmemiş';
             const workingDuration = emp.startDate ? this.calculateWorkingDuration(emp.startDate) : 'Belirtilmemiş';
+            const formattedDebt = (this.calculateCurrentDebt(emp) || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             
             return `
             <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
@@ -734,7 +735,7 @@ class LuxWage {
                     <div class="flex gap-2 mt-auto">
                         <div class="bg-white/5 border border-white/5 px-3 py-1.5 rounded-lg text-xs">
                             <span class="text-slate-400">Borç: </span>
-                            <span class="text-white font-bold">${this.calculateCurrentDebt(emp).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                            <span class="text-white font-bold">${formattedDebt} TL</span>
                         </div>
                         ${this.getTodayEarningSmallInfo(emp)}
                     </div>
@@ -1228,11 +1229,9 @@ class LuxWage {
         startDate.setHours(0, 0, 0, 0);
         
         // startDate'dan bugüne kadar olan günleri hesapla (off-by-one hatası düzeltildi)
-        let currentDate = new Date(startDate);
-        
-        while (currentDate <= today) {
-            const dateStr = currentDate.toISOString().split('T')[0];
-            const dayOfWeek = currentDate.getDay();
+        for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
+            const dayOfWeek = d.getDay();
             
             // Check if this day is a closed day
             const isClosedDay = employee.closedDays && employee.closedDays.includes(dayOfWeek);
@@ -1263,10 +1262,10 @@ class LuxWage {
                 // Determine status based on date and time comparison
                 let status = 'pending';
                 
-                if (currentDate.toDateString() === today.toDateString()) {
+                if (d.toDateString() === today.toDateString()) {
                     // Bugün - saat kontrolü
                     status = (currentHour >= 18) ? 'added' : 'pending';
-                } else if (currentDate < today) {
+                } else if (d < today) {
                     // Geçmiş günler
                     status = 'added';
                 } else {
@@ -1285,9 +1284,6 @@ class LuxWage {
                     isClosedDay: isClosedDay
                 });
             }
-            
-            // Bir sonraki güne geç
-            currentDate.setDate(currentDate.getDate() + 1);
         }
         
         // En yeni gün en üstte olacak şekilde ters çevir
@@ -1844,7 +1840,7 @@ function openDailyDetails(employeeId) {
         today.setHours(0, 0, 0, 0);
         
         // Başlangıç tarihinden bugüne kadar geçen toplam gün sayısını hesapla (tüm günler, kapalı günler dahil)
-        const daysWorked = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
+        const daysWorked = Math.round((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
         
         const formattedStartDate = startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
         
