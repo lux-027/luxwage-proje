@@ -692,6 +692,12 @@ class LuxWage {
             const startDateStr = startDate ? startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belirtilmemiş';
             const dailyLogs = emp.startDate ? this.calculateDailyLogs(emp) : [];
             const totalWorkDays = dailyLogs.length;
+            
+            // Calculate debt using logList.length * dailyRate
+            const dailyRate = this.calculateDailyWage(emp);
+            const calculatedDebt = totalWorkDays * dailyRate;
+            emp.debt = calculatedDebt;
+            
             const formattedDebt = (emp.debt || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             
             return `
@@ -732,12 +738,13 @@ class LuxWage {
                 </div>
                 ` : ''}
                 
+                <div class="bg-slate-800/50 backdrop-blur-md border border-white/10 p-4 rounded-xl flex justify-between items-center mb-2">
+                    <span class="text-slate-300 text-sm font-medium">Toplam Borç</span>
+                    <span class="text-white font-bold text-lg">${(emp.debt || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL</span>
+                </div>
+                
                 <div class="flex items-center justify-between">
                     <div class="flex gap-2 mt-auto">
-                        <div class="bg-white/5 border border-white/5 px-3 py-1.5 rounded-lg text-xs">
-                            <span class="text-slate-400">Borç: </span>
-                            <span class="text-white font-bold">${formattedDebt} TL</span>
-                        </div>
                         ${this.getTodayEarningSmallInfo(emp)}
                     </div>
                     <div class="flex space-x-2">
