@@ -730,14 +730,14 @@ class LuxWage {
                 </div>
                 ` : ''}
                 
-                <div class="flex items-center justify-between">
-                    <div class="mt-4 p-4 bg-white/5 backdrop-blur-md rounded-xl border border-slate-700 shadow-lg">
-                        <div class="flex justify-between items-center mb-3">
-                            <span class="text-slate-400 text-sm">Toplam Borç</span>
-                            <span class="text-emerald-400 font-bold text-lg">${this.calculateCurrentDebt(emp).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                        </div>
-                        ${this.getTodayEarningInfo(emp)}
+                <div class="grid grid-cols-1 gap-3 mt-4">
+                    <div class="bg-white/5 backdrop-blur-md border border-white/10 p-4 rounded-xl flex justify-between items-center hover:bg-white/10 transition-all">
+                        <span class="text-slate-400 text-sm font-medium">Toplam Borç</span>
+                        <span class="text-white font-bold text-lg">${this.calculateCurrentDebt(emp).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                     </div>
+
+                    ${this.getTodayEarningInfo(emp)}
+                </div>
                     <div class="flex space-x-2">
                         <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm">
                             <i class="fas fa-info-circle mr-1"></i>
@@ -1492,18 +1492,18 @@ class LuxWage {
         // Saat 18:00'den önceyse
         if (currentHour < 18) {
             return `
-                <div class="flex justify-between items-center border-t border-slate-700 pt-3">
-                    <span class="text-slate-400 text-sm">Bugünün Kazancı</span>
-                    <span class="text-emerald-300 font-medium">+${dailyWage.toFixed(2)} TL</span>
+                <div class="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 p-4 rounded-xl flex justify-between items-center hover:bg-emerald-500/20 transition-all">
+                    <span class="text-emerald-400 text-sm font-medium">Bugünün Kazancı</span>
+                    <span class="text-emerald-300 font-bold text-lg">+${dailyWage.toFixed(2)} TL</span>
                 </div>
             `;
         }
         
         // Saat 18:00'den sonra
         return `
-            <div class="flex justify-between items-center border-t border-slate-700 pt-3">
-                <span class="text-slate-400 text-sm">Bugünün Kazancı</span>
-                <span class="text-emerald-300 font-medium">+${dailyWage.toFixed(2)} TL</span>
+            <div class="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 p-4 rounded-xl flex justify-between items-center hover:bg-emerald-500/20 transition-all">
+                <span class="text-emerald-400 text-sm font-medium">Bugünün Kazancı</span>
+                <span class="text-emerald-300 font-bold text-lg">+${dailyWage.toFixed(2)} TL</span>
             </div>
         `;
     }
