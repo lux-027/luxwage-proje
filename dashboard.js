@@ -1229,9 +1229,10 @@ class LuxWage {
         startDate.setHours(0, 0, 0, 0);
         
         // startDate'dan bugüne kadar olan günleri hesapla (off-by-one hatası düzeltildi)
-        for (let d = new Date(startDate); d <= today; d.setDate(d.getDate() + 1)) {
-            const dateStr = d.toISOString().split('T')[0];
-            const dayOfWeek = d.getDay();
+        let currentDate = new Date(startDate);
+        while (currentDate <= today) {
+            const dateStr = currentDate.toISOString().split('T')[0];
+            const dayOfWeek = currentDate.getDay();
             
             // Check if this day is a closed day
             const isClosedDay = employee.closedDays && employee.closedDays.includes(dayOfWeek);
@@ -1262,10 +1263,10 @@ class LuxWage {
                 // Determine status based on date and time comparison
                 let status = 'pending';
                 
-                if (d.toDateString() === today.toDateString()) {
+                if (currentDate.toDateString() === today.toDateString()) {
                     // Bugün - saat kontrolü
                     status = (currentHour >= 18) ? 'added' : 'pending';
-                } else if (d < today) {
+                } else if (currentDate < today) {
                     // Geçmiş günler
                     status = 'added';
                 } else {
@@ -1284,6 +1285,9 @@ class LuxWage {
                     isClosedDay: isClosedDay
                 });
             }
+            
+            // Bir sonraki güne geç
+            currentDate.setDate(currentDate.getDate() + 1);
         }
         
         // En yeni gün en üstte olacak şekilde ters çevir
@@ -1840,7 +1844,8 @@ function openDailyDetails(employeeId) {
         today.setHours(0, 0, 0, 0);
         
         // Başlangıç tarihinden bugüne kadar geçen toplam gün sayısını hesapla (tüm günler, kapalı günler dahil)
-        const daysWorked = Math.round((today - startDate) / (1000 * 60 * 60 * 24)) + 1;
+        const diffTime = Math.abs(today - startDate);
+        const daysWorked = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
         
         const formattedStartDate = startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
         
