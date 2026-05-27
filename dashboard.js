@@ -699,6 +699,7 @@ class LuxWage {
             emp.debt = calculatedDebt;
             
             const formattedDebt = (emp.debt || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const formattedDailyRate = dailyRate.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             
             return `
             <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
@@ -739,17 +740,17 @@ class LuxWage {
                 ` : ''}
                 
                 <div class="flex items-center justify-between">
-                    <div class="flex gap-2 mt-2">
-                        <!-- Toplam Borç -->
-                        <div class="bg-slate-700/30 backdrop-blur-sm border border-white/10 px-3 py-1 rounded-lg">
-                            <p class="text-[10px] text-slate-300 uppercase">Borç</p>
-                            <p class="text-xs font-bold text-white">${formattedDebt} TL</p>
+                    <div class="flex gap-3 mt-3">
+                        <!-- Borç Kutusu -->
+                        <div class="bg-slate-600/60 backdrop-blur-sm border border-white/10 px-5 py-2 rounded-xl min-w-[130px]">
+                            <p class="text-[10px] text-slate-200 uppercase font-semibold">Borç</p>
+                            <p class="text-sm font-bold text-white">${formattedDebt} TL</p>
                         </div>
                         
-                        <!-- Günlük Kazanç -->
-                        <div class="bg-emerald-500/10 backdrop-blur-sm border border-emerald-500/20 px-3 py-1 rounded-lg">
-                            <p class="text-[10px] text-emerald-400 uppercase">Kazanç</p>
-                            <p class="text-xs font-bold text-emerald-300">+${dailyRate.toFixed(2)} TL</p>
+                        <!-- Kazanç Kutusu -->
+                        <div class="bg-emerald-500/10 backdrop-blur-sm border border-emerald-500/20 px-5 py-2 rounded-xl min-w-[130px]">
+                            <p class="text-[10px] text-emerald-300 uppercase font-semibold">Kazanç</p>
+                            <p class="text-sm font-bold text-emerald-400">+${formattedDailyRate} TL</p>
                         </div>
                     </div>
                     <div class="flex space-x-2">
