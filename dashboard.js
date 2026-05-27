@@ -738,14 +738,19 @@ class LuxWage {
                 </div>
                 ` : ''}
                 
-                <div class="bg-slate-800/50 backdrop-blur-md border border-white/10 p-4 rounded-xl flex justify-between items-center mb-2">
-                    <span class="text-slate-300 text-sm font-medium">Toplam Borç</span>
-                    <span class="text-white font-bold text-lg">${(emp.debt || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2 })} TL</span>
-                </div>
-                
                 <div class="flex items-center justify-between">
-                    <div class="flex gap-2 mt-auto">
-                        ${this.getTodayEarningSmallInfo(emp)}
+                    <div class="flex gap-2 mt-2">
+                        <!-- Toplam Borç -->
+                        <div class="bg-slate-700/30 backdrop-blur-sm border border-white/10 px-3 py-1 rounded-lg">
+                            <p class="text-[10px] text-slate-300 uppercase">Borç</p>
+                            <p class="text-xs font-bold text-white">${formattedDebt} TL</p>
+                        </div>
+                        
+                        <!-- Günlük Kazanç -->
+                        <div class="bg-emerald-500/10 backdrop-blur-sm border border-emerald-500/20 px-3 py-1 rounded-lg">
+                            <p class="text-[10px] text-emerald-400 uppercase">Kazanç</p>
+                            <p class="text-xs font-bold text-emerald-300">+${dailyRate.toFixed(2)} TL</p>
+                        </div>
                     </div>
                     <div class="flex space-x-2">
                         <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm">
