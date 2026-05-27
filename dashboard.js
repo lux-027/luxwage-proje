@@ -731,14 +731,11 @@ class LuxWage {
                 ` : ''}
                 
                 <div class="flex items-center justify-between">
-                    <div class="mt-4 p-3 bg-slate-800 rounded-lg border border-slate-700 flex flex-col gap-2">
-                        <!-- Borç Bilgisi -->
-                        <div class="flex justify-between items-center">
-                            <span class="text-slate-400 text-sm">Toplam Borç:</span>
+                    <div class="mt-4 p-4 bg-[#1a1a1a] rounded-xl border border-slate-700 shadow-lg">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="text-slate-400 text-sm">Toplam Borç</span>
                             <span class="text-emerald-400 font-bold text-lg">${this.calculateCurrentDebt(emp).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                         </div>
-                        
-                        <!-- Bugünün Kazancı -->
                         ${this.getTodayEarningInfo(emp)}
                     </div>
                     <div class="flex space-x-2">
@@ -1484,18 +1481,18 @@ class LuxWage {
         // Saat 18:00'den önceyse
         if (currentHour < 18) {
             return `
-                <div class="flex justify-between items-center border-t border-slate-700 pt-2">
-                    <span class="text-slate-400 text-sm">Bugünün Kazancı:</span>
-                    <span class="text-emerald-300 font-medium text-sm">+${dailyWage.toFixed(2)} TL (18:00'de)</span>
+                <div class="flex justify-between items-center border-t border-slate-700 pt-3">
+                    <span class="text-slate-400 text-sm">Bugünün Kazancı</span>
+                    <span class="text-emerald-300 font-medium">+${dailyWage.toFixed(2)} TL</span>
                 </div>
             `;
         }
         
         // Saat 18:00'den sonra
         return `
-            <div class="flex justify-between items-center border-t border-slate-700 pt-2">
-                <span class="text-slate-400 text-sm">Bugünün Kazancı:</span>
-                <span class="text-emerald-300 font-medium text-sm">+${dailyWage.toFixed(2)} TL (Eklendi)</span>
+            <div class="flex justify-between items-center border-t border-slate-700 pt-3">
+                <span class="text-slate-400 text-sm">Bugünün Kazancı</span>
+                <span class="text-emerald-300 font-medium">+${dailyWage.toFixed(2)} TL</span>
             </div>
         `;
     }
