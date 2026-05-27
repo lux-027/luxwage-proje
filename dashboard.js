@@ -731,9 +731,14 @@ class LuxWage {
                 ` : ''}
                 
                 <div class="flex items-center justify-between">
-                    <div class="text-sm">
-                        <span class="text-gray-500">Borç: </span>
-                        <span class="font-bold ${this.calculateCurrentDebt(emp) > 0 ? 'text-red-500' : 'text-green-500'}">${this.calculateCurrentDebt(emp).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                    <div class="mt-4 p-3 bg-slate-800 rounded-lg border border-slate-700 flex flex-col gap-2">
+                        <!-- Borç Bilgisi -->
+                        <div class="flex justify-between items-center">
+                            <span class="text-slate-400 text-sm">Toplam Borç:</span>
+                            <span class="text-emerald-400 font-bold text-lg">${this.calculateCurrentDebt(emp).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                        </div>
+                        
+                        <!-- Bugünün Kazancı -->
                         ${this.getTodayEarningInfo(emp)}
                     </div>
                     <div class="flex space-x-2">
@@ -1474,13 +1479,25 @@ class LuxWage {
         // Bugün kapalı gün ise
         if (this.isClosedDay(today, employee)) return '';
         
+        const dailyWage = this.calculateDailyWage(employee);
+        
         // Saat 18:00'den önceyse
         if (currentHour < 18) {
-            const dailyWage = this.calculateDailyWage(employee);
-            return `<span class="text-xs text-blue-400 ml-2">(+${dailyWage.toFixed(2)} TL Bugün 18:00'de eklenecek)</span>`;
+            return `
+                <div class="flex justify-between items-center border-t border-slate-700 pt-2">
+                    <span class="text-slate-400 text-sm">Bugünün Kazancı:</span>
+                    <span class="text-emerald-300 font-medium text-sm">+${dailyWage.toFixed(2)} TL (18:00'de)</span>
+                </div>
+            `;
         }
         
-        return '';
+        // Saat 18:00'den sonra
+        return `
+            <div class="flex justify-between items-center border-t border-slate-700 pt-2">
+                <span class="text-slate-400 text-sm">Bugünün Kazancı:</span>
+                <span class="text-emerald-300 font-medium text-sm">+${dailyWage.toFixed(2)} TL (Eklendi)</span>
+            </div>
+        `;
     }
     
     // Mevcut borcu hesapla (günlük bazda)
@@ -1786,11 +1803,9 @@ function openDailyDetails(employeeId) {
     
     // Çalışma süresi bilgisi
     let workDurationInfo = '';
-    let todayEarningInfo = '';
     if (employee.startDate) {
         const startDate = new Date(employee.startDate);
         const today = new Date();
-        const currentHour = today.getHours();
         startDate.setHours(0, 0, 0, 0);
         today.setHours(0, 0, 0, 0);
         
@@ -1803,33 +1818,6 @@ function openDailyDetails(employeeId) {
         }
         
         const formattedStartDate = startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-        const dailyWage = luxwage.calculateDailyWage(employee);
-        
-        // Bugünün kazancı bilgisi
-        const isTodayClosed = luxwage.isClosedDay(today, employee);
-        if (!isTodayClosed && !employee.isStopped) {
-            if (currentHour >= 18 || currentHour < 7) {
-                // 18:00'den sonra veya sabah 7'den önce - bugün zaten eklendi/bekleniyor
-                todayEarningInfo = `
-                    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mt-3">
-                        <p class="text-sm text-emerald-700">
-                            <i class="fas fa-check-circle mr-2"></i>
-                            <strong>Bugünün Kazancı:</strong> ${dailyWage.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL (Borça Eklendi)
-                        </p>
-                    </div>
-                `;
-            } else {
-                // 07:00 - 18:00 arası - bugün henüz eklenmedi, beklüyor
-                todayEarningInfo = `
-                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
-                        <p class="text-sm text-amber-700">
-                            <i class="fas fa-clock mr-2"></i>
-                            <strong>Bugünün Kazancı:</strong> ${dailyWage.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL saat 18:00'de eklenecek (Bekliyor)
-                        </p>
-                    </div>
-                `;
-            }
-        }
         
         workDurationInfo = `
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
@@ -1851,7 +1839,6 @@ function openDailyDetails(employeeId) {
                         </p>
                     </div>
                 </div>
-                ${todayEarningInfo}
             </div>
         `;
     }
