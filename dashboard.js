@@ -1223,14 +1223,18 @@ class LuxWage {
         const logs = [];
         const today = new Date();
         const currentHour = today.getHours();
-        today.setHours(0, 0, 0, 0);
         
-        const startDate = employee.startDate ? new Date(employee.startDate) : new Date(today);
-        startDate.setHours(0, 0, 0, 0);
+        // Tarihleri YYYY-MM-DD string formatına çevir (saat farklarından etkilenmez)
+        const getDayString = (date) => date.toISOString().split('T')[0];
+        
+        const startDateStr = employee.startDate ? getDayString(new Date(employee.startDate)) : getDayString(today);
+        const todayStr = getDayString(today);
+        
+        const currentDate = new Date(startDateStr + 'T00:00:00');
+        const endDate = new Date(todayStr + 'T00:00:00');
         
         // startDate'dan bugüne kadar olan günleri hesapla (off-by-one hatası düzeltildi)
-        let currentDate = new Date(startDate);
-        while (currentDate <= today) {
+        while (currentDate <= endDate) {
             const dateStr = currentDate.toISOString().split('T')[0];
             const dayOfWeek = currentDate.getDay();
             
@@ -1263,10 +1267,10 @@ class LuxWage {
                 // Determine status based on date and time comparison
                 let status = 'pending';
                 
-                if (currentDate.toDateString() === today.toDateString()) {
+                if (currentDate.toDateString() === endDate.toDateString()) {
                     // Bugün - saat kontrolü
                     status = (currentHour >= 18) ? 'added' : 'pending';
-                } else if (currentDate < today) {
+                } else if (currentDate < endDate) {
                     // Geçmiş günler
                     status = 'added';
                 } else {
@@ -1838,10 +1842,14 @@ function openDailyDetails(employeeId) {
     // Çalışma süresi bilgisi
     let workDurationInfo = '';
     if (employee.startDate) {
-        const startDate = new Date(employee.startDate);
-        const today = new Date();
-        startDate.setHours(0, 0, 0, 0);
-        today.setHours(0, 0, 0, 0);
+        // Tarihleri YYYY-MM-DD string formatına çevir (saat farklarından etkilenmez)
+        const getDayString = (date) => date.toISOString().split('T')[0];
+        
+        const startDateStr = getDayString(new Date(employee.startDate));
+        const todayStr = getDayString(new Date());
+        
+        const startDate = new Date(startDateStr + 'T00:00:00');
+        const today = new Date(todayStr + 'T00:00:00');
         
         // Başlangıç tarihinden bugüne kadar geçen toplam gün sayısını hesapla (tüm günler, kapalı günler dahil)
         const diffTime = Math.abs(today - startDate);
