@@ -690,8 +690,9 @@ class LuxWage {
             const originalIndex = this.employees.indexOf(emp);
             const startDate = emp.startDate ? new Date(emp.startDate) : null;
             const startDateStr = startDate ? startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belirtilmemiş';
-            const workingDuration = emp.startDate ? this.calculateWorkingDuration(emp.startDate) : 'Belirtilmemiş';
-            const formattedDebt = (this.calculateCurrentDebt(emp) || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const dailyLogs = emp.startDate ? this.calculateDailyLogs(emp) : [];
+            const totalWorkDays = dailyLogs.length;
+            const formattedDebt = (emp.debt || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             
             return `
             <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
@@ -718,7 +719,7 @@ class LuxWage {
                 <div class="bg-blue-50 rounded-lg p-3 mb-4">
                     <div class="flex items-center">
                         <i class="fas fa-clock text-blue-500 mr-2"></i>
-                        <span class="text-sm text-blue-700 font-medium">${workingDuration}</span>
+                        <span class="text-sm text-blue-700 font-medium">${totalWorkDays} gün çalışıyor</span>
                     </div>
                 </div>
                 
