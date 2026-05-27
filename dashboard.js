@@ -1221,12 +1221,16 @@ class LuxWage {
     calculateDailyLogs(employee) {
         const logs = [];
         const today = new Date();
+        const currentHour = today.getHours();
         today.setHours(0, 0, 0, 0);
         
-        // Bugünden geriye doğru 10 gün hesapla
-        for (let i = 0; i < 10; i++) {
-            const currentDate = new Date(today);
-            currentDate.setDate(currentDate.getDate() - i);
+        const startDate = employee.startDate ? new Date(employee.startDate) : new Date(today);
+        startDate.setHours(0, 0, 0, 0);
+        
+        // startDate'dan bugüne kadar olan günleri hesapla
+        let currentDate = new Date(startDate);
+        
+        while (currentDate <= today) {
             const dateStr = currentDate.toISOString().split('T')[0];
             const dayOfWeek = currentDate.getDay();
             
@@ -1256,14 +1260,17 @@ class LuxWage {
                     dailyAmount = 0;
                 }
                 
-                // Determine status based on date comparison with today
+                // Determine status based on date and time comparison
                 let status = 'pending';
-                const rowDate = new Date(dateStr);
-                rowDate.setHours(0, 0, 0, 0);
                 
-                if (rowDate <= today) {
+                if (currentDate.toDateString() === today.toDateString()) {
+                    // Bugün - saat kontrolü
+                    status = (currentHour >= 18) ? 'added' : 'pending';
+                } else if (currentDate < today) {
+                    // Geçmiş günler
                     status = 'added';
                 } else {
+                    // Gelecek günler
                     status = 'pending';
                 }
                 
@@ -1278,9 +1285,13 @@ class LuxWage {
                     isClosedDay: isClosedDay
                 });
             }
+            
+            // Bir sonraki güne geç
+            currentDate.setDate(currentDate.getDate() + 1);
         }
         
-        return logs;
+        // En yeni gün en üstte olacak şekilde ters çevir
+        return logs.reverse();
     }
     
     // İşçiyi kalıcı olarak sil (şifre doğrulaması ile)
