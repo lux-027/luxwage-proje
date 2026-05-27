@@ -1810,17 +1810,30 @@ function openDailyDetails(employeeId) {
         const formattedStartDate = startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
         const dailyWage = luxwage.calculateDailyWage(employee);
         
-        // Bugünün kazancı 18:00'de eklenecek bilgisi
+        // Bugünün kazancı bilgisi
         const isTodayClosed = luxwage.isClosedDay(today, employee);
-        if (!isTodayClosed && !employee.isStopped && currentHour < 18) {
-            todayEarningInfo = `
-                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mt-3">
-                    <p class="text-sm text-emerald-700">
-                        <i class="fas fa-info-circle mr-2"></i>
-                        <strong>Bugünün Kazancı:</strong> ${dailyWage.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL saat 18:00'de eklenecek
-                    </p>
-                </div>
-            `;
+        if (!isTodayClosed && !employee.isStopped) {
+            if (currentHour >= 18 || currentHour < 7) {
+                // 18:00'den sonra veya sabah 7'den önce - bugün zaten eklendi/bekleniyor
+                todayEarningInfo = `
+                    <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mt-3">
+                        <p class="text-sm text-emerald-700">
+                            <i class="fas fa-check-circle mr-2"></i>
+                            <strong>Bugünün Kazancı:</strong> ${dailyWage.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL (Borça Eklendi)
+                        </p>
+                    </div>
+                `;
+            } else {
+                // 07:00 - 18:00 arası - bugün henüz eklenmedi, beklüyor
+                todayEarningInfo = `
+                    <div class="bg-amber-50 border border-amber-200 rounded-lg p-3 mt-3">
+                        <p class="text-sm text-amber-700">
+                            <i class="fas fa-clock mr-2"></i>
+                            <strong>Bugünün Kazancı:</strong> ${dailyWage.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL saat 18:00'de eklenecek (Bekliyor)
+                        </p>
+                    </div>
+                `;
+            }
         }
         
         workDurationInfo = `
