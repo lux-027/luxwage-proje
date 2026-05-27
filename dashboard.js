@@ -1789,33 +1789,39 @@ function openDailyDetails(employeeId) {
     
     // Çalışma süresi bilgisi
     let workDurationInfo = '';
+    let todayEarningInfo = '';
     if (employee.startDate) {
         const startDate = new Date(employee.startDate);
         const today = new Date();
+        const currentHour = today.getHours();
         startDate.setHours(0, 0, 0, 0);
         today.setHours(0, 0, 0, 0);
         
-        let years = today.getFullYear() - startDate.getFullYear();
-        let months = today.getMonth() - startDate.getMonth();
-        let days = today.getDate() - startDate.getDate();
-        
-        if (days < 0) {
-            months--;
-            const previousMonth = new Date(today.getFullYear(), today.getMonth(), 0);
-            days += previousMonth.getDate();
-        }
-        if (months < 0) {
-            years--;
-            months += 12;
+        // Başlangıç tarihinden bugüne kadar geçen gün sayısını hesapla (ileriye doğru)
+        let daysWorked = 0;
+        let tempDate = new Date(startDate);
+        while (tempDate <= today) {
+            if (!luxwage.isClosedDay(tempDate, employee) && !employee.isStopped) {
+                daysWorked++;
+            }
+            tempDate.setDate(tempDate.getDate() + 1);
         }
         
-        const parts = [];
-        if (years > 0) parts.push(`${years} Yıl`);
-        if (months > 0) parts.push(`${months} Ay`);
-        if (days > 0) parts.push(`${days} Gün`);
-        
-        const durationText = parts.length > 0 ? parts.join(', ') : 'Bugün başladı';
         const formattedStartDate = startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+        const dailyWage = luxwage.calculateDailyWage(employee);
+        
+        // Bugünün kazancı 18:00'de eklenecek bilgisi
+        const isTodayClosed = luxwage.isClosedDay(today, employee);
+        if (!isTodayClosed && !employee.isStopped && currentHour < 18) {
+            todayEarningInfo = `
+                <div class="bg-emerald-50 border border-emerald-200 rounded-lg p-3 mt-3">
+                    <p class="text-sm text-emerald-700">
+                        <i class="fas fa-info-circle mr-2"></i>
+                        <strong>Bugünün Kazancı:</strong> ${dailyWage.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL saat 18:00'de eklenecek
+                    </p>
+                </div>
+            `;
+        }
         
         workDurationInfo = `
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
@@ -1827,7 +1833,7 @@ function openDailyDetails(employeeId) {
                         </p>
                         <p class="text-sm text-blue-700 mt-1">
                             <i class="fas fa-clock mr-2"></i>
-                            <strong>Çalışma Süresi:</strong> ${durationText}
+                            <strong>Çalışılan Gün:</strong> ${daysWorked} gün
                         </p>
                     </div>
                     <div class="text-right">
@@ -1837,6 +1843,7 @@ function openDailyDetails(employeeId) {
                         </p>
                     </div>
                 </div>
+                ${todayEarningInfo}
             </div>
         `;
     }
