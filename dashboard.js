@@ -627,22 +627,27 @@ class LuxWage {
         const start = new Date(startDate);
         const now = new Date();
         
-        // Farkı hesapla
-        let years = now.getFullYear() - start.getFullYear();
-        let months = now.getMonth() - start.getMonth();
-        let days = now.getDate() - start.getDate();
+        // Tarih farkını gün olarak hesapla
+        const diffTime = Math.abs(now - start);
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
         
-        // Günleri ayarlama
-        if (days < 0) {
-            months--;
-            const previousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-            days += previousMonth.getDate();
+        // Günleri yıl, ay ve güne çevir
+        let years = Math.floor(diffDays / 365);
+        let remainingDays = diffDays % 365;
+        let months = Math.floor(remainingDays / 30);
+        let days = remainingDays % 30;
+        
+        // Eğer sadece 1 aydan az ise, 0 Ay, X Gün şeklinde göster
+        if (years === 0 && months === 0 && days > 0) {
+            return `${days} Gün süredir çalışıyor`;
         }
         
-        // Ayları ayarlama
-        if (months < 0) {
-            years--;
-            months += 12;
+        // Eğer sadece 1 yıldan az ise, X Ay, Y Gün şeklinde göster
+        if (years === 0 && months > 0) {
+            const parts = [];
+            parts.push(`${months} Ay`);
+            if (days > 0) parts.push(`${days} Gün`);
+            return parts.join(', ') + ' süredir çalışıyor';
         }
         
         // Formatla
@@ -1214,17 +1219,12 @@ class LuxWage {
     calculateDailyLogs(employee) {
         const logs = [];
         const today = new Date();
-        const startDate = employee.startDate ? new Date(employee.startDate) : new Date(today);
-        
-        // Başlangıç tarihini bugünün başlangıcı olarak ayarla
-        startDate.setHours(0, 0, 0, 0);
         today.setHours(0, 0, 0, 0);
         
-        // Başlangıç tarihinden bugüne kadar olan günleri hesapla (maksimum 10 gün)
-        let currentDate = new Date(startDate);
-        let dayCount = 0;
-        
-        while (currentDate <= today && dayCount < 10) {
+        // Bugünden geriye doğru 10 gün hesapla
+        for (let i = 0; i < 10; i++) {
+            const currentDate = new Date(today);
+            currentDate.setDate(currentDate.getDate() - i);
             const dateStr = currentDate.toISOString().split('T')[0];
             const dayOfWeek = currentDate.getDay();
             
@@ -1254,13 +1254,15 @@ class LuxWage {
                     dailyAmount = 0;
                 }
                 
-                // Determine status based on payment history
+                // Determine status based on date comparison with today
                 let status = 'pending';
-                if (employee.paymentHistory) {
-                    const paymentOnDate = employee.paymentHistory.find(p => p.date === dateStr);
-                    if (paymentOnDate) {
-                        status = 'paid';
-                    }
+                const rowDate = new Date(dateStr);
+                rowDate.setHours(0, 0, 0, 0);
+                
+                if (rowDate <= today) {
+                    status = 'added';
+                } else {
+                    status = 'pending';
                 }
                 
                 // Check if work was stopped on this day
@@ -1274,14 +1276,9 @@ class LuxWage {
                     isClosedDay: isClosedDay
                 });
             }
-            
-            // Bir sonraki güne geç
-            currentDate.setDate(currentDate.getDate() + 1);
-            dayCount++;
         }
         
-        // En yeni gün en üstte olacak şekilde ters çevir
-        return logs.reverse();
+        return logs;
     }
     
     // İşçiyi kalıcı olarak sil (şifre doğrulaması ile)
@@ -1797,13 +1794,11 @@ function openDailyDetails(employeeId) {
         startDate.setHours(0, 0, 0, 0);
         today.setHours(0, 0, 0, 0);
         
-        // Başlangıç tarihinden bugüne kadar geçen gün sayısını hesapla (ileriye doğru)
+        // Başlangıç tarihinden bugüne kadar geçen toplam gün sayısını hesapla (tüm günler, kapalı günler dahil)
         let daysWorked = 0;
         let tempDate = new Date(startDate);
         while (tempDate <= today) {
-            if (!luxwage.isClosedDay(tempDate, employee) && !employee.isStopped) {
-                daysWorked++;
-            }
+            daysWorked++;
             tempDate.setDate(tempDate.getDate() + 1);
         }
         
@@ -1886,9 +1881,9 @@ function openDailyDetails(employeeId) {
                 rowClass = 'bg-gray-50';
                 statusText = 'Kapalı Gün';
                 statusClass = 'text-gray-500';
-            } else if (log.status === 'paid') {
+            } else if (log.status === 'added') {
                 rowClass = 'bg-green-50';
-                statusText = 'Ödendi';
+                statusText = 'Eklendi';
                 statusClass = 'text-green-600 font-semibold';
             } else {
                 rowClass = 'bg-yellow-50';
