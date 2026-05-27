@@ -1227,7 +1227,7 @@ class LuxWage {
         const startDate = employee.startDate ? new Date(employee.startDate) : new Date(today);
         startDate.setHours(0, 0, 0, 0);
         
-        // startDate'dan bugüne kadar olan günleri hesapla
+        // startDate'dan bugüne kadar olan günleri hesapla (off-by-one hatası düzeltildi)
         let currentDate = new Date(startDate);
         
         while (currentDate <= today) {
@@ -1818,12 +1818,7 @@ function openDailyDetails(employeeId) {
         today.setHours(0, 0, 0, 0);
         
         // Başlangıç tarihinden bugüne kadar geçen toplam gün sayısını hesapla (tüm günler, kapalı günler dahil)
-        let daysWorked = 0;
-        let tempDate = new Date(startDate);
-        while (tempDate <= today) {
-            daysWorked++;
-            tempDate.setDate(tempDate.getDate() + 1);
-        }
+        const daysWorked = Math.floor((today - startDate) / (1000 * 60 * 60 * 24));
         
         const formattedStartDate = startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
         
