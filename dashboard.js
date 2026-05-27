@@ -257,8 +257,7 @@ class LuxWage {
             });
         }
         
-        // Salary amount auto-format with Turkish thousand separator
-        const salaryAmount = document.getElementById('salaryAmount');
+        // Salary amount auto-format with Turkish thousand separator (salaryAmount already declared above)
         if (salaryAmount) {
             salaryAmount.addEventListener('input', (e) => {
                 let val = e.target.value.replace(/\D/g, '');
