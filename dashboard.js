@@ -1787,10 +1787,64 @@ function openDailyDetails(employeeId) {
     // 10 günlük günlük hesapla ve göster
     const dailyLogs = luxwage.calculateDailyLogs(employee);
     
+    // Çalışma süresi bilgisi
+    let workDurationInfo = '';
+    if (employee.startDate) {
+        const startDate = new Date(employee.startDate);
+        const today = new Date();
+        startDate.setHours(0, 0, 0, 0);
+        today.setHours(0, 0, 0, 0);
+        
+        let years = today.getFullYear() - startDate.getFullYear();
+        let months = today.getMonth() - startDate.getMonth();
+        let days = today.getDate() - startDate.getDate();
+        
+        if (days < 0) {
+            months--;
+            const previousMonth = new Date(today.getFullYear(), today.getMonth(), 0);
+            days += previousMonth.getDate();
+        }
+        if (months < 0) {
+            years--;
+            months += 12;
+        }
+        
+        const parts = [];
+        if (years > 0) parts.push(`${years} Yıl`);
+        if (months > 0) parts.push(`${months} Ay`);
+        if (days > 0) parts.push(`${days} Gün`);
+        
+        const durationText = parts.length > 0 ? parts.join(', ') : 'Bugün başladı';
+        const formattedStartDate = startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+        
+        workDurationInfo = `
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                <div class="flex items-center justify-between flex-wrap gap-2">
+                    <div>
+                        <p class="text-sm text-blue-700">
+                            <i class="fas fa-calendar-check mr-2"></i>
+                            <strong>İşe Başlama:</strong> ${formattedStartDate}
+                        </p>
+                        <p class="text-sm text-blue-700 mt-1">
+                            <i class="fas fa-clock mr-2"></i>
+                            <strong>Çalışma Süresi:</strong> ${durationText}
+                        </p>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-sm text-blue-700">
+                            <i class="fas fa-list mr-2"></i>
+                            <strong>Gösterilen:</strong> Son ${Math.min(dailyLogs.length, 10)} gün
+                        </p>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+    
     if (dailyLogs.length === 0) {
-        dailyDetailsList.innerHTML = '<p class="text-gray-500 text-center py-4">Henüz günlük kayıt yok</p>';
+        dailyDetailsList.innerHTML = workDurationInfo + '<p class="text-gray-500 text-center py-4">Henüz günlük kayıt yok</p>';
     } else {
-        let dailyLogsHTML = '<table class="w-full"><thead><tr class="bg-gray-200">';
+        let dailyLogsHTML = workDurationInfo + '<table class="w-full"><thead><tr class="bg-gray-200">';
         dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Tarih</th>';
         dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Günlük Tutar</th>';
         dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Durum</th>';
