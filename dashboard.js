@@ -1224,18 +1224,21 @@ class LuxWage {
         const today = new Date();
         const currentHour = today.getHours();
         
-        // Tarihleri YYYY-MM-DD string formatına çevir (saat farklarından etkilenmez)
-        const getDayString = (date) => date.toISOString().split('T')[0];
+        // Tarihleri yerel saatle "YYYY-MM-DD" formatına çevir (saat farklarından etkilenmez)
+        const toDateString = (date) => {
+            const d = new Date(date);
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        };
         
-        const startDateStr = employee.startDate ? getDayString(new Date(employee.startDate)) : getDayString(today);
-        const todayStr = getDayString(today);
+        const startDateStr = employee.startDate ? toDateString(employee.startDate) : toDateString(today);
+        const todayStr = toDateString(today);
         
         const currentDate = new Date(startDateStr + 'T00:00:00');
         const endDate = new Date(todayStr + 'T00:00:00');
         
         // startDate'dan bugüne kadar olan günleri hesapla (off-by-one hatası düzeltildi)
         while (currentDate <= endDate) {
-            const dateStr = currentDate.toISOString().split('T')[0];
+            const dateStr = toDateString(currentDate);
             const dayOfWeek = currentDate.getDay();
             
             // Check if this day is a closed day
@@ -1842,18 +1845,20 @@ function openDailyDetails(employeeId) {
     // Çalışma süresi bilgisi
     let workDurationInfo = '';
     if (employee.startDate) {
-        // Tarihleri YYYY-MM-DD string formatına çevir (saat farklarından etkilenmez)
-        const getDayString = (date) => date.toISOString().split('T')[0];
+        // Tarihleri yerel saatle "YYYY-MM-DD" formatına çevir (saat farklarından etkilenmez)
+        const toDateString = (date) => {
+            const d = new Date(date);
+            return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+        };
         
-        const startDateStr = getDayString(new Date(employee.startDate));
-        const todayStr = getDayString(new Date());
+        const startDateStr = toDateString(employee.startDate);
+        const todayStr = toDateString(new Date());
         
         const startDate = new Date(startDateStr + 'T00:00:00');
         const today = new Date(todayStr + 'T00:00:00');
         
         // Başlangıç tarihinden bugüne kadar geçen toplam gün sayısını hesapla (tüm günler, kapalı günler dahil)
-        const diffTime = Math.abs(today - startDate);
-        const daysWorked = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+        const daysWorked = dailyLogs.length;
         
         const formattedStartDate = startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
         
