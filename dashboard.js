@@ -705,6 +705,19 @@ class LuxWage {
             const formattedDailyRate = rateValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const totalWorkDays = dailyLogs.length;
             
+            // Status check for today's earnings display
+            const today = new Date();
+            const todayStatus = this.getStatusForDate(today);
+            const isPending = todayStatus === "Bekleniyor";
+            
+            // Dynamic styling based on status
+            const textColor = isPending ? "text-slate-400" : "text-emerald-400";
+            const labelText = isPending ? "Bekleniyor..." : `+${formattedDailyRate} TL`;
+            const bgColor = isPending ? "bg-slate-700/20" : "bg-emerald-500/10";
+            const borderColor = isPending ? "border-slate-700/50" : "border-emerald-500/20";
+            const labelTextColor = isPending ? "text-slate-400" : "text-emerald-300";
+            const labelTextHeader = isPending ? "Durum" : "Kazanç";
+            
             return `
             <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between mb-4">
@@ -752,9 +765,9 @@ class LuxWage {
                         </div>
                         
                         <!-- Kazanç Kutusu -->
-                        <div class="bg-emerald-500/10 backdrop-blur-sm border border-emerald-500/20 px-5 py-2 rounded-xl min-w-[130px]">
-                            <p class="text-[10px] text-emerald-300 uppercase font-semibold">Kazanç</p>
-                            <p class="text-sm font-bold text-emerald-400">+${formattedDailyRate} TL</p>
+                        <div class="${bgColor} backdrop-blur-sm border ${borderColor} px-5 py-2 rounded-xl min-w-[130px]">
+                            <p class="text-[10px] ${labelTextColor} uppercase font-semibold">${labelTextHeader}</p>
+                            <p class="text-sm font-bold ${textColor}">${labelText}</p>
                         </div>
                     </div>
                     <div class="flex space-x-2">
