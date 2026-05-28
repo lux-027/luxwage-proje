@@ -692,14 +692,12 @@ class LuxWage {
             const startDateStr = startDate ? startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belirtilmemiş';
             const dailyLogs = emp.startDate ? this.calculateDailyLogs(emp) : [];
             
-            // Calculate debt using only "Eklendi" (added) status days
-            const dailyRate = this.calculateDailyWage(emp) || 0;
-            const addedDays = dailyLogs.filter(log => log.status === 'added').length;
-            const calculatedDebt = addedDays * dailyRate;
-            emp.debt = calculatedDebt;
+            // Calculate debt using calculateCurrentDebt (includes payments)
+            const debtValue = this.calculateCurrentDebt(emp);
+            emp.debt = debtValue;
             
             // Safe variable definitions with fallback values
-            const debtValue = emp.debt || 0;
+            const dailyRate = this.calculateDailyWage(emp) || 0;
             const rateValue = dailyRate || 0;
             const formattedDebt = debtValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const formattedDailyRate = rateValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -711,9 +709,9 @@ class LuxWage {
             const isPending = todayStatus === "Bekleniyor";
             
             // Dynamic styling based on status
-            const bgColor = isPending ? "bg-orange-500/20" : "bg-emerald-500/20";
-            const borderColor = isPending ? "border-orange-500/30" : "border-emerald-500/30";
-            const textColor = isPending ? "text-orange-400" : "text-emerald-400";
+            const bgColor = isPending ? "bg-orange-500/50" : "bg-emerald-500/20";
+            const borderColor = isPending ? "border-orange-500/50" : "border-emerald-500/30";
+            const textColor = isPending ? "text-white" : "text-emerald-400";
             const titleText = isPending ? "Bekleniyor" : "Eklenecek Tutar";
             const amountText = isPending ? `${formattedDailyRate} TL Eklenecek` : `+${formattedDailyRate} TL`;
             
