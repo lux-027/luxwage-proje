@@ -758,15 +758,15 @@ class LuxWage {
                 <div class="flex items-center justify-between">
                     <div class="flex gap-3 mt-3">
                         <!-- Borç Kutusu -->
-                        <div class="bg-gradient-to-br from-blue-500/30 to-blue-600/40 backdrop-blur-xl border border-blue-300/50 shadow-lg p-4 rounded-xl min-w-[140px]">
-                            <p class="text-[11px] text-blue-100 uppercase font-semibold tracking-wide">Borç</p>
-                            <p class="text-lg font-bold text-white drop-shadow-md">${formattedDebt} TL</p>
+                        <div class="bg-gradient-to-br from-blue-500/70 to-blue-600/80 backdrop-blur-md border border-blue-300/60 shadow-md p-3 rounded-xl min-w-[140px]">
+                            <p class="text-[10px] text-blue-50 uppercase font-semibold tracking-wide">Borç</p>
+                            <p class="text-sm font-bold text-white">${formattedDebt} TL</p>
                         </div>
                         
                         <!-- Kazanç Kutusu -->
-                        <div class="${bgColor} backdrop-blur-xl border ${borderColor} shadow-lg p-4 rounded-xl min-w-[140px]">
-                            <p class="text-[11px] ${textColor} uppercase font-semibold tracking-wide">${titleText}</p>
-                            <p class="text-lg font-bold text-white drop-shadow-md">${amountText}</p>
+                        <div class="${bgColor} backdrop-blur-md border ${borderColor} shadow-md p-3 rounded-xl min-w-[140px]">
+                            <p class="text-[10px] ${textColor} uppercase font-semibold tracking-wide">${titleText}</p>
+                            <p class="text-sm font-bold text-white">${amountText}</p>
                         </div>
                     </div>
                     <div class="flex space-x-2">
