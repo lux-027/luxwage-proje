@@ -693,13 +693,17 @@ class LuxWage {
             const dailyLogs = emp.startDate ? this.calculateDailyLogs(emp) : [];
             
             // Calculate debt using only "Eklendi" (added) status days
-            const dailyRate = this.calculateDailyWage(emp);
+            const dailyRate = this.calculateDailyWage(emp) || 0;
             const addedDays = dailyLogs.filter(log => log.status === 'added').length;
             const calculatedDebt = addedDays * dailyRate;
             emp.debt = calculatedDebt;
             
-            const formattedDebt = (emp.debt || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            const formattedDailyRate = dailyRate.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            // Safe variable definitions with fallback values
+            const debtValue = emp.debt || 0;
+            const rateValue = dailyRate || 0;
+            const formattedDebt = debtValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const formattedDailyRate = rateValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            const totalWorkDays = dailyLogs.length;
             
             return `
             <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
