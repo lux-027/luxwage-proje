@@ -2429,39 +2429,223 @@ function calculateDebtInfo(employee) {
     };
 }
 
+// Borç bildirimlerini hesapla (geçmiş dönemler için)
+function calculateDebtNotifications(employee) {
+    const notifications = [];
+    const now = new Date();
+    const today = new Date(now);
+    today.setHours(0, 0, 0, 0);
+    
+    if (!employee.startDate) return notifications;
+    
+    const startDate = new Date(employee.startDate);
+    startDate.setHours(0, 0, 0, 0);
+    
+    const dailyWage = luxwage.calculateDailyWage(employee);
+    
+    if (employee.salaryType === 'weekly' || employee.salaryType === 'daily') {
+        // Haftalık ve günlük için: Her Pazar günü bildirim
+        // Son 12 haftayı hesapla
+        let currentWeekEnd = new Date(today);
+        const dayOfWeek = today.getDay();
+        const daysUntilSunday = (7 - dayOfWeek) % 7;
+        currentWeekEnd.setDate(currentWeekEnd.getDate() + daysUntilSunday);
+        
+        for (let i = 0; i < 12; i++) {
+            const weekStart = new Date(currentWeekEnd);
+            weekStart.setDate(weekStart.getDate() - 6);
+            weekStart.setHours(0, 0, 0, 0);
+            
+            const weekEnd = new Date(currentWeekEnd);
+            weekEnd.setHours(23, 59, 59, 999);
+            
+            // Hafta başlangıcı işe başlama tarihinden önceyse atla
+            if (weekStart < startDate) {
+                currentWeekEnd.setDate(currentWeekEnd.getDate() - 7);
+                continue;
+            }
+            
+            // Hafta içindeki borç hesapla
+            let periodDebt = 0;
+            const currentDate = new Date(weekStart);
+            while (currentDate <= weekEnd) {
+                if (!luxwage.isClosedDay(currentDate, employee)) {
+                    const currentDateStr = currentDate.toISOString().split('T')[0];
+                    const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+                    
+                    if (!isAbsentDay) {
+                        const isToday = currentDate.getTime() === today.getTime();
+                        const currentHour = now.getHours();
+                        
+                        if (isToday) {
+                            if (currentHour >= 18) {
+                                periodDebt += dailyWage;
+                            }
+                        } else {
+                            periodDebt += dailyWage;
+                        }
+                    }
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            // O tarihteki toplam borcu hesapla (tahmini)
+            const totalDebtAtPeriod = calculateDebtAtDate(employee, weekEnd);
+            
+            if (periodDebt > 0 || totalDebtAtPeriod > 0) {
+                notifications.push({
+                    employeeName: employee.name,
+                    date: weekEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
+                    periodDebt: periodDebt,
+                    totalDebt: totalDebtAtPeriod,
+                    periodLabel: 'Haftalık'
+                });
+            }
+            
+            currentWeekEnd.setDate(currentWeekEnd.getDate() - 7);
+        }
+    } else if (employee.salaryType === 'monthly') {
+        // Aylık için: İşe başlama tarihine göre her ay aynı gün
+        const startDay = startDate.getDate();
+        
+        for (let i = 0; i < 12; i++) {
+            const monthStart = new Date(today.getFullYear(), today.getMonth() - i, startDay);
+            monthStart.setHours(0, 0, 0, 0);
+            
+            const monthEnd = new Date(today.getFullYear(), today.getMonth() - i + 1, startDay - 1);
+            monthEnd.setHours(23, 59, 59, 999);
+            
+            // Ay başlangıcı işe başlama tarihinden önceyse atla
+            if (monthStart < startDate) {
+                continue;
+            }
+            
+            // Ay içindeki borç hesapla
+            let periodDebt = 0;
+            const currentDate = new Date(monthStart);
+            while (currentDate <= monthEnd) {
+                if (!luxwage.isClosedDay(currentDate, employee)) {
+                    const currentDateStr = currentDate.toISOString().split('T')[0];
+                    const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+                    
+                    if (!isAbsentDay) {
+                        const isToday = currentDate.getTime() === today.getTime();
+                        const currentHour = now.getHours();
+                        
+                        if (isToday) {
+                            if (currentHour >= 18) {
+                                periodDebt += dailyWage;
+                            }
+                        } else {
+                            periodDebt += dailyWage;
+                        }
+                    }
+                }
+                currentDate.setDate(currentDate.getDate() + 1);
+            }
+            
+            // O tarihteki toplam borcu hesapla (tahmini)
+            const totalDebtAtPeriod = calculateDebtAtDate(employee, monthEnd);
+            
+            if (periodDebt > 0 || totalDebtAtPeriod > 0) {
+                notifications.push({
+                    employeeName: employee.name,
+                    date: monthEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
+                    periodDebt: periodDebt,
+                    totalDebt: totalDebtAtPeriod,
+                    periodLabel: 'Aylık'
+                });
+            }
+        }
+    }
+    
+    return notifications;
+}
+
+// Belirli bir tarihteki borcu hesapla
+function calculateDebtAtDate(employee, targetDate) {
+    const startDate = new Date(employee.startDate);
+    startDate.setHours(0, 0, 0, 0);
+    
+    const target = new Date(targetDate);
+    target.setHours(23, 59, 59, 999);
+    
+    if (target < startDate) return 0;
+    
+    const dailyWage = luxwage.calculateDailyWage(employee);
+    let totalDebt = 0;
+    
+    const currentDate = new Date(startDate);
+    while (currentDate <= target) {
+        if (!luxwage.isClosedDay(currentDate, employee)) {
+            const currentDateStr = currentDate.toISOString().split('T')[0];
+            const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+            
+            if (!isAbsentDay) {
+                totalDebt += dailyWage;
+            }
+        }
+        currentDate.setDate(currentDate.getDate() + 1);
+    }
+    
+    // O tarihe kadar olan ödemeleri çıkar
+    if (employee.paymentHistory && employee.paymentHistory.length > 0) {
+        employee.paymentHistory.forEach(payment => {
+            const paymentDate = new Date(payment.date);
+            if (paymentDate <= target) {
+                totalDebt -= Math.abs(Number(payment.amount) || 0);
+            }
+        });
+    }
+    
+    // O tarihe kadar olan devamsızlık kesintilerini ekle
+    if (employee.absenceHistory && employee.absenceHistory.length > 0) {
+        employee.absenceHistory.forEach(absence => {
+            const absenceDate = new Date(absence.date);
+            if (absenceDate <= target) {
+                totalDebt += Number(absence.deduction) || 0;
+            }
+        });
+    }
+    
+    return totalDebt;
+}
+
 // Geçmiş içeriğini oluştur
 function generateHistoryContent(employee, recentPayments, recentAbsences, category) {
     let html = '';
     
     if (category === 'debt') {
-        // Borç bilgisi göster
-        const debtInfo = calculateDebtInfo(employee);
-        html += `
-            <div class="bg-purple-50 rounded-lg p-4 mb-4 border-l-4 border-purple-500">
-                <h3 class="font-bold text-gray-800 mb-3">Borç Bilgisi</h3>
-                <div class="space-y-3">
-                    <div class="flex justify-between items-center bg-white rounded-lg p-3">
-                        <span class="text-gray-700 font-medium">Toplam Borç</span>
-                        <span class="font-bold text-purple-700">${debtInfo.totalDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                    </div>
-                    <div class="flex justify-between items-center bg-white rounded-lg p-3">
-                        <span class="text-gray-700 font-medium">${debtInfo.periodLabel} Ekle</span>
-                        <span class="font-bold text-red-500">+${debtInfo.periodDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                    </div>
-                    <div class="flex justify-between items-center bg-white rounded-lg p-3">
-                        <span class="text-gray-700 font-medium">Ödenen Tutar</span>
-                        <span class="font-bold text-green-500">-${debtInfo.totalPaid.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                    </div>
-                    <div class="flex justify-between items-center bg-white rounded-lg p-3">
-                        <span class="text-gray-700 font-medium">Devamsızlık Kesintisi</span>
-                        <span class="font-bold text-red-500">+${debtInfo.totalDeduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
-                    </div>
-                </div>
-            </div>
-        `;
+        // Borç bildirimlerini göster (bildirim kartları formatında)
+        const debtNotifications = calculateDebtNotifications(employee);
         
-        if (html === '') {
-            html = '<p class="text-gray-500 text-center">Borç bilgisi hesaplanamadı</p>';
+        if (debtNotifications.length === 0) {
+            html = '<p class="text-gray-500 text-center">Henüz borç bildirimi yok</p>';
+        } else {
+            html += '<h3 class="font-bold text-gray-800 mb-3">Borç Bildirimleri</h3>';
+            
+            debtNotifications.forEach(notification => {
+                html += `
+                    <div class="bg-purple-50 rounded-lg p-4 mb-4 border-l-4 border-purple-500 hover:bg-purple-100 transition-colors">
+                        <div class="flex justify-between items-center mb-2">
+                            <div>
+                                <p class="font-bold text-gray-800">${notification.employeeName}</p>
+                                <p class="text-xs text-gray-500">${notification.date}</p>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-bold text-red-500">+${notification.periodDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
+                                <p class="text-xs text-gray-500">${notification.periodLabel}</p>
+                            </div>
+                        </div>
+                        <div class="bg-white rounded-lg p-3 mt-2">
+                            <p class="text-sm text-gray-700">
+                                <span class="font-medium">Toplam Borç:</span> 
+                                <span class="font-bold text-purple-700">${notification.totalDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                            </p>
+                        </div>
+                    </div>
+                `;
+            });
         }
         
         return html;
