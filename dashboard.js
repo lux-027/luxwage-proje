@@ -157,8 +157,19 @@ class LuxWage {
         this.setupEventListeners();
         this.updateCurrentDate();
         this.cleanupOldData();
+        this.recalculateAllDebts(); // Eski çalışanların borçlarını yeniden hesapla
         this.showPage('home');
         this.checkDebtNotifications();
+    }
+
+    // Tüm çalışanların borçlarını yeniden hesapla
+    recalculateAllDebts() {
+        console.log('Tüm çalışanların borçları yeniden hesaplanıyor...');
+        this.employees.forEach(employee => {
+            employee.debt = this.calculateCurrentDebt(employee);
+        });
+        this.saveData();
+        console.log('Borç hesaplaması tamamlandı.');
     }
 
     // Event Listener'ları kur
@@ -416,7 +427,10 @@ class LuxWage {
                 const currentDateStr = currentDate.toISOString().split('T')[0];
                 const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
                 
-                if (!isAbsentDay) {
+                // Devamsızlık günü ise borç çıkar
+                if (isAbsentDay) {
+                    periodDebt -= dailyWage;
+                } else {
                     const isToday = currentDate.getTime() === today.getTime();
                     const currentHour = now.getHours();
                     
@@ -2023,6 +2037,32 @@ class LuxWage {
             const dailyWage = this.calculateDailyWage(employee);
             let totalDebt = 0;
             
+            // İş durdurulma tarihine kadar borç hesapla
+            const startDate = new Date(employee.startDate);
+            startDate.setHours(0, 0, 0, 0);
+            
+            // İş durdurulma tarihini bul (son çalışma günü)
+            const dailyLogs = this.calculateDailyLogs(employee);
+            if (dailyLogs.length > 0) {
+                const lastWorkDate = new Date(dailyLogs[dailyLogs.length - 1].date);
+                const currentDate = new Date(startDate);
+                while (currentDate <= lastWorkDate) {
+                    if (!this.isClosedDay(currentDate, employee)) {
+                        const currentDateStr = currentDate.toISOString().split('T')[0];
+                        const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+                        
+                        // Devamsızlık günü ise borç çıkar
+                        if (isAbsentDay) {
+                            totalDebt -= dailyWage;
+                        } else {
+                            // Normal gün için borç ekle
+                            totalDebt += dailyWage;
+                        }
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+            }
+            
             // Ödemeleri çıkar
             if (employee.paymentHistory && employee.paymentHistory.length > 0) {
                 employee.paymentHistory.forEach(payment => {
@@ -2031,13 +2071,7 @@ class LuxWage {
                 });
             }
             
-            // Devamsızlıkları ekle
-            if (employee.absenceHistory && employee.absenceHistory.length > 0) {
-                employee.absenceHistory.forEach(absence => {
-                    console.log('Devamsızlık verisi:', absence);
-                    totalDebt += Number(absence.deduction) || 0;
-                });
-            }
+            // Devamsızlık kesintilerini EKLEME - zaten devamsızlık günlerinde borç eklenmedi
             
             console.log('İş durdurulmuş borç:', totalDebt);
             return totalDebt;
@@ -2058,7 +2092,16 @@ class LuxWage {
             const currentDate = new Date(startDate);
             while (currentDate < departureDate) {
                 if (!this.isClosedDay(currentDate, employee)) {
-                    totalDebt += dailyWage;
+                    const currentDateStr = currentDate.toISOString().split('T')[0];
+                    const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+                    
+                    // Devamsızlık günü ise borç çıkar
+                    if (isAbsentDay) {
+                        totalDebt -= dailyWage;
+                    } else {
+                        // Normal gün için borç ekle
+                        totalDebt += dailyWage;
+                    }
                 }
                 currentDate.setDate(currentDate.getDate() + 1);
             }
@@ -2071,13 +2114,7 @@ class LuxWage {
                 });
             }
             
-            // Devamsızlıkları ekle
-            if (employee.absenceHistory && employee.absenceHistory.length > 0) {
-                employee.absenceHistory.forEach(absence => {
-                    console.log('İşten çıkarılmış devamsızlık verisi:', absence);
-                    totalDebt += Number(absence.deduction) || 0;
-                });
-            }
+            // Devamsızlık kesintilerini EKLEME - zaten devamsızlık günlerinde borç eklenmedi
             
             console.log('İşten çıkarılmış borç:', totalDebt);
             return totalDebt;
@@ -2106,8 +2143,11 @@ class LuxWage {
                 // Devamsızlık günü kontrolü
                 const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
                 
-                // Devamsızlık günü ise para ekleme
-                if (!isAbsentDay) {
+                // Devamsızlık günü ise borç çıkar (geçmişe dönük devamsızlık için)
+                if (isAbsentDay) {
+                    totalDebt -= dailyWage;
+                } else {
+                    // Normal gün için borç ekle
                     // Bugün için saat kontrolü: 18:00'den önce ise dahil etme
                     if (isToday) {
                         if (currentHour >= 18) {
@@ -2130,13 +2170,7 @@ class LuxWage {
             });
         }
         
-        // Devamsızlık kesintilerini ekle
-        if (employee.absenceHistory && employee.absenceHistory.length > 0) {
-            employee.absenceHistory.forEach(absence => {
-                console.log('Aktif devamsızlık verisi:', absence);
-                totalDebt += Number(absence.deduction) || 0;
-            });
-        }
+        // Devamsızlık kesintilerini EKLEME - zaten devamsızlık günlerinde borç eklenmedi
         
         console.log('Aktif borç:', totalDebt);
         return totalDebt;
@@ -2473,7 +2507,10 @@ function calculateDebtNotifications(employee) {
                     const currentDateStr = currentDate.toISOString().split('T')[0];
                     const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
                     
-                    if (!isAbsentDay) {
+                    // Devamsızlık günü ise borç çıkar
+                    if (isAbsentDay) {
+                        periodDebt -= dailyWage;
+                    } else {
                         const isToday = currentDate.getTime() === today.getTime();
                         const currentHour = now.getHours();
                         
@@ -2528,7 +2565,10 @@ function calculateDebtNotifications(employee) {
                     const currentDateStr = currentDate.toISOString().split('T')[0];
                     const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
                     
-                    if (!isAbsentDay) {
+                    // Devamsızlık günü ise borç çıkar
+                    if (isAbsentDay) {
+                        periodDebt -= dailyWage;
+                    } else {
                         const isToday = currentDate.getTime() === today.getTime();
                         const currentHour = now.getHours();
                         
@@ -2581,7 +2621,11 @@ function calculateDebtAtDate(employee, targetDate) {
             const currentDateStr = currentDate.toISOString().split('T')[0];
             const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
             
-            if (!isAbsentDay) {
+            // Devamsızlık günü ise borç çıkar
+            if (isAbsentDay) {
+                totalDebt -= dailyWage;
+            } else {
+                // Normal gün için borç ekle
                 totalDebt += dailyWage;
             }
         }
@@ -2598,15 +2642,7 @@ function calculateDebtAtDate(employee, targetDate) {
         });
     }
     
-    // O tarihe kadar olan devamsızlık kesintilerini ekle
-    if (employee.absenceHistory && employee.absenceHistory.length > 0) {
-        employee.absenceHistory.forEach(absence => {
-            const absenceDate = new Date(absence.date);
-            if (absenceDate <= target) {
-                totalDebt += Number(absence.deduction) || 0;
-            }
-        });
-    }
+    // Devamsızlık kesintilerini EKLEME - zaten devamsızlık günlerinde borç eklenmedi
     
     return totalDebt;
 }
