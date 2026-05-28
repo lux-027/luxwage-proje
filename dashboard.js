@@ -691,11 +691,11 @@ class LuxWage {
             const startDate = emp.startDate ? new Date(emp.startDate) : null;
             const startDateStr = startDate ? startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belirtilmemiş';
             const dailyLogs = emp.startDate ? this.calculateDailyLogs(emp) : [];
-            const totalWorkDays = dailyLogs.length;
             
-            // Calculate debt using logList.length * dailyRate
+            // Calculate debt using only "Eklendi" (added) status days
             const dailyRate = this.calculateDailyWage(emp);
-            const calculatedDebt = totalWorkDays * dailyRate;
+            const addedDays = dailyLogs.filter(log => log.status === 'added').length;
+            const calculatedDebt = addedDays * dailyRate;
             emp.debt = calculatedDebt;
             
             const formattedDebt = (emp.debt || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -1232,20 +1232,26 @@ class LuxWage {
         this.pendingWorkStopIndex = null;
     }
 
-    // Günün tamamlanıp tamamlanmadığını kontrol et (18:00 kuralı)
-    isDayCompleted(date) {
+    // Günün durumunu belirle (7:00-18:00 kuralı)
+    getStatusForDate(date) {
         const now = new Date();
         const currentHour = now.getHours();
         
-        // Tarihleri saat farklarından etkilenmez şekilde karşılaştır
-        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-        const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-        
-        // Eğer tarih bugünden küçükse kesinlikle "Eklendi"
-        if (checkDate < today) return true;
-        // Eğer tarih bugünse ve saat 18:00'den büyükse "Eklendi", değilse "Bekleniyor"
-        if (checkDate.getTime() === today.getTime() && currentHour >= 18) return true;
-        return false;
+        const today = new Date(now.toDateString());
+        const target = new Date(date.toDateString());
+
+        // 1. Gelecek günler: Kesinlikle "Bekleniyor"
+        if (target > today) return "Bekleniyor";
+
+        // 2. Bugün:
+        if (target.getTime() === today.getTime()) {
+            if (currentHour < 7) return "Bekleniyor"; // 07:00 öncesi
+            if (currentHour >= 7 && currentHour < 18) return "Bekleniyor"; // 07:00 - 18:00 arası
+            return "Eklendi"; // 18:00 sonrası
+        }
+
+        // 3. Geçmiş günler: Kesinlikle "Eklendi"
+        return "Eklendi";
     }
 
     // 10 günlük günlük hesaplama
@@ -1297,8 +1303,9 @@ class LuxWage {
                     dailyAmount = 0;
                 }
                 
-                // Determine status based on isDayCompleted function
-                const status = this.isDayCompleted(currentDate) ? 'added' : 'pending';
+                // Determine status based on getStatusForDate function
+                const statusText = this.getStatusForDate(currentDate);
+                const status = statusText === 'Eklendi' ? 'added' : 'pending';
                 
                 // Check if work was stopped on this day
                 const isStopped = employee.isStopped || false;
@@ -1477,12 +1484,18 @@ class LuxWage {
         const worker = this.employees.find(w => w.id === workerId);
         if (worker) {
             // Borç değerini anında güncelle
-            worker.debt -= paymentAmount;
+            worker.debt = parseFloat(worker.debt) - parseFloat(paymentAmount);
             
-            // UI'ı tazele
-            this.renderEmployeesPage();
-            this.renderHomePage();
+            // UI'ı sadece ilgili kart için tazele
+            this.updateSingleWorkerCard(worker);
         }
+    }
+
+    // Tekil çalışan kartını güncelle (tüm sayfayı yeniden render etmeden)
+    updateSingleWorkerCard(worker) {
+        // Tüm sayfayı yeniden render et (daha optimize edilebilir)
+        this.renderEmployeesPage();
+        this.renderHomePage();
     }
 
     // Günlük ücret hesapla
@@ -1756,12 +1769,13 @@ function openPaymentModal(employeeIndex) {
     if (!employee) return;
     
     const currentDebt = luxwage.calculateCurrentDebt(employee);
+    const debtDisplay = currentDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
     
     document.getElementById('paymentEmployeeId').value = employee.id;
     document.getElementById('paymentEmployeeName').value = employee.name;
     document.getElementById('currentDebt').value = currentDebt.toFixed(2);
     document.getElementById('paymentAmount').value = '';
-    document.getElementById('remainingDebt').textContent = currentDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL';
+    document.getElementById('remainingDebt').textContent = debtDisplay + ' TL';
     
     openModal('paymentModal');
 };
