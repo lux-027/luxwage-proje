@@ -957,16 +957,22 @@ class LuxWage {
         }).join('');
         
         employeesSection.innerHTML = `
-            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-500 mb-4">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <p class="text-gray-500 text-sm">Toplam Çalışan</p>
-                        <p class="text-3xl font-bold text-gray-800">${activeEmployees.length}</p>
-                    </div>
-                    <div class="bg-emerald-100 p-3 rounded-full">
-                        <i class="fas fa-users text-emerald-500 text-2xl"></i>
+            <div class="flex items-center justify-between mb-4">
+                <div class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-emerald-500 max-w-xs">
+                    <div class="flex items-center justify-between">
+                        <div>
+                            <p class="text-gray-500 text-sm">Toplam Çalışan</p>
+                            <p class="text-2xl font-bold text-gray-800">${activeEmployees.length}</p>
+                        </div>
+                        <div class="bg-emerald-100 p-2 rounded-full">
+                            <i class="fas fa-users text-emerald-500 text-xl"></i>
+                        </div>
                     </div>
                 </div>
+                <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-6 py-3 rounded-lg hover:bg-emerald-600 transition-colors">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Yeni İşçi Ekle
+                </button>
             </div>
             <div class="grid gap-4">
                 ${employeesHTML}
