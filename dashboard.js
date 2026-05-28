@@ -278,15 +278,28 @@ class LuxWage {
 
     // LocalStorage'dan verileri yükle
     loadData() {
-        const employeesData = localStorage.getItem('luxwage-employees');
-        if (employeesData) {
-            this.employees = JSON.parse(employeesData);
+        try {
+            const employeesData = localStorage.getItem('luxwage-employees');
+            if (employeesData) {
+                const parsed = JSON.parse(employeesData);
+                this.employees = Array.isArray(parsed) ? parsed : [];
+            } else {
+                this.employees = [];
+            }
+        } catch (error) {
+            console.error('LocalStorage veri yükleme hatası:', error);
+            this.employees = [];
         }
     }
 
     // LocalStorage'a verileri kaydet
     saveData() {
-        localStorage.setItem('luxwage-employees', JSON.stringify(this.employees));
+        try {
+            console.log('Kaydedilen veri:', this.employees);
+            localStorage.setItem('luxwage-employees', JSON.stringify(this.employees));
+        } catch (error) {
+            console.error('LocalStorage veri kaydetme hatası:', error);
+        }
     }
 
     // Tarihi güncelle
@@ -830,12 +843,35 @@ class LuxWage {
             const todayStatus = this.getStatusForDate(today);
             const isPending = todayStatus === "Bekleniyor";
             
+            // Check if today is an absence day
+            const todayStr = today.toISOString().split('T')[0];
+            const isTodayAbsent = emp.absenceHistory && emp.absenceHistory.some(absence => absence.date === todayStr);
+            
             // Dynamic styling based on status
-            const bgColor = isPending ? "bg-orange-500/50" : "bg-emerald-500/20";
-            const borderColor = isPending ? "border-orange-500/50" : "border-emerald-500/30";
-            const textColor = isPending ? "text-white" : "text-emerald-400";
-            const titleText = isPending ? "Bekleniyor" : "Eklenecek Tutar";
-            const amountText = isPending ? `${formattedDailyRate} TL Eklenecek` : `+${formattedDailyRate} TL`;
+            let bgColor, borderColor, textColor, titleText, amountText;
+            
+            if (isTodayAbsent) {
+                // Devamsızlık günü - kırmızı kart
+                bgColor = "bg-red-500/50";
+                borderColor = "border-red-500/50";
+                textColor = "text-white";
+                titleText = "Bugün Gelmedi";
+                amountText = "Devamsızlık";
+            } else if (isPending) {
+                // Bekleniyor - turuncu kart
+                bgColor = "bg-orange-500/50";
+                borderColor = "border-orange-500/50";
+                textColor = "text-white";
+                titleText = "Bekleniyor";
+                amountText = `${formattedDailyRate} TL Eklenecek`;
+            } else {
+                // Eklenecek Tutar - yeşil kart
+                bgColor = "bg-emerald-500/20";
+                borderColor = "border-emerald-500/30";
+                textColor = "text-emerald-400";
+                titleText = "Eklenecek Tutar";
+                amountText = `+${formattedDailyRate} TL`;
+            }
             
             return `
             <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
@@ -1760,6 +1796,8 @@ class LuxWage {
     
     // Mevcut borcu hesapla (günlük bazda)
     calculateCurrentDebt(employee) {
+        console.log('calculateCurrentDebt çağrıldı, çalışan:', employee.name);
+        
         if (!employee.startDate) return 0;
         
         // İş durdurulmuşsa borç artışı durdur
@@ -1771,17 +1809,20 @@ class LuxWage {
             // Ödemeleri çıkar
             if (employee.paymentHistory && employee.paymentHistory.length > 0) {
                 employee.paymentHistory.forEach(payment => {
-                    totalDebt -= Math.abs(payment.amount);
+                    console.log('Ödeme verisi:', payment);
+                    totalDebt -= Math.abs(Number(payment.amount) || 0);
                 });
             }
             
             // Devamsızlıkları ekle
             if (employee.absenceHistory && employee.absenceHistory.length > 0) {
                 employee.absenceHistory.forEach(absence => {
-                    totalDebt += absence.deduction;
+                    console.log('Devamsızlık verisi:', absence);
+                    totalDebt += Number(absence.deduction) || 0;
                 });
             }
             
+            console.log('İş durdurulmuş borç:', totalDebt);
             return totalDebt;
         }
         
@@ -1808,17 +1849,20 @@ class LuxWage {
             // Ödemeleri çıkar
             if (employee.paymentHistory && employee.paymentHistory.length > 0) {
                 employee.paymentHistory.forEach(payment => {
-                    totalDebt -= Math.abs(payment.amount);
+                    console.log('İşten çıkarılmış ödeme verisi:', payment);
+                    totalDebt -= Math.abs(Number(payment.amount) || 0);
                 });
             }
             
             // Devamsızlıkları ekle
             if (employee.absenceHistory && employee.absenceHistory.length > 0) {
                 employee.absenceHistory.forEach(absence => {
-                    totalDebt += absence.deduction;
+                    console.log('İşten çıkarılmış devamsızlık verisi:', absence);
+                    totalDebt += Number(absence.deduction) || 0;
                 });
             }
             
+            console.log('İşten çıkarılmış borç:', totalDebt);
             return totalDebt;
         }
         
@@ -1857,17 +1901,20 @@ class LuxWage {
         // Ödemeleri çıkar
         if (employee.paymentHistory && employee.paymentHistory.length > 0) {
             employee.paymentHistory.forEach(payment => {
-                totalDebt -= Math.abs(payment.amount);
+                console.log('Aktif ödeme verisi:', payment);
+                totalDebt -= Math.abs(Number(payment.amount) || 0);
             });
         }
         
         // Devamsızlık kesintilerini ekle
         if (employee.absenceHistory && employee.absenceHistory.length > 0) {
             employee.absenceHistory.forEach(absence => {
-                totalDebt += absence.deduction;
+                console.log('Aktif devamsızlık verisi:', absence);
+                totalDebt += Number(absence.deduction) || 0;
             });
         }
         
+        console.log('Aktif borç:', totalDebt);
         return totalDebt;
     }
 
