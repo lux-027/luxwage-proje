@@ -852,22 +852,22 @@ class LuxWage {
             
             if (isTodayAbsent) {
                 // Devamsızlık günü - kırmızı kart
-                bgColor = "bg-red-500/50";
-                borderColor = "border-red-500/50";
+                bgColor = "bg-red-500/70";
+                borderColor = "border-red-500/70";
                 textColor = "text-white";
                 titleText = "Bugün Gelmedi";
                 amountText = "Devamsızlık";
             } else if (isPending) {
                 // Bekleniyor - turuncu kart
-                bgColor = "bg-orange-500/50";
-                borderColor = "border-orange-500/50";
+                bgColor = "bg-orange-500/70";
+                borderColor = "border-orange-500/70";
                 textColor = "text-white";
                 titleText = "Bekleniyor";
                 amountText = `${formattedDailyRate} TL Eklenecek`;
             } else {
                 // Eklenecek Tutar - yeşil kart
-                bgColor = "bg-emerald-500/20";
-                borderColor = "border-emerald-500/30";
+                bgColor = "bg-emerald-500/50";
+                borderColor = "border-emerald-500/50";
                 textColor = "text-emerald-400";
                 titleText = "Eklenecek Tutar";
                 amountText = `+${formattedDailyRate} TL`;
@@ -912,17 +912,17 @@ class LuxWage {
                 ` : ''}
                 
                 <div class="flex items-center justify-between">
-                    <div class="flex gap-3 mt-3">
+                    <div class="flex gap-2 mt-3">
                         <!-- Borç Kutusu -->
-                        <div class="bg-gradient-to-br from-blue-500/70 to-blue-600/80 backdrop-blur-md border border-blue-300/60 shadow-md p-3 rounded-xl min-w-[140px]">
-                            <p class="text-[10px] text-blue-50 uppercase font-semibold tracking-wide">Borç</p>
-                            <p class="text-sm font-bold text-white">${formattedDebt} TL</p>
+                        <div class="bg-gradient-to-br from-blue-500/70 to-blue-600/80 backdrop-blur-md border border-blue-300/60 shadow-md p-2 rounded-xl min-w-[120px]">
+                            <p class="text-[9px] text-blue-50 uppercase font-semibold tracking-wide">Borç</p>
+                            <p class="text-xs font-bold text-white">${formattedDebt} TL</p>
                         </div>
                         
                         <!-- Kazanç Kutusu -->
-                        <div class="${bgColor} backdrop-blur-md border ${borderColor} shadow-md p-3 rounded-xl min-w-[140px]">
-                            <p class="text-[10px] ${textColor} uppercase font-semibold tracking-wide">${titleText}</p>
-                            <p class="text-sm font-bold text-white">${amountText}</p>
+                        <div class="${bgColor} backdrop-blur-md border ${borderColor} shadow-md p-2 rounded-xl min-w-[120px]">
+                            <p class="text-[9px] ${textColor} uppercase font-semibold tracking-wide">${titleText}</p>
+                            <p class="text-xs font-bold text-white">${amountText}</p>
                         </div>
                     </div>
                     <div class="flex space-x-2">
@@ -1618,22 +1618,73 @@ class LuxWage {
         const employee = this.employees.find(emp => emp.id === employeeId);
         if (!employee) return;
         
+        // Tarih kontrolü: İşe başlamadan önceki tarihleri engelle
+        const startDate = new Date(employee.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        const selectedDate = new Date(date);
+        selectedDate.setHours(0, 0, 0, 0);
+        
+        if (selectedDate < startDate) {
+            showNotification('İşe başlamadan önceki tarih için devamsızlık ekleyemezsiniz', 'error');
+            return;
+        }
+        
+        // Tarih kontrolü: Tatil günlerini engelle
+        if (this.isClosedDay(selectedDate, employee)) {
+            showNotification('Bu gün tatil günü, devamsızlık ekleyemezsiniz', 'error');
+            return;
+        }
+        
+        // Aynı güne tekrar devamsızlık verilmemesini engelle
+        if (employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === date)) {
+            showNotification('Bu güne zaten devamsızlık kaydedilmiş', 'error');
+            return;
+        }
+        
+        // İş durdurulan günlere devamsızlık verilmemesini engelle
+        const dailyLogs = this.calculateDailyLogs(employee);
+        const selectedDateStr = selectedDate.toISOString().split('T')[0];
+        const isWorkStoppedOnDay = dailyLogs.some(log => log.date === selectedDateStr && log.isStopped);
+        
+        if (isWorkStoppedOnDay) {
+            showNotification('İş durdurulan güne devamsızlık ekleyemezsiniz', 'error');
+            return;
+        }
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const isToday = selectedDate.getTime() === today.getTime();
+        const isPast = selectedDate < today;
+        
         const deduction = this.calculateDailyWage(employee);
         
-        // Devamsızlık geçmişine ekle (borç dinamik olarak hesaplanacak)
+        // Devamsızlık geçmişine ekle
         if (!employee.absenceHistory) {
             employee.absenceHistory = [];
         }
-        employee.absenceHistory.push({
+        
+        // Bugün için devamsızlık ekleniyorsa, kesinti eklemiyoruz (çünkü bugün henüz para eklenmedi)
+        // Geçmiş için devamsızlık ekleniyorsa, kesinti ekliyoruz
+        const absenceEntry = {
             date,
-            deduction,
             timestamp: Date.now()
-        });
+        };
+        
+        if (isPast) {
+            // Geçmiş tarih için kesinti ekle
+            absenceEntry.deduction = deduction;
+            showNotification(`Geçmiş devamsızlık kaydedildi. Kesinti: ${deduction.toFixed(2)} TL`, 'success');
+        } else {
+            // Bugün için kesinti ekleme (18:00'da da eklenmeyecek)
+            absenceEntry.deduction = 0;
+            showNotification(`Bugün için devamsızlık kaydedildi. Para eklenmeyecek`, 'success');
+        }
+        
+        employee.absenceHistory.push(absenceEntry);
         
         this.saveData();
         closeModal('absenceModal');
         
-        showNotification(`Devamsızlık kaydedildi. Kesinti: ${deduction.toFixed(2)} TL`, 'success');
         this.renderEmployeesPage();
         this.renderHomePage();
         
@@ -1882,17 +1933,24 @@ class LuxWage {
         const currentDate = new Date(startDate);
         while (currentDate <= today) {
             const isToday = currentDate.getTime() === today.getTime();
+            const currentDateStr = currentDate.toISOString().split('T')[0];
             
             // Gün kapalı değilse
             if (!this.isClosedDay(currentDate, employee)) {
-                // Bugün için saat kontrolü: 18:00'den önce ise dahil etme
-                if (isToday) {
-                    if (currentHour >= 18) {
+                // Devamsızlık günü kontrolü
+                const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+                
+                // Devamsızlık günü ise para ekleme
+                if (!isAbsentDay) {
+                    // Bugün için saat kontrolü: 18:00'den önce ise dahil etme
+                    if (isToday) {
+                        if (currentHour >= 18) {
+                            totalDebt += dailyWage;
+                        }
+                    } else {
+                        // Geçmiş günler için doğrudan ekle
                         totalDebt += dailyWage;
                     }
-                } else {
-                    // Geçmiş günler için doğrudan ekle
-                    totalDebt += dailyWage;
                 }
             }
             currentDate.setDate(currentDate.getDate() + 1);
@@ -1982,6 +2040,53 @@ function openAbsenceModal(employeeIndex) {
     document.getElementById('absenceDeduction').textContent = '0 TL';
     document.getElementById('wageCalculation').textContent = 'Yevmiye hesaplanıyor...';
     
+    // Tarih seçimini kısıtla: sadece işe başlama tarihinden bugüne kadar
+    const startDate = new Date(employee.startDate);
+    const startDateStr = startDate.toISOString().split('T')[0];
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    
+    const absenceDateInput = document.getElementById('absenceDate');
+    absenceDateInput.min = startDateStr;
+    absenceDateInput.max = todayStr;
+    
+    // Tarih değiştiğinde kontrol et
+    absenceDateInput.onchange = function() {
+        const selectedDate = new Date(this.value);
+        const selectedDateStr = selectedDate.toISOString().split('T')[0];
+        
+        // İşe başlamadan önceki tarih kontrolü
+        if (selectedDate < startDate) {
+            showNotification('İşe başlamadan önceki tarih seçilemez', 'error');
+            this.value = '';
+            return;
+        }
+        
+        // Tatil günü kontrolü
+        if (luxwage.isClosedDay(selectedDate, employee)) {
+            showNotification('Bu gün tatil günü, devamsızlık eklenemez', 'error');
+            this.value = '';
+            return;
+        }
+        
+        // Aynı güne tekrar devamsızlık kontrolü
+        if (employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === selectedDateStr)) {
+            showNotification('Bu güne zaten devamsızlık kaydedilmiş', 'error');
+            this.value = '';
+            return;
+        }
+        
+        // İş durdurulan gün kontrolü
+        const dailyLogs = luxwage.calculateDailyLogs(employee);
+        const isWorkStoppedOnDay = dailyLogs.some(log => log.date === selectedDateStr && log.isStopped);
+        
+        if (isWorkStoppedOnDay) {
+            showNotification('İş durdurulan güne devamsızlık eklenemez', 'error');
+            this.value = '';
+            return;
+        }
+    };
+    
     openModal('absenceModal');
 };
 
@@ -2011,10 +2116,12 @@ function showHistory(employeeIndex) {
     
     const historyContent = document.getElementById('historyContent');
     
+    let html = '';
+    
     // Ödeme geçmişini göster
-    if (!employee.paymentHistory || employee.paymentHistory.length === 0) {
-        historyContent.innerHTML = '<p class="text-gray-500 text-center">Henüz ödeme kaydı yok</p>';
-    } else {
+    if (employee.paymentHistory && employee.paymentHistory.length > 0) {
+        html += '<h3 class="font-bold text-gray-800 mb-3">Ödeme Geçmişi</h3>';
+        
         // Maaş tipine göre ödemeleri grupla
         const groupedPayments = {};
         
@@ -2056,7 +2163,6 @@ function showHistory(employeeIndex) {
         // Tarihe göre sırala (yeniden eskiye)
         const sortedPeriods = Object.keys(groupedPayments).sort((a, b) => new Date(b) - new Date(a));
         
-        let html = '';
         sortedPeriods.forEach(periodKey => {
             const data = groupedPayments[periodKey];
             const periodLabel = employee.salaryType === 'daily' 
@@ -2094,12 +2200,68 @@ function showHistory(employeeIndex) {
                 </div>
             `;
         });
-        
-        historyContent.innerHTML = html;
     }
+    
+    // Devamsızlık geçmişini göster
+    if (employee.absenceHistory && employee.absenceHistory.length > 0) {
+        html += '<h3 class="font-bold text-gray-800 mb-3 mt-6">Devamsızlık Geçmişi</h3>';
+        
+        // Tarihe göre sırala (yeniden eskiye)
+        const sortedAbsences = [...employee.absenceHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+        
+        sortedAbsences.forEach((absence, index) => {
+            const deductionText = absence.deduction > 0 
+                ? `Kesinti: ${absence.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL` 
+                : 'Para eklenmeyecek (bugün)';
+            
+            html += `
+                <div class="bg-red-50 rounded-lg p-4 mb-4 border-l-4 border-red-500 flex justify-between items-center">
+                    <div>
+                        <p class="font-semibold text-gray-800 text-sm">Devamsızlık</p>
+                        <p class="text-xs text-gray-500">${absence.date}</p>
+                    </div>
+                    <div class="flex items-center space-x-3">
+                        <p class="font-bold text-red-500 text-sm">
+                            ${deductionText}
+                        </p>
+                        <button onclick="deleteAbsence(${employeeIndex}, ${index})" class="text-red-500 hover:text-red-700 transition-colors p-1" title="Devamsızlığı Sil">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+        });
+    }
+    
+    if (!employee.paymentHistory && !employee.absenceHistory) {
+        html = '<p class="text-gray-500 text-center">Henüz kayıt yok</p>';
+    }
+    
+    historyContent.innerHTML = html;
     
     openModal('historyModal');
 };
+
+// Devamsızlığı sil
+function deleteAbsence(employeeIndex, absenceIndex) {
+    const employee = luxwage.employees[employeeIndex];
+    if (!employee) return;
+    
+    if (!employee.absenceHistory || employee.absenceHistory.length === 0) return;
+    
+    // Tarihe göre sıralı olduğu için, orijinal index'i bulmamız gerekiyor
+    const sortedAbsences = [...employee.absenceHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
+    const absenceToDelete = sortedAbsences[absenceIndex];
+    
+    // Orijinal array'den bul ve sil
+    const originalIndex = employee.absenceHistory.findIndex(a => a.date === absenceToDelete.date && a.timestamp === absenceToDelete.timestamp);
+    if (originalIndex !== -1) {
+        employee.absenceHistory.splice(originalIndex, 1);
+        luxwage.saveData();
+        showNotification('Devamsızlık silindi', 'success');
+        showHistory(employeeIndex);
+    }
+}
 
 // Günlük detayları göster
 function openDailyDetails(employeeId) {
