@@ -850,7 +850,14 @@ class LuxWage {
             // Dynamic styling based on status
             let bgColor, borderColor, textColor, titleText, amountText;
             
-            if (isTodayAbsent) {
+            if (emp.isStopped) {
+                // İş durdurulmuş - gri kart
+                bgColor = "bg-gray-500/70";
+                borderColor = "border-gray-500/70";
+                textColor = "text-white";
+                titleText = "Çalışan Aktif Değil";
+                amountText = "İş Durduruldu";
+            } else if (isTodayAbsent) {
                 // Devamsızlık günü - kırmızı kart
                 bgColor = "bg-red-500/70";
                 borderColor = "border-red-500/70";
@@ -958,7 +965,7 @@ class LuxWage {
         
         employeesSection.innerHTML = `
             <div class="flex items-center justify-between mb-4">
-                <div class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-emerald-500 max-w-xs">
+                <div class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-emerald-500 max-w-sm">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-sm">Toplam Çalışan</p>
@@ -1399,6 +1406,7 @@ class LuxWage {
             } else {
                 // İş devam ettirilecek
                 employee.isStopped = false;
+                employee.workResumeDate = Date.now();
                 this.saveData();
                 this.renderEmployeesPage();
                 showNotification('Çalışanın işi devam ettirildi', 'success');
@@ -1412,6 +1420,14 @@ class LuxWage {
                     timestamp: Date.now()
                 });
                 this.saveData();
+                
+                // Günlük detaylar modalı açıksa ve aynı çalışanı gösteriyorsa, yenile
+                if (window.currentDailyDetailsEmployeeId === employee.id) {
+                    const dailyDetailsModal = document.getElementById('dailyDetailsModal');
+                    if (dailyDetailsModal && !dailyDetailsModal.classList.contains('hidden')) {
+                        openDailyDetails(employee.id);
+                    }
+                }
             }
         }
     }
@@ -1421,6 +1437,7 @@ class LuxWage {
         if (this.pendingWorkStopIndex !== null && this.pendingWorkStopIndex >= 0 && this.pendingWorkStopIndex < this.employees.length) {
             const employee = this.employees[this.pendingWorkStopIndex];
             employee.isStopped = true;
+            employee.workStopDate = Date.now();
             this.saveData();
             this.renderEmployeesPage();
             showNotification('Çalışanın işi durduruldu', 'warning');
@@ -1434,6 +1451,14 @@ class LuxWage {
                 timestamp: Date.now()
             });
             this.saveData();
+            
+            // Günlük detaylar modalı açıksa ve aynı çalışanı gösteriyorsa, yenile
+            if (window.currentDailyDetailsEmployeeId === employee.id) {
+                const dailyDetailsModal = document.getElementById('dailyDetailsModal');
+                if (dailyDetailsModal && !dailyDetailsModal.classList.contains('hidden')) {
+                    openDailyDetails(employee.id);
+                }
+            }
         }
         this.closeWorkStopModal();
     }
@@ -1485,10 +1510,15 @@ class LuxWage {
         const currentDate = new Date(startDateStr + 'T00:00:00');
         const endDate = new Date(todayStr + 'T00:00:00');
         
+        // İş durdurma ve geri başlatma tarihleri
+        const workStopDate = employee.workStopDate ? new Date(employee.workStopDate) : null;
+        const workResumeDate = employee.workResumeDate ? new Date(employee.workResumeDate) : null;
+        
         // startDate'dan bugüne kadar olan günleri hesapla (off-by-one hatası düzeltildi)
         while (currentDate <= endDate) {
             const dateStr = toDateString(currentDate);
             const dayOfWeek = currentDate.getDay();
+            const currentDateMidnight = new Date(dateStr + 'T00:00:00');
             
             // Check if this day is a closed day
             const isClosedDay = employee.closedDays && employee.closedDays.includes(dayOfWeek);
@@ -1499,6 +1529,20 @@ class LuxWage {
             if (existingLog) {
                 logs.push(existingLog);
             } else {
+                // İş durdurulmuşsa ve geri başlatılmamışsa, durdurma tarihinden sonraki günleri atla
+                if (workStopDate && !workResumeDate && currentDateMidnight >= workStopDate) {
+                    currentDate.setDate(currentDate.getDate() + 1);
+                    continue;
+                }
+                
+                // İş durdurulmuş ve geri başlatılmışsa, durdurma ve geri başlatma arasındaki günleri atla
+                if (workStopDate && workResumeDate) {
+                    if (currentDateMidnight >= workStopDate && currentDateMidnight < workResumeDate) {
+                        currentDate.setDate(currentDate.getDate() + 1);
+                        continue;
+                    }
+                }
+                
                 // Calculate daily amount based on salary type (same as calculateDailyWage)
                 let dailyAmount = 0;
                 if (employee.salaryType === 'daily') {
@@ -2271,6 +2315,7 @@ function deleteAbsence(employeeIndex, absenceIndex) {
 
 // Günlük detayları göster
 function openDailyDetails(employeeId) {
+    window.currentDailyDetailsEmployeeId = employeeId;
     const employee = luxwage.employees.find(emp => emp.id === employeeId);
     if (!employee) return;
     
@@ -2299,7 +2344,20 @@ function openDailyDetails(employeeId) {
         
         const formattedStartDate = startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
         
-        workDurationInfo = `
+        // Çalışan aktif değilse uyarı göster
+        let statusInfo = '';
+        if (employee.isStopped) {
+            statusInfo = `
+                <div class="bg-red-50 border border-red-200 rounded-lg p-3 mb-4">
+                    <div class="flex items-center">
+                        <i class="fas fa-user-slash text-red-500 mr-2"></i>
+                        <span class="text-sm text-red-700 font-medium">Çalışan Aktif Değil - İş Durduruldu</span>
+                    </div>
+                </div>
+            `;
+        }
+        
+        workDurationInfo = statusInfo + `
             <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
                 <div class="flex items-center justify-between flex-wrap gap-2">
                     <div>
