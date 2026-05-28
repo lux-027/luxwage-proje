@@ -1743,11 +1743,9 @@ class LuxWage {
         this.renderHomePage();
         
         // Günlük detaylar modalı açıksa ve aynı çalışanı gösteriyorsa, yenile
-        if (window.currentDailyDetailsEmployeeId === employeeId) {
-            const dailyDetailsModal = document.getElementById('dailyDetailsModal');
-            if (dailyDetailsModal && !dailyDetailsModal.classList.contains('hidden')) {
-                openDailyDetails(employeeId);
-            }
+        const dailyDetailsModal = document.getElementById('dailyDetailsModal');
+        if (dailyDetailsModal && !dailyDetailsModal.classList.contains('hidden')) {
+            openDailyDetails(employeeId);
         }
     }
 
@@ -2170,131 +2168,217 @@ function showHistory(employeeIndex) {
     
     const historyContent = document.getElementById('historyContent');
     
-    let html = '';
+    // Son 12 ayı hesapla
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
     
-    // Ödeme geçmişini göster
+    // Ödeme geçmişini filtrele (son 12 ay)
+    let recentPayments = [];
     if (employee.paymentHistory && employee.paymentHistory.length > 0) {
-        html += '<h3 class="font-bold text-gray-800 mb-3">Ödeme Geçmişi</h3>';
-        
-        // Maaş tipine göre ödemeleri grupla
-        const groupedPayments = {};
-        
-        employee.paymentHistory.forEach((payment, index) => {
+        recentPayments = employee.paymentHistory.filter(payment => {
             const paymentDate = new Date(payment.date);
-            let periodKey;
-            
-            if (employee.salaryType === 'daily') {
-                // Günlük: Her gün ayrı göster
-                periodKey = paymentDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-            } else if (employee.salaryType === 'weekly') {
-                // Haftalık: Hafta sonu tarihi
-                const dayOfWeek = paymentDate.getDay();
-                const daysUntilSunday = 7 - dayOfWeek;
-                const weekEnd = new Date(paymentDate);
-                weekEnd.setDate(weekEnd.getDate() + daysUntilSunday);
-                periodKey = weekEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-            } else {
-                // Aylık: Ay sonu tarihi
-                const monthEnd = new Date(paymentDate.getFullYear(), paymentDate.getMonth() + 1, 0);
-                periodKey = monthEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
-            }
-            
-            if (!groupedPayments[periodKey]) {
-                groupedPayments[periodKey] = {
-                    totalAmount: 0,
-                    payments: [],
-                    periodEnd: periodKey
-                };
-            }
-            
-            groupedPayments[periodKey].totalAmount += payment.amount;
-            groupedPayments[periodKey].payments.push({
-                ...payment,
-                index: index
-            });
-        });
-        
-        // Tarihe göre sırala (yeniden eskiye)
-        const sortedPeriods = Object.keys(groupedPayments).sort((a, b) => new Date(b) - new Date(a));
-        
-        sortedPeriods.forEach(periodKey => {
-            const data = groupedPayments[periodKey];
-            const periodLabel = employee.salaryType === 'daily' 
-                ? 'Günlük' 
-                : employee.salaryType === 'weekly' 
-                    ? 'Haftalık' 
-                    : 'Aylık';
-            
-            html += `
-                <div class="bg-blue-50 rounded-lg p-4 mb-4 border-l-4 border-blue-500">
-                    <div class="flex justify-between items-center mb-2">
-                        <p class="font-bold text-gray-800">${periodLabel} - ${data.periodEnd}</p>
-                        <p class="font-bold text-blue-700">
-                            ${data.totalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                        </p>
-                    </div>
-                    <div class="space-y-2 mt-3">
-                        ${data.payments.map(payment => `
-                            <div class="bg-white rounded-lg p-3 border-l-4 border-green-500 flex justify-between items-center">
-                                <div>
-                                    <p class="font-semibold text-gray-800 text-sm">Ödeme Alındı</p>
-                                    <p class="text-xs text-gray-500">${payment.date}</p>
-                                </div>
-                                <div class="flex items-center space-x-3">
-                                    <p class="font-bold text-green-500">
-                                        ${payment.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
-                                    </p>
-                                    <button onclick="deletePayment(${employeeIndex}, ${payment.index})" class="text-red-500 hover:text-red-700 transition-colors p-1" title="Ödemeyi Sil">
-                                        <i class="fas fa-trash-alt"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    </div>
-                </div>
-            `;
+            return paymentDate >= twelveMonthsAgo;
         });
     }
     
-    // Devamsızlık geçmişini göster
+    // Devamsızlık geçmişini filtrele (son 12 ay)
+    let recentAbsences = [];
     if (employee.absenceHistory && employee.absenceHistory.length > 0) {
-        html += '<h3 class="font-bold text-gray-800 mb-3 mt-6">Devamsızlık Geçmişi</h3>';
-        
-        // Tarihe göre sırala (yeniden eskiye)
-        const sortedAbsences = [...employee.absenceHistory].sort((a, b) => new Date(b.date) - new Date(a.date));
-        
-        sortedAbsences.forEach((absence, index) => {
-            const deductionText = absence.deduction > 0 
-                ? `Kesinti: ${absence.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL` 
-                : 'Para eklenmeyecek (bugün)';
-            
-            html += `
-                <div class="bg-red-50 rounded-lg p-4 mb-4 border-l-4 border-red-500 flex justify-between items-center">
-                    <div>
-                        <p class="font-semibold text-gray-800 text-sm">Devamsızlık</p>
-                        <p class="text-xs text-gray-500">${absence.date}</p>
-                    </div>
-                    <div class="flex items-center space-x-3">
-                        <p class="font-bold text-red-500 text-sm">
-                            ${deductionText}
-                        </p>
-                        <button onclick="deleteAbsence(${employeeIndex}, ${index})" class="text-red-500 hover:text-red-700 transition-colors p-1" title="Devamsızlığı Sil">
-                            <i class="fas fa-trash-alt"></i>
-                        </button>
-                    </div>
-                </div>
-            `;
+        recentAbsences = employee.absenceHistory.filter(absence => {
+            const absenceDate = new Date(absence.date);
+            return absenceDate >= twelveMonthsAgo;
         });
     }
     
-    if (!employee.paymentHistory && !employee.absenceHistory) {
-        html = '<p class="text-gray-500 text-center">Henüz kayıt yok</p>';
-    }
+    // Kategori butonları ve içerik oluştur
+    let html = `
+        <div class="flex gap-2 mb-4 flex-wrap">
+            <button onclick="filterHistory('all', ${employeeIndex})" class="history-filter-btn px-4 py-2 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors" data-category="all">
+                Tümü
+            </button>
+            <button onclick="filterHistory('payments', ${employeeIndex})" class="history-filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors" data-category="payments">
+                Ödemeler
+            </button>
+            <button onclick="filterHistory('absences', ${employeeIndex})" class="history-filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors" data-category="absences">
+                Devamsızlıklar
+            </button>
+        </div>
+        <div id="historyContentInner">
+            ${generateHistoryContent(employee, recentPayments, recentAbsences, 'all')}
+        </div>
+    `;
     
     historyContent.innerHTML = html;
     
     openModal('historyModal');
-};
+}
+
+// Geçmiş içeriğini oluştur
+function generateHistoryContent(employee, recentPayments, recentAbsences, category) {
+    let html = '';
+    
+    if (category === 'all' || category === 'payments') {
+        if (recentPayments.length > 0) {
+            html += '<h3 class="font-bold text-gray-800 mb-3">Ödeme Geçmişi (Son 12 Ay)</h3>';
+            
+            // Maaş tipine göre ödemeleri grupla
+            const groupedPayments = {};
+            
+            recentPayments.forEach((payment, index) => {
+                const paymentDate = new Date(payment.date);
+                let periodKey;
+                
+                if (employee.salaryType === 'daily') {
+                    // Günlük: Her gün ayrı göster
+                    periodKey = paymentDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+                } else if (employee.salaryType === 'weekly') {
+                    // Haftalık: Hafta sonu tarihi
+                    const dayOfWeek = paymentDate.getDay();
+                    const daysUntilSunday = 7 - dayOfWeek;
+                    const weekEnd = new Date(paymentDate);
+                    weekEnd.setDate(weekEnd.getDate() + daysUntilSunday);
+                    periodKey = weekEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+                } else {
+                    // Aylık: Ay sonu tarihi
+                    const monthEnd = new Date(paymentDate.getFullYear(), paymentDate.getMonth() + 1, 0);
+                    periodKey = monthEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
+                }
+                
+                if (!groupedPayments[periodKey]) {
+                    groupedPayments[periodKey] = {
+                        totalAmount: 0,
+                        payments: [],
+                        periodEnd: periodKey
+                    };
+                }
+                
+                groupedPayments[periodKey].totalAmount += payment.amount;
+                groupedPayments[periodKey].payments.push({
+                    ...payment,
+                    index: index
+                });
+            });
+            
+            // Tarihe göre sırala (yeniden eskiye)
+            const sortedPeriods = Object.keys(groupedPayments).sort((a, b) => new Date(b) - new Date(a));
+            
+            sortedPeriods.forEach(periodKey => {
+                const data = groupedPayments[periodKey];
+                const periodLabel = employee.salaryType === 'daily' 
+                    ? 'Günlük' 
+                    : employee.salaryType === 'weekly' 
+                        ? 'Haftalık' 
+                        : 'Aylık';
+                
+                html += `
+                    <div class="bg-blue-50 rounded-lg p-4 mb-4 border-l-4 border-blue-500">
+                        <div class="flex justify-between items-center mb-2">
+                            <p class="font-bold text-gray-800">${periodLabel} - ${data.periodEnd}</p>
+                            <p class="font-bold text-blue-700">
+                                ${data.totalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                            </p>
+                        </div>
+                        <div class="space-y-2 mt-3">
+                            ${data.payments.map(payment => `
+                                <div class="bg-white rounded-lg p-3 border-l-4 border-green-500 flex justify-between items-center">
+                                    <div>
+                                        <p class="font-semibold text-gray-800 text-sm">Ödeme Alındı</p>
+                                        <p class="text-xs text-gray-500">${payment.date}</p>
+                                    </div>
+                                    <div class="flex items-center space-x-3">
+                                        <p class="font-bold text-green-500">
+                                            ${payment.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
+                                        </p>
+                                    </div>
+                                </div>
+                            `).join('')}
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    }
+    
+    if (category === 'all' || category === 'absences') {
+        if (recentAbsences.length > 0) {
+            html += '<h3 class="font-bold text-gray-800 mb-3 mt-6">Devamsızlık Geçmişi (Son 12 Ay)</h3>';
+            
+            // Tarihe göre sırala (yeniden eskiye)
+            const sortedAbsences = [...recentAbsences].sort((a, b) => new Date(b.date) - new Date(a.date));
+            
+            sortedAbsences.forEach((absence, index) => {
+                const deductionText = absence.deduction > 0 
+                    ? `Kesinti: ${absence.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL` 
+                    : 'Para eklenmeyecek (bugün)';
+                
+                html += `
+                    <div class="bg-red-50 rounded-lg p-4 mb-4 border-l-4 border-red-500 flex justify-between items-center">
+                        <div>
+                            <p class="font-semibold text-gray-800 text-sm">Devamsızlık</p>
+                            <p class="text-xs text-gray-500">${absence.date}</p>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <p class="font-bold text-red-500 text-sm">
+                                ${deductionText}
+                            </p>
+                        </div>
+                    </div>
+                `;
+            });
+        }
+    }
+    
+    if (html === '') {
+        html = '<p class="text-gray-500 text-center">Son 12 ayda kayıt yok</p>';
+    }
+    
+    return html;
+}
+
+// Geçmişi filtrele
+function filterHistory(category, employeeIndex) {
+    const employee = luxwage.employees[employeeIndex];
+    if (!employee) return;
+    
+    // Buton stillerini güncelle
+    document.querySelectorAll('.history-filter-btn').forEach(btn => {
+        if (btn.getAttribute('data-category') === category) {
+            btn.classList.remove('bg-gray-200', 'text-gray-700');
+            btn.classList.add('bg-blue-500', 'text-white');
+        } else {
+            btn.classList.remove('bg-blue-500', 'text-white');
+            btn.classList.add('bg-gray-200', 'text-gray-700');
+        }
+    });
+    
+    // Son 12 ayı hesapla
+    const twelveMonthsAgo = new Date();
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
+    
+    // Ödeme geçmişini filtrele (son 12 ay)
+    let recentPayments = [];
+    if (employee.paymentHistory && employee.paymentHistory.length > 0) {
+        recentPayments = employee.paymentHistory.filter(payment => {
+            const paymentDate = new Date(payment.date);
+            return paymentDate >= twelveMonthsAgo;
+        });
+    }
+    
+    // Devamsızlık geçmişini filtrele (son 12 ay)
+    let recentAbsences = [];
+    if (employee.absenceHistory && employee.absenceHistory.length > 0) {
+        recentAbsences = employee.absenceHistory.filter(absence => {
+            const absenceDate = new Date(absence.date);
+            return absenceDate >= twelveMonthsAgo;
+        });
+    }
+    
+    // İçeriği güncelle
+    const historyContentInner = document.getElementById('historyContentInner');
+    if (historyContentInner) {
+        historyContentInner.innerHTML = generateHistoryContent(employee, recentPayments, recentAbsences, category);
+    }
+}
 
 // Devamsızlığı sil
 function deleteAbsence(employeeIndex, absenceIndex) {
