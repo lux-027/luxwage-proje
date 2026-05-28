@@ -1232,6 +1232,22 @@ class LuxWage {
         this.pendingWorkStopIndex = null;
     }
 
+    // Günün tamamlanıp tamamlanmadığını kontrol et (18:00 kuralı)
+    isDayCompleted(date) {
+        const now = new Date();
+        const currentHour = now.getHours();
+        
+        // Tarihleri saat farklarından etkilenmez şekilde karşılaştır
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        const checkDate = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        
+        // Eğer tarih bugünden küçükse kesinlikle "Eklendi"
+        if (checkDate < today) return true;
+        // Eğer tarih bugünse ve saat 18:00'den büyükse "Eklendi", değilse "Bekleniyor"
+        if (checkDate.getTime() === today.getTime() && currentHour >= 18) return true;
+        return false;
+    }
+
     // 10 günlük günlük hesaplama
     calculateDailyLogs(employee) {
         const logs = [];
@@ -1281,19 +1297,8 @@ class LuxWage {
                     dailyAmount = 0;
                 }
                 
-                // Determine status based on date and time comparison
-                let status = 'pending';
-                
-                if (currentDate.toDateString() === endDate.toDateString()) {
-                    // Bugün - saat kontrolü
-                    status = (currentHour >= 18) ? 'added' : 'pending';
-                } else if (currentDate < endDate) {
-                    // Geçmiş günler
-                    status = 'added';
-                } else {
-                    // Gelecek günler
-                    status = 'pending';
-                }
+                // Determine status based on isDayCompleted function
+                const status = this.isDayCompleted(currentDate) ? 'added' : 'pending';
                 
                 // Check if work was stopped on this day
                 const isStopped = employee.isStopped || false;
@@ -1454,8 +1459,9 @@ class LuxWage {
         closeModal('paymentModal');
         
         showNotification(`${amount.toFixed(2)} TL ödeme kaydedildi`, 'success');
-        this.renderEmployeesPage();
-        this.renderHomePage();
+        
+        // Borç değerini anında güncelle ve UI'ı tazele
+        this.updateDebtUI(employeeId, amount);
         
         // Günlük detaylar modalı açıksa ve aynı çalışanı gösteriyorsa, yenile
         if (window.currentDailyDetailsEmployeeId === employeeId) {
@@ -1463,6 +1469,19 @@ class LuxWage {
             if (dailyDetailsModal && !dailyDetailsModal.classList.contains('hidden')) {
                 openDailyDetails(employeeId);
             }
+        }
+    }
+
+    // Borç-Ödeme Senkronizasyonu: UI'ı anında güncelle
+    updateDebtUI(workerId, paymentAmount) {
+        const worker = this.employees.find(w => w.id === workerId);
+        if (worker) {
+            // Borç değerini anında güncelle
+            worker.debt -= paymentAmount;
+            
+            // UI'ı tazele
+            this.renderEmployeesPage();
+            this.renderHomePage();
         }
     }
 
