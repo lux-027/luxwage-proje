@@ -711,12 +711,11 @@ class LuxWage {
             const isPending = todayStatus === "Bekleniyor";
             
             // Dynamic styling based on status
-            const textColor = isPending ? "text-slate-300" : "text-emerald-400";
-            const labelText = isPending ? "18:00'de Eklenecek" : `+${formattedDailyRate} TL`;
-            const bgColor = isPending ? "bg-slate-700/30" : "bg-emerald-500/10";
-            const borderColor = isPending ? "border-slate-600" : "border-emerald-500/20";
-            const labelTextColor = isPending ? "text-slate-400" : "text-emerald-300";
-            const labelTextHeader = isPending ? "Bekleniyor" : "Eklenecek Tutar";
+            const bgColor = isPending ? "bg-orange-500/20" : "bg-emerald-500/20";
+            const borderColor = isPending ? "border-orange-500/30" : "border-emerald-500/30";
+            const textColor = isPending ? "text-orange-400" : "text-emerald-400";
+            const titleText = isPending ? "Bekleniyor" : "Eklenecek Tutar";
+            const amountText = isPending ? `${formattedDailyRate} TL Eklenecek` : `+${formattedDailyRate} TL`;
             
             return `
             <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
@@ -759,15 +758,15 @@ class LuxWage {
                 <div class="flex items-center justify-between">
                     <div class="flex gap-3 mt-3">
                         <!-- Borç Kutusu -->
-                        <div class="bg-blue-600/20 backdrop-blur-sm border border-blue-500/30 px-5 py-2 rounded-xl min-w-[130px]">
-                            <p class="text-[10px] text-blue-200 uppercase font-semibold">Borç</p>
+                        <div class="bg-blue-900/40 backdrop-blur-md border border-blue-400/30 p-3 rounded-xl min-w-[140px]">
+                            <p class="text-[10px] text-white uppercase font-semibold">Borç</p>
                             <p class="text-sm font-bold text-white">${formattedDebt} TL</p>
                         </div>
                         
                         <!-- Kazanç Kutusu -->
-                        <div class="${bgColor} backdrop-blur-md border ${borderColor} px-5 py-2 rounded-xl min-w-[130px]">
-                            <p class="text-[10px] ${labelTextColor} uppercase font-semibold">${labelTextHeader}</p>
-                            <p class="text-sm font-bold ${textColor}">${labelText}</p>
+                        <div class="${bgColor} backdrop-blur-md border ${borderColor} px-4 py-2 rounded-xl min-w-[140px]">
+                            <p class="text-[10px] ${textColor} uppercase font-bold">${titleText}</p>
+                            <p class="text-sm font-bold text-white">${amountText}</p>
                         </div>
                     </div>
                     <div class="flex space-x-2">
