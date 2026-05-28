@@ -671,7 +671,7 @@ class LuxWage {
         if (debtLevel >= 1) {
             const debtDisplay = currentDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             return {
-                message: `Borç ${debtDisplay} TL'ye ulaştı (Seviye ${debtLevel})`
+                message: `Borç ${debtDisplay} TL'ye ulaştı`
             };
         }
         
@@ -965,7 +965,7 @@ class LuxWage {
         
         employeesSection.innerHTML = `
             <div class="flex items-center justify-between mb-4">
-                <div class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-emerald-500 max-w-sm">
+                <div class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-emerald-500 max-w-xl">
                     <div class="flex items-center justify-between">
                         <div>
                             <p class="text-gray-500 text-sm">Toplam Çalışan</p>
@@ -1567,12 +1567,16 @@ class LuxWage {
                 // Check if work was stopped on this day
                 const isStopped = employee.isStopped || false;
                 
+                // Check if this day is an absence day
+                const isAbsent = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === dateStr);
+                
                 logs.push({
                     date: dateStr,
                     status: status,
                     amount: dailyAmount,
                     isStopped: isStopped,
-                    isClosedDay: isClosedDay
+                    isClosedDay: isClosedDay,
+                    isAbsent: isAbsent
                 });
             }
             
@@ -2397,8 +2401,18 @@ function openDailyDetails(employeeId) {
             let rowClass = '';
             let statusText = '';
             let statusClass = '';
+            let deductionText = '';
             
-            if (log.isStopped) {
+            if (log.isAbsent) {
+                rowClass = 'bg-red-50';
+                statusText = 'Devamsızlık';
+                statusClass = 'text-red-600 font-semibold';
+                // Devamsızlık kesinti bilgisini al
+                const absence = employee.absenceHistory.find(a => a.date === log.date);
+                if (absence && absence.deduction) {
+                    deductionText = ` (${absence.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL kesinti)`;
+                }
+            } else if (log.isStopped) {
                 rowClass = 'bg-gray-100';
                 statusText = 'İş Durduruldu';
                 statusClass = 'text-gray-600 font-semibold';
@@ -2422,7 +2436,7 @@ function openDailyDetails(employeeId) {
                     <td class="px-4 py-3 text-sm font-medium ${log.amount > 0 ? 'text-gray-800' : 'text-gray-400'}">
                         ${log.amount > 0 ? log.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL' : '-'}
                     </td>
-                    <td class="px-4 py-3 text-sm ${statusClass}">${statusText}</td>
+                    <td class="px-4 py-3 text-sm ${statusClass}">${statusText}${deductionText}</td>
                 </tr>
             `;
         });
