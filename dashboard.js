@@ -758,15 +758,15 @@ class LuxWage {
                 <div class="flex items-center justify-between">
                     <div class="flex gap-3 mt-3">
                         <!-- Borç Kutusu -->
-                        <div class="bg-blue-900/40 backdrop-blur-md border border-blue-400/30 p-3 rounded-xl min-w-[140px]">
-                            <p class="text-[10px] text-white uppercase font-semibold">Borç</p>
-                            <p class="text-sm font-bold text-white">${formattedDebt} TL</p>
+                        <div class="bg-gradient-to-br from-blue-500/30 to-blue-600/40 backdrop-blur-xl border border-blue-300/50 shadow-lg p-4 rounded-xl min-w-[140px]">
+                            <p class="text-[11px] text-blue-100 uppercase font-semibold tracking-wide">Borç</p>
+                            <p class="text-lg font-bold text-white drop-shadow-md">${formattedDebt} TL</p>
                         </div>
                         
                         <!-- Kazanç Kutusu -->
-                        <div class="${bgColor} backdrop-blur-md border ${borderColor} px-4 py-2 rounded-xl min-w-[140px]">
-                            <p class="text-[10px] ${textColor} uppercase font-bold">${titleText}</p>
-                            <p class="text-sm font-bold text-white">${amountText}</p>
+                        <div class="${bgColor} backdrop-blur-xl border ${borderColor} shadow-lg p-4 rounded-xl min-w-[140px]">
+                            <p class="text-[11px] ${textColor} uppercase font-semibold tracking-wide">${titleText}</p>
+                            <p class="text-lg font-bold text-white drop-shadow-md">${amountText}</p>
                         </div>
                     </div>
                     <div class="flex space-x-2">
@@ -1499,8 +1499,8 @@ class LuxWage {
     updateDebtUI(workerId, paymentAmount) {
         const worker = this.employees.find(w => w.id === workerId);
         if (worker) {
-            // Borç değerini anında güncelle
-            worker.debt = parseFloat(worker.debt) - parseFloat(paymentAmount);
+            // Borç değerini dinamik olarak yeniden hesapla
+            worker.debt = this.calculateCurrentDebt(worker);
             
             // UI'ı sadece ilgili kart için tazele
             this.updateSingleWorkerCard(worker);
@@ -1789,7 +1789,7 @@ function openPaymentModal(employeeIndex) {
     
     document.getElementById('paymentEmployeeId').value = employee.id;
     document.getElementById('paymentEmployeeName').value = employee.name;
-    document.getElementById('currentDebt').value = currentDebt.toFixed(2);
+    document.getElementById('currentDebt').value = debtDisplay;
     document.getElementById('paymentAmount').value = '';
     document.getElementById('remainingDebt').textContent = debtDisplay + ' TL';
     
