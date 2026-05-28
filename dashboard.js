@@ -646,6 +646,9 @@ class LuxWage {
     checkDebtWarning(employee) {
         if (!employee.startDate) return null;
         
+        // Sadece aktif çalışanlar için bildirim gönder
+        if (employee.status === 'inactive') return null;
+        
         const currentDebt = this.calculateCurrentDebt(employee);
         
         // Her 5.000 TL artışta bildirim
