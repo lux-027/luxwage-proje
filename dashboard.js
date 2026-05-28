@@ -1737,7 +1737,11 @@ class LuxWage {
 
     // Kalan borcu hesapla
     calculateRemainingDebt() {
-        const currentDebt = parseFloat(document.getElementById('currentDebt').value) || 0;
+        let currentDebtStr = document.getElementById('currentDebt').value || '0';
+        // Türkçe formatındaki string'i parse et (4.000,00 -> 4000.00)
+        currentDebtStr = currentDebtStr.replace(/\./g, '').replace(',', '.');
+        const currentDebt = parseFloat(currentDebtStr) || 0;
+        
         const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
         const remaining = Math.max(0, currentDebt - paymentAmount);
         document.getElementById('remainingDebt').textContent = remaining.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL';
