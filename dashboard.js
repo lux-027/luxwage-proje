@@ -485,13 +485,13 @@ class LuxWage {
                 });
             }
             
-            // Ödeme günü kontrolü
-            const paymentDue = this.checkPaymentDue(emp);
-            if (paymentDue) {
+            // Borç bazlı bildirim kontrolü (5.000, 10.000, 15.000...)
+            const debtWarning = this.checkDebtWarning(emp);
+            if (debtWarning) {
                 activities.push({
-                    type: 'warning',
+                    type: 'debt_warning',
                     employeeName: emp.name,
-                    message: paymentDue.message,
+                    message: debtWarning.message,
                     timestamp: Date.now()
                 });
             }
@@ -524,9 +524,11 @@ class LuxWage {
                         </div>
                         <div class="flex-1">
                             <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
-                            <p class="text-sm text-gray-500">${timeAgo}</p>
+                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <div class="text-sm text-gray-400">${dateStr}</div>
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 `;
             } else if (activity.type === 'payment') {
@@ -537,9 +539,11 @@ class LuxWage {
                         </div>
                         <div class="flex-1">
                             <p class="font-medium text-gray-800">${activity.employeeName} isimli çalışana ${activity.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL ödeme yapıldı</p>
-                            <p class="text-sm text-gray-500">${timeAgo}</p>
+                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <div class="text-sm text-gray-400">${dateStr}</div>
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 `;
             } else if (activity.type === 'absence') {
@@ -550,9 +554,11 @@ class LuxWage {
                         </div>
                         <div class="flex-1">
                             <p class="font-medium text-gray-800">${activity.employeeName} isimli çalışana devamsızlık kaydı (${activity.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL kesinti)</p>
-                            <p class="text-sm text-gray-500">${timeAgo}</p>
+                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <div class="text-sm text-gray-400">${dateStr}</div>
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 `;
             } else if (activity.type === 'warning') {
@@ -563,9 +569,11 @@ class LuxWage {
                         </div>
                         <div class="flex-1">
                             <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
-                            <p class="text-sm text-gray-500">${timeAgo}</p>
+                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <div class="text-sm text-gray-400">${dateStr}</div>
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 `;
             } else if (activity.type === 'work_stopped') {
@@ -576,9 +584,11 @@ class LuxWage {
                         </div>
                         <div class="flex-1">
                             <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
-                            <p class="text-sm text-gray-500">${timeAgo}</p>
+                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <div class="text-sm text-gray-400">${dateStr}</div>
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 `;
             } else if (activity.type === 'work_resumed') {
@@ -589,9 +599,11 @@ class LuxWage {
                         </div>
                         <div class="flex-1">
                             <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
-                            <p class="text-sm text-gray-500">${timeAgo}</p>
+                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <div class="text-sm text-gray-400">${dateStr}</div>
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 `;
             } else if (activity.type === 'terminated') {
@@ -602,15 +614,52 @@ class LuxWage {
                         </div>
                         <div class="flex-1">
                             <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
-                            <p class="text-sm text-gray-500">${timeAgo}</p>
+                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <div class="text-sm text-gray-400">${dateStr}</div>
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
+                    </div>
+                `;
+            } else if (activity.type === 'debt_warning') {
+                return `
+                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-red-100 p-3 rounded-full mr-4">
+                            <i class="fas fa-exclamation-circle text-red-500"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
+                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
+                        </div>
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                            <i class="fas fa-trash-alt"></i>
+                        </button>
                     </div>
                 `;
             }
         }).join('');
         
         recentActivityList.innerHTML = activitiesHTML;
+    }
+    
+    // Borç bazlı bildirim kontrolü (5.000, 10.000, 15.000...)
+    checkDebtWarning(employee) {
+        if (!employee.startDate) return null;
+        
+        const currentDebt = this.calculateCurrentDebt(employee);
+        
+        // Her 5.000 TL artışta bildirim
+        const threshold = 5000;
+        const debtLevel = Math.floor(currentDebt / threshold);
+        
+        if (debtLevel >= 1) {
+            const debtDisplay = currentDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return {
+                message: `Borç ${debtDisplay} TL'ye ulaştı (Seviye ${debtLevel})`
+            };
+        }
+        
+        return null;
     }
     
     // Ödeme günü kontrolü
@@ -869,11 +918,16 @@ class LuxWage {
         }).join('');
         
         employeesSection.innerHTML = `
-            <div class="mb-4">
-                <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-6 py-3 rounded-lg hover:bg-emerald-600 transition-colors">
-                    <i class="fas fa-user-plus mr-2"></i>
-                    Yeni İşçi Ekle
-                </button>
+            <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-500 mb-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-gray-500 text-sm">Toplam Çalışan</p>
+                        <p class="text-3xl font-bold text-gray-800">${activeEmployees.length}</p>
+                    </div>
+                    <div class="bg-emerald-100 p-3 rounded-full">
+                        <i class="fas fa-users text-emerald-500 text-2xl"></i>
+                    </div>
+                </div>
             </div>
             <div class="grid gap-4">
                 ${employeesHTML}
