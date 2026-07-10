@@ -187,7 +187,29 @@ class LuxWage {
     constructor() {
         this.employees = [];
         this.currentPage = 'home';
+        this.pendingWorkStopId = null;
         this.init();
+    }
+
+    // Çalışanı ID ile bul (dizi indeksi yerine güvenli referans)
+    findEmployeeById(id) {
+        return this.employees.find(emp => emp.id === id) || null;
+    }
+    
+    // Çalışanın dizindeki indeksini ID ile bul
+    findEmployeeIndexById(id) {
+        return this.employees.findIndex(emp => emp.id === id);
+    }
+    
+    // Benzersiz çalışan ID'si üret (çakışma olasılığını minimize eder)
+    generateEmployeeId() {
+        let newId = Date.now();
+        // Aynı ID varsa, mevcut ID'lerin maksimumundan 1 fazlasını kullan
+        while (this.employees.some(emp => emp.id === newId)) {
+            const maxId = this.employees.reduce((max, emp) => Math.max(max, emp.id || 0), 0);
+            newId = maxId + 1;
+        }
+        return newId;
     }
 
     // Uygulamayı başlat
@@ -648,7 +670,7 @@ class LuxWage {
                     <i class="fas fa-bell text-blue-500 mr-2"></i>
                     Son İşlemler ve Bildirimler
                 </h2>
-                <div id="recentActivityList">
+                <div id="recentActivityList" class="max-h-80 overflow-y-auto pr-1">
                     <!-- Activities will be loaded here -->
                 </div>
             </div>
@@ -773,8 +795,12 @@ class LuxWage {
         // Tarihe göre sırala (yeniden eskiye)
         activities.sort((a, b) => b.timestamp - a.timestamp);
         
+        // Sadece son 1 haftayı göster
+        const oneWeekAgo = Date.now() - (7 * 24 * 60 * 60 * 1000);
+        const recentActivities = activities.filter(activity => activity.timestamp >= oneWeekAgo);
+        
         // Eğer aktivite yoksa
-        if (activities.length === 0) {
+        if (recentActivities.length === 0) {
             recentActivityList.innerHTML = `
                 <div class="text-center py-8 text-gray-500">
                     <i class="fas fa-inbox text-4xl mb-3"></i>
@@ -785,7 +811,7 @@ class LuxWage {
         }
         
         // Aktiviteleri render et
-        const activitiesHTML = activities.slice(0, 10).map(activity => {
+        const activitiesHTML = recentActivities.slice(0, 50).map(activity => {
             const timeAgo = this.getTimeAgo(activity.timestamp);
             const dateStr = new Date(activity.timestamp).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
             
@@ -1101,9 +1127,7 @@ class LuxWage {
             return;
         }
         
-        let employeesHTML = activeEmployees.map((emp, index) => {
-            // Original index in the full employees array
-            const originalIndex = this.employees.indexOf(emp);
+        let employeesHTML = activeEmployees.map((emp) => {
             const startDate = emp.startDate ? new Date(emp.startDate) : null;
             const startDateStr = startDate ? startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belirtilmemiş';
             const dailyLogs = emp.startDate ? this.calculateDailyLogs(emp) : [];
@@ -1241,23 +1265,23 @@ class LuxWage {
                             <i class="fas fa-info-circle mr-1"></i>
                             Detay
                         </button>
-                        <button data-index="${originalIndex}" class="absenceBtn bg-red-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-red-600 transition-colors text-xs md:text-sm">
+                        <button data-id="${emp.id}" class="absenceBtn bg-red-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-red-600 transition-colors text-xs md:text-sm">
                             <i class="fas fa-calendar-times mr-1"></i>
                             Devamsızlık
                         </button>
-                        <button data-index="${originalIndex}" class="toggleWorkBtn ${emp.isStopped ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors text-xs md:text-sm">
+                        <button data-id="${emp.id}" class="toggleWorkBtn ${emp.isStopped ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors text-xs md:text-sm">
                             <i class="fas ${emp.isStopped ? 'fa-play' : 'fa-pause'} mr-1"></i>
                             ${emp.isStopped ? 'Devam Ettir' : 'İşi Durdur'}
                         </button>
-                        <button data-index="${originalIndex}" class="paymentBtn bg-green-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-green-600 transition-colors text-xs md:text-sm">
+                        <button data-id="${emp.id}" class="paymentBtn bg-green-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-green-600 transition-colors text-xs md:text-sm">
                             <i class="fas fa-money-check-alt mr-1"></i>
                             Ödeme
                         </button>
-                        <button data-index="${originalIndex}" class="historyBtn bg-blue-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-blue-600 transition-colors text-xs md:text-sm">
+                        <button data-id="${emp.id}" class="historyBtn bg-blue-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-blue-600 transition-colors text-xs md:text-sm">
                             <i class="fas fa-history mr-1"></i>
                             Geçmiş
                         </button>
-                        <button data-index="${originalIndex}" class="terminateBtn bg-orange-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-orange-600 transition-colors text-xs md:text-sm">
+                        <button data-id="${emp.id}" class="terminateBtn bg-orange-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-orange-600 transition-colors text-xs md:text-sm">
                             <i class="fas fa-door-open mr-1"></i>
                             İşten Çıkar
                         </button>
@@ -1341,8 +1365,7 @@ class LuxWage {
             return;
         }
         
-        let employeesHTML = inactiveEmployees.map((emp, index) => {
-            const originalIndex = this.employees.indexOf(emp);
+        let employeesHTML = inactiveEmployees.map((emp) => {
             const departureDate = emp.departureDate ? new Date(emp.departureDate) : null;
             const departureDateStr = departureDate ? departureDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }) : 'Belirtilmemiş';
             const fixedDebt = this.calculateCurrentDebt(emp);
@@ -1377,11 +1400,11 @@ class LuxWage {
                 </div>
                 
                 <div class="flex flex-col gap-1.5 md:gap-2">
-                    <button data-id="${originalIndex}" class="showPastHistoryBtn bg-blue-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-blue-600 transition-colors text-xs md:text-sm">
+                    <button data-id="${emp.id}" class="showPastHistoryBtn bg-blue-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-blue-600 transition-colors text-xs md:text-sm">
                         <i class="fas fa-history mr-1"></i>
                         Geçmiş
                     </button>
-                    <button data-id="${originalIndex}" class="permanentlyDeleteBtn bg-red-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-red-600 transition-colors text-xs md:text-sm">
+                    <button data-id="${emp.id}" class="permanentlyDeleteBtn bg-red-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-red-600 transition-colors text-xs md:text-sm">
                         <i class="fas fa-trash mr-1"></i>
                         Sil
                     </button>
@@ -1398,8 +1421,8 @@ class LuxWage {
     }
     
     // Geçmiş çalışan geçmişini göster
-    showPastEmployeeHistory(employeeIndex) {
-        const employee = this.employees[employeeIndex];
+    showPastEmployeeHistory(employeeId) {
+        const employee = this.findEmployeeById(employeeId);
         if (!employee) return;
         
         const historyContent = document.getElementById('historyContent');
@@ -1693,7 +1716,7 @@ class LuxWage {
         const effectiveStartDate = this.getEffectiveEmployeeStartDate(selectedStartDate, now);
 
         const employee = {
-            id: Date.now(),
+            id: this.generateEmployeeId(),
             name,
             phone,
             salaryType,
@@ -1761,7 +1784,7 @@ class LuxWage {
 
         const salaryType = salaryTypes[Math.floor(Math.random() * salaryTypes.length)];
         const employee = {
-            id: Date.now(),
+            id: this.generateEmployeeId(),
             name: generateName(),
             phone: generatePhone(),
             salaryType,
@@ -1782,8 +1805,9 @@ class LuxWage {
     }
 
     // İşçiyi işten çıkar (status: inactive)
-    terminateEmployee(employeeIndex) {
-        if (employeeIndex !== null && employeeIndex >= 0 && employeeIndex < this.employees.length) {
+    terminateEmployee(employeeId) {
+        const employeeIndex = this.findEmployeeIndexById(employeeId);
+        if (employeeIndex !== -1) {
             const employee = this.employees[employeeIndex];
             employee.status = 'inactive';
             employee.departureDate = Date.now();
@@ -1805,15 +1829,16 @@ class LuxWage {
     }
     
     // Çalışanın iş durumunu değiştir (isStopped toggle)
-    toggleWorkStatus(employeeIndex) {
-        if (employeeIndex !== null && employeeIndex >= 0 && employeeIndex < this.employees.length) {
+    toggleWorkStatus(employeeId) {
+        const employeeIndex = this.findEmployeeIndexById(employeeId);
+        if (employeeIndex !== -1) {
             const employee = this.employees[employeeIndex];
             const currentStatus = employee.isStopped || false;
             const newStatus = !currentStatus;
             
             if (newStatus) {
                 // İş durdurulacak - custom modal göster
-                this.pendingWorkStopIndex = employeeIndex;
+                this.pendingWorkStopId = employee.id;
                 const modal = document.getElementById('workStopModal');
                 if (modal) modal.classList.remove('hidden');
             } else {
@@ -1847,8 +1872,8 @@ class LuxWage {
 
     // İş durdurmayı onayla
     confirmWorkStop() {
-        if (this.pendingWorkStopIndex !== null && this.pendingWorkStopIndex >= 0 && this.pendingWorkStopIndex < this.employees.length) {
-            const employee = this.employees[this.pendingWorkStopIndex];
+        const employee = this.pendingWorkStopId ? this.findEmployeeById(this.pendingWorkStopId) : null;
+        if (employee) {
             employee.isStopped = true;
             employee.workStopDate = Date.now();
             this.saveData();
@@ -1880,7 +1905,7 @@ class LuxWage {
     closeWorkStopModal() {
         const modal = document.getElementById('workStopModal');
         if (modal) modal.classList.add('hidden');
-        this.pendingWorkStopIndex = null;
+        this.pendingWorkStopId = null;
     }
 
     // Günün durumunu belirle (08:00-18:00 kuralı)
@@ -2007,8 +2032,9 @@ class LuxWage {
     }
     
     // İşçiyi kalıcı olarak sil (şifre doğrulaması ile)
-    permanentlyDeleteEmployee(employeeIndex, password) {
-        if (employeeIndex !== null && employeeIndex >= 0 && employeeIndex < this.employees.length) {
+    permanentlyDeleteEmployee(employeeId, password) {
+        const employeeIndex = this.findEmployeeIndexById(employeeId);
+        if (employeeIndex !== -1) {
             const user = auth.currentUser;
             if (!user) {
                 showNotification('Kullanıcı oturumu bulunamadı', 'error');
@@ -2045,8 +2071,9 @@ class LuxWage {
     }
     
     // İşçi sil
-    deleteEmployee(employeeIndex) {
-        if (employeeIndex !== null && employeeIndex >= 0 && employeeIndex < this.employees.length) {
+    deleteEmployee(employeeId) {
+        const employeeIndex = this.findEmployeeIndexById(employeeId);
+        if (employeeIndex !== -1) {
             this.employees.splice(employeeIndex, 1);
             this.saveData();
             this.renderEmployeesPage();
@@ -2056,8 +2083,8 @@ class LuxWage {
     }
     
     // Ödemeyi sil
-    deletePayment(employeeIndex, recordIndex) {
-        const employee = this.employees[employeeIndex];
+    deletePayment(employeeId, recordIndex) {
+        const employee = this.findEmployeeById(employeeId);
         if (!employee) return;
         
         if (!employee.paymentHistory || recordIndex < 0 || recordIndex >= employee.paymentHistory.length) return;
@@ -2068,7 +2095,7 @@ class LuxWage {
         this.saveData();
         
         // Geçmiş modalını güncelle
-        showHistory(employeeIndex);
+        showHistory(employeeId);
         
         // Listeleri güncelle
         this.renderEmployeesPage();
@@ -2645,8 +2672,8 @@ function closeModal(modalId) {
 }
 
 // Devamsızlık modalını aç
-function openAbsenceModal(employeeIndex) {
-    const employee = luxwage.employees[employeeIndex];
+function openAbsenceModal(employeeId) {
+    const employee = luxwage.findEmployeeById(employeeId);
     if (!employee) return;
     
     document.getElementById('absenceEmployeeId').value = employee.id;
@@ -2745,8 +2772,8 @@ function openAbsenceModal(employeeIndex) {
 };
 
 // Ödeme modalını aç
-function openPaymentModal(employeeIndex) {
-    const employee = luxwage.employees[employeeIndex];
+function openPaymentModal(employeeId) {
+    const employee = luxwage.findEmployeeById(employeeId);
     if (!employee) return;
     
     const currentDebt = luxwage.calculateCurrentDebt(employee);
@@ -2762,8 +2789,8 @@ function openPaymentModal(employeeIndex) {
 };
 
 // Geçmişi göster
-function showHistory(employeeIndex) {
-    const employee = luxwage.employees[employeeIndex];
+function showHistory(employeeId) {
+    const employee = luxwage.findEmployeeById(employeeId);
     if (!employee) return;
     
     document.getElementById('historyEmployeeName').textContent = employee.name;
@@ -2816,28 +2843,28 @@ function showHistory(employeeIndex) {
         <div class="flex flex-wrap items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
             <div class="flex items-center gap-2">
                 <label class="text-sm text-gray-600 font-medium">Yıl:</label>
-                <select id="historyYearSelect" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white" onchange="filterHistory('all', ${employeeIndex})">
+                <select id="historyYearSelect" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white" onchange="filterHistory('all', ${employee.id})">
                     ${yearOptions}
                 </select>
             </div>
             <div class="flex items-center gap-2">
                 <label class="text-sm text-gray-600 font-medium">Ay:</label>
-                <select id="historyMonthSelect" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white" onchange="filterHistory('all', ${employeeIndex})">
+                <select id="historyMonthSelect" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white" onchange="filterHistory('all', ${employee.id})">
                     ${monthOptions}
                 </select>
             </div>
         </div>
         <div class="flex gap-2 mb-4 flex-wrap">
-            <button onclick="filterHistory('all', ${employeeIndex})" class="history-filter-btn px-4 py-2 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors" data-category="all">
+            <button onclick="filterHistory('all', ${employee.id})" class="history-filter-btn px-4 py-2 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors" data-category="all">
                 Tümü
             </button>
-            <button onclick="filterHistory('payments', ${employeeIndex})" class="history-filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors" data-category="payments">
+            <button onclick="filterHistory('payments', ${employee.id})" class="history-filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors" data-category="payments">
                 Ödemeler
             </button>
-            <button onclick="filterHistory('absences', ${employeeIndex})" class="history-filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors" data-category="absences">
+            <button onclick="filterHistory('absences', ${employee.id})" class="history-filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors" data-category="absences">
                 Devamsızlıklar
             </button>
-            <button onclick="filterHistory('debt', ${employeeIndex})" class="history-filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors" data-category="debt">
+            <button onclick="filterHistory('debt', ${employee.id})" class="history-filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors" data-category="debt">
                 Borç
             </button>
         </div>
@@ -3306,8 +3333,8 @@ function generateHistoryContent(employee, recentPayments, recentAbsences, catego
 }
 
 // Geçmişi filtrele
-function filterHistory(category, employeeIndex) {
-    const employee = luxwage.employees[employeeIndex];
+function filterHistory(category, employeeId) {
+    const employee = luxwage.findEmployeeById(employeeId);
     if (!employee) return;
     
     // Seçili yıl ve ayı al
@@ -3398,8 +3425,8 @@ window.calculateDebtInfo = calculateDebtInfo;
 window.setPaymentPeriodView = setPaymentPeriodView;
 
 // Devamsızlığı sil
-function deleteAbsence(employeeIndex, absenceIndex) {
-    const employee = luxwage.employees[employeeIndex];
+function deleteAbsence(employeeId, absenceIndex) {
+    const employee = luxwage.findEmployeeById(employeeId);
     if (!employee) return;
     
     if (!employee.absenceHistory || employee.absenceHistory.length === 0) return;
@@ -3414,7 +3441,7 @@ function deleteAbsence(employeeIndex, absenceIndex) {
         employee.absenceHistory.splice(originalIndex, 1);
         luxwage.saveData();
         showNotification('Devamsızlık silindi', 'success');
-        showHistory(employeeIndex);
+        showHistory(employeeId);
     }
 }
 
@@ -3557,14 +3584,10 @@ function openDailyDetails(employeeId) {
     }
 };
 
-// İşçi sil
-function deleteEmployee(employeeIndex) {
+// İşçi sil (global fonksiyon - güvenlik için ID bazlı)
+function deleteEmployee(employeeId) {
     if (confirm('Bu çalışanı silmek istediğinize emin misiniz?')) {
-        luxwage.employees.splice(employeeIndex, 1);
-        luxwage.saveData();
-        luxwage.renderEmployeesPage();
-        luxwage.renderHomePage();
-        showNotification('İşçi silindi', 'success');
+        luxwage.deleteEmployee(employeeId);
     }
 };
 
@@ -3657,28 +3680,28 @@ window.showPage = function(pageName) {
     luxwage.showPage(pageName);
 };
 
-window.deletePayment = function(employeeIndex, recordIndex) {
-    luxwage.deletePayment(employeeIndex, recordIndex);
+window.deletePayment = function(employeeId, recordIndex) {
+    luxwage.deletePayment(employeeId, recordIndex);
 };
 
-window.filterHistory = function(category, employeeIndex) {
-    filterHistory(category, employeeIndex);
+window.filterHistory = function(category, employeeId) {
+    filterHistory(category, employeeId);
 };
 
 window.openDailyDetails = function(employeeId) {
     openDailyDetails(employeeId);
 };
 
-window.showHistory = function(employeeIndex) {
-    showHistory(employeeIndex);
+window.showHistory = function(employeeId) {
+    showHistory(employeeId);
 };
 
-window.openAbsenceModal = function(employeeIndex) {
-    openAbsenceModal(employeeIndex);
+window.openAbsenceModal = function(employeeId) {
+    openAbsenceModal(employeeId);
 };
 
-window.openPaymentModal = function(employeeIndex) {
-    openPaymentModal(employeeIndex);
+window.openPaymentModal = function(employeeId) {
+    openPaymentModal(employeeId);
 };
 
 // Logout button event listener
@@ -3990,27 +4013,27 @@ document.addEventListener('DOMContentLoaded', function() {
             openModal('employeeModal');
         }
 
-        // Employee action buttons with data-index
+        // Employee action buttons with data-id (employee ID)
         if (e.target && e.target.classList.contains('absenceBtn')) {
-            const index = e.target.getAttribute('data-index');
-            openAbsenceModal(parseInt(index));
+            const employeeId = parseInt(e.target.getAttribute('data-id'));
+            openAbsenceModal(employeeId);
         }
         
         if (e.target && e.target.classList.contains('paymentBtn')) {
-            const index = e.target.getAttribute('data-index');
-            openPaymentModal(parseInt(index));
+            const employeeId = parseInt(e.target.getAttribute('data-id'));
+            openPaymentModal(employeeId);
         }
         
         if (e.target && e.target.classList.contains('historyBtn')) {
-            const index = e.target.getAttribute('data-index');
-            showHistory(parseInt(index));
+            const employeeId = parseInt(e.target.getAttribute('data-id'));
+            showHistory(employeeId);
         }
         
         if (e.target && e.target.classList.contains('terminateBtn')) {
-            const index = e.target.getAttribute('data-index');
-            const employee = luxwage.employees[parseInt(index)];
+            const employeeId = parseInt(e.target.getAttribute('data-id'));
+            const employee = luxwage.findEmployeeById(employeeId);
             if (employee) {
-                employeeIdToTerminate = parseInt(index);
+                employeeIdToTerminate = employeeId;
                 const terminateConfirmMessage = document.getElementById('terminateConfirmMessage');
                 if (terminateConfirmMessage) {
                     terminateConfirmMessage.textContent = `${employee.name} adlı çalışanı işten çıkarmak istediğinize emin misiniz?`;
@@ -4023,13 +4046,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (e.target && e.target.classList.contains('toggleWorkBtn')) {
-            const index = e.target.getAttribute('data-index');
-            luxwage.toggleWorkStatus(parseInt(index));
+            const employeeId = parseInt(e.target.getAttribute('data-id'));
+            luxwage.toggleWorkStatus(employeeId);
         }
         
         if (e.target && e.target.classList.contains('permanentlyDeleteBtn')) {
-            const index = e.target.getAttribute('data-id');
-            employeeIdToDelete = parseInt(index);
+            const employeeId = parseInt(e.target.getAttribute('data-id'));
+            employeeIdToDelete = employeeId;
             const deleteConfirmModal = document.getElementById('deleteConfirmModal');
             if (deleteConfirmModal) {
                 deleteConfirmModal.classList.remove('hidden');
@@ -4037,13 +4060,13 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         if (e.target && e.target.classList.contains('showPastHistoryBtn')) {
-            const index = e.target.getAttribute('data-id');
-            luxwage.showPastEmployeeHistory(parseInt(index));
+            const employeeId = parseInt(e.target.getAttribute('data-id'));
+            luxwage.showPastEmployeeHistory(employeeId);
         }
         
         if (e.target && e.target.classList.contains('detailsBtn')) {
-            const employeeId = e.target.getAttribute('data-id');
-            openDailyDetails(parseInt(employeeId));
+            const employeeId = parseInt(e.target.getAttribute('data-id'));
+            openDailyDetails(employeeId);
         }
     });
     
