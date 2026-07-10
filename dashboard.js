@@ -96,6 +96,45 @@ function showNotification(message, type = 'info') {
     }, 3000);
 };
 
+// Türkçe sayı formatı yardımcıları
+function formatTurkishNumberInput(value) {
+    if (!value) return '';
+    
+    // Sadece rakam, nokta ve virgüle izin ver
+    let cleaned = value.replace(/[^\d.,]/g, '');
+    
+    // Son virgülü ondalık ayırıcı olarak koru, öncesindeki nokta/virgülleri sil
+    const lastCommaIndex = cleaned.lastIndexOf(',');
+    if (lastCommaIndex !== -1) {
+        const integerPart = cleaned.slice(0, lastCommaIndex).replace(/[.,]/g, '');
+        const decimalPart = cleaned.slice(lastCommaIndex + 1).replace(/[.,]/g, '').slice(0, 2);
+        cleaned = integerPart + ',' + decimalPart;
+    } else {
+        cleaned = cleaned.replace(/[.,]/g, '');
+    }
+    
+    if (!cleaned) return '';
+    
+    const [integerPart, decimalPart] = cleaned.split(',');
+    const formattedInteger = integerPart.replace(/\B(?=(\d{3})+(?!\d))/g, '.');
+    
+    if (value.endsWith(',')) {
+        return formattedInteger + ',';
+    }
+    
+    if (decimalPart !== undefined) {
+        return formattedInteger + ',' + decimalPart;
+    }
+    
+    return formattedInteger;
+}
+
+function parseTurkishNumber(value) {
+    if (!value) return 0;
+    const normalized = value.replace(/\./g, '').replace(',', '.');
+    return parseFloat(normalized) || 0;
+}
+
 // Logout fonksiyonu
 function logout() {
     if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
@@ -242,7 +281,11 @@ class LuxWage {
         // Payment amount change - calculate remaining debt
         const paymentAmountInput = document.getElementById('paymentAmount');
         if (paymentAmountInput) {
-            paymentAmountInput.addEventListener('input', () => {
+            paymentAmountInput.addEventListener('input', (e) => {
+                const formatted = formatTurkishNumberInput(e.target.value);
+                if (formatted !== e.target.value) {
+                    e.target.value = formatted;
+                }
                 this.calculateRemainingDebt();
             });
         }
@@ -272,17 +315,9 @@ class LuxWage {
         // Salary amount auto-format with Turkish thousand separator (salaryAmount already declared above)
         if (salaryAmount) {
             salaryAmount.addEventListener('input', (e) => {
-                let val = e.target.value.replace(/\D/g, '');
-                
-                if (val.length > 0) {
-                    const num = parseInt(val, 10);
-                    if (!isNaN(num)) {
-                        e.target.value = num.toLocaleString('tr-TR');
-                    } else {
-                        e.target.value = '';
-                    }
-                } else {
-                    e.target.value = '';
+                const formatted = formatTurkishNumberInput(e.target.value);
+                if (formatted !== e.target.value) {
+                    e.target.value = formatted;
                 }
             });
         }
@@ -381,6 +416,9 @@ class LuxWage {
                     'info'
                 );
             }
+            
+            // Günlük kalan borç uyarısını kontrol et ve kaydet
+            this.checkDebtWarning(employee);
         });
     }
 
@@ -485,22 +523,22 @@ class LuxWage {
         
         switch(pageName) {
             case 'home':
-                if (pageTitle) pageTitle.textContent = 'Ana Sayfa';
+                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-home hidden md:inline mr-2 text-blue-600"></i>Ana Sayfa';
                 if (homeSection) homeSection.style.display = 'block';
                 this.renderHomePage();
                 break;
             case 'employees':
-                if (pageTitle) pageTitle.textContent = 'Çalışanlarım';
+                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-users hidden md:inline mr-2 text-blue-600"></i>Çalışanlarım';
                 if (employeesSection) employeesSection.style.display = 'block';
                 this.renderEmployeesPage();
                 break;
             case 'account':
-                if (pageTitle) pageTitle.textContent = 'Hesabım';
+                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-user-circle hidden md:inline mr-2 text-blue-600"></i>Hesabım';
                 if (accountSection) accountSection.style.display = 'block';
                 this.renderAccountPage();
                 break;
             case 'pastEmployees':
-                if (pageTitle) pageTitle.textContent = 'Geçmiş Çalışanlar';
+                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-user-clock hidden md:inline mr-2 text-blue-600"></i>Geçmiş Çalışanlar';
                 if (pastEmployeesSection) pastEmployeesSection.style.display = 'block';
                 this.renderPastEmployeesPage();
                 break;
@@ -516,40 +554,90 @@ class LuxWage {
         const totalEmployees = activeEmployees.length;
         const totalDebt = activeEmployees.reduce((sum, emp) => sum + this.calculateCurrentDebt(emp), 0);
         
+        // Aylık ve yıllık toplam ödemeleri hesapla
+        const now = new Date();
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth() + 1;
+        function calculatePeriodPayments(year, month) {
+            return activeEmployees.reduce((total, emp) => {
+                if (!emp.paymentHistory || emp.paymentHistory.length === 0) return total;
+                return total + emp.paymentHistory.reduce((empTotal, payment) => {
+                    const paymentDate = new Date(payment.date + 'T00:00:00');
+                    const amount = Math.abs(Number(payment.amount) || 0);
+                    if (paymentDate.getFullYear() === year && paymentDate.getMonth() + 1 === month) {
+                        return empTotal + amount;
+                    }
+                    return empTotal;
+                }, 0);
+            }, 0);
+        }
+        
+        function calculateYearlyPayments(year) {
+            return activeEmployees.reduce((total, emp) => {
+                if (!emp.paymentHistory || emp.paymentHistory.length === 0) return total;
+                return total + emp.paymentHistory.reduce((empTotal, payment) => {
+                    const paymentDate = new Date(payment.date + 'T00:00:00');
+                    const amount = Math.abs(Number(payment.amount) || 0);
+                    if (paymentDate.getFullYear() === year) {
+                        return empTotal + amount;
+                    }
+                    return empTotal;
+                }, 0);
+            }, 0);
+        }
+        
+        const monthlyPayments = calculatePeriodPayments(currentYear, currentMonth);
+        const yearlyPayments = calculateYearlyPayments(currentYear);
+        
+        // Toggle fonksiyonu için global değişkenler
+        window.monthlyPaymentsAmount = monthlyPayments;
+        window.yearlyPaymentsAmount = yearlyPayments;
+        
         homeSection.innerHTML = `
-            <div class="grid md:grid-cols-3 gap-6 mb-8">
-                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-emerald-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm">Toplam Çalışan</p>
-                            <p class="text-3xl font-bold text-gray-800">${totalEmployees}</p>
+            <div class="grid grid-cols-3 gap-2 md:gap-6 mb-8">
+                <div class="bg-white rounded-xl shadow-lg p-2 md:p-6 border-l-2 md:border-l-4 border-emerald-500">
+                    <div class="flex items-center justify-between gap-1">
+                        <div class="min-w-0">
+                            <p class="text-[10px] md:text-sm text-gray-500 truncate">Toplam Çalışan</p>
+                            <p class="text-lg md:text-3xl font-bold text-gray-800">${totalEmployees}</p>
                         </div>
-                        <div class="bg-emerald-100 p-3 rounded-full">
-                            <i class="fas fa-users text-emerald-500 text-2xl"></i>
-                        </div>
-                    </div>
-                </div>
-                
-                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-red-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm">Toplam Borç</p>
-                            <p class="text-3xl font-bold text-gray-800">${totalDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
-                        </div>
-                        <div class="bg-red-100 p-3 rounded-full">
-                            <i class="fas fa-money-bill-wave text-red-500 text-2xl"></i>
+                        <div class="bg-emerald-100 p-1.5 md:p-3 rounded-full shrink-0">
+                            <i class="fas fa-users text-emerald-500 text-sm md:text-2xl"></i>
                         </div>
                     </div>
                 </div>
                 
-                <div class="bg-white rounded-xl shadow-lg p-6 border-l-4 border-blue-500">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm">Aktif İşlemler</p>
-                            <p class="text-3xl font-bold text-gray-800">0</p>
+                <div class="bg-white rounded-xl shadow-lg p-2 md:p-6 border-l-2 md:border-l-4 border-red-500">
+                    <div class="flex items-center justify-between gap-1">
+                        <div class="min-w-0">
+                            <p class="text-[10px] md:text-sm text-gray-500 truncate">Toplam Borç</p>
+                            <p class="text-lg md:text-3xl font-bold text-gray-800 truncate">${totalDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
                         </div>
-                        <div class="bg-blue-100 p-3 rounded-full">
-                            <i class="fas fa-chart-line text-blue-500 text-2xl"></i>
+                        <div class="bg-red-100 p-1.5 md:p-3 rounded-full shrink-0">
+                            <i class="fas fa-money-bill-wave text-red-500 text-sm md:text-2xl"></i>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="bg-white rounded-xl shadow-lg p-2 md:p-6 border-l-2 md:border-l-4 border-blue-500">
+                    <div class="flex items-center justify-between gap-2 mb-1 md:mb-3">
+                        <p id="paymentPeriodTitle" class="text-[10px] md:text-sm text-gray-500 truncate font-medium">Aylık Toplam Ödeme</p>
+                        <div class="flex items-center bg-gray-100 rounded-lg p-0.5 shrink-0">
+                            <button type="button" id="paymentMonthlyBtn" onclick="setPaymentPeriodView('monthly')" class="px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs rounded-md bg-blue-600 text-white font-semibold shadow-sm transition-all">
+                                Aylık
+                            </button>
+                            <button type="button" id="paymentYearlyBtn" onclick="setPaymentPeriodView('yearly')" class="px-2 md:px-3 py-0.5 md:py-1 text-[10px] md:text-xs rounded-md text-gray-600 hover:text-gray-800 hover:bg-gray-200 transition-all font-medium">
+                                Yıllık
+                            </button>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <div class="min-w-0">
+                            <p id="paymentPeriodValue" class="text-lg md:text-3xl font-bold text-gray-800 truncate">${monthlyPayments.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</p>
+                            <p class="text-[10px] md:text-xs text-gray-400 mt-1 truncate" id="paymentPeriodLabel">Bu ay</p>
+                        </div>
+                        <div class="bg-blue-100 p-1.5 md:p-3 rounded-full shrink-0">
+                            <i class="fas fa-chart-line text-blue-500 text-sm md:text-2xl"></i>
                         </div>
                     </div>
                 </div>
@@ -562,6 +650,60 @@ class LuxWage {
                 </h2>
                 <div id="recentActivityList">
                     <!-- Activities will be loaded here -->
+                </div>
+            </div>
+            
+            <div class="mt-8 grid grid-cols-2 gap-4 md:gap-6">
+                <div class="bg-gradient-to-br from-blue-500 to-blue-600 rounded-xl shadow-lg p-4 md:p-6 text-white">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-white/20 p-3 rounded-lg mr-4">
+                            <i class="fas fa-clock text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold">Otomatik Hesaplama</h3>
+                    </div>
+                    <p class="text-blue-100 text-sm leading-relaxed">
+                        Çalışanlarınızın günlük kazançları saat 18:00'den sonra otomatik olarak borçlarına eklenir. 
+                        08:00 - 18:00 arası kazançlar "Bekleniyor" olarak işaretlenir.
+                    </p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-xl shadow-lg p-4 md:p-6 text-white">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-white/20 p-3 rounded-lg mr-4">
+                            <i class="fas fa-calendar-check text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold">Kapalı Günler</h3>
+                    </div>
+                    <p class="text-emerald-100 text-sm leading-relaxed">
+                        Belirlediğiniz tatil günlerinde borç artışı otomatik olarak durdurulur. 
+                        Kapalı günlerde sistem çalışanlarınızın maaşını hesaplamaz.
+                    </p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-purple-500 to-purple-600 rounded-xl shadow-lg p-4 md:p-6 text-white">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-white/20 p-3 rounded-lg mr-4">
+                            <i class="fas fa-history text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold">Detaylı Geçmiş</h3>
+                    </div>
+                    <p class="text-purple-100 text-sm leading-relaxed">
+                        Tüm ödeme, avans ve devamsızlık kayıtlarını çalışan kartlarından takip edebilirsiniz. 
+                        Geçmiş çalışanlar ayrı bir bölümde saklanır.
+                    </p>
+                </div>
+                
+                <div class="bg-gradient-to-br from-orange-500 to-orange-600 rounded-xl shadow-lg p-4 md:p-6 text-white">
+                    <div class="flex items-center mb-4">
+                        <div class="bg-white/20 p-3 rounded-lg mr-4">
+                            <i class="fas fa-mobile-alt text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-bold">Mobil Uyumlu</h3>
+                    </div>
+                    <p class="text-orange-100 text-sm leading-relaxed">
+                        LuxWage telefon ve tabletlerde rahatlıkla kullanılabilir. 
+                        Tüm sayfalar ve dashboard mobil ekranlara uyumlu tasarlanmıştır.
+                    </p>
                 </div>
             </div>
         `;
@@ -626,16 +768,6 @@ class LuxWage {
                 });
             }
             
-            // Borç bazlı bildirim kontrolü (5.000, 10.000, 15.000...)
-            const debtWarning = this.checkDebtWarning(emp);
-            if (debtWarning) {
-                activities.push({
-                    type: 'debt_warning',
-                    employeeName: emp.name,
-                    message: debtWarning.message,
-                    timestamp: Date.now()
-                });
-            }
         });
         
         // Tarihe göre sırala (yeniden eskiye)
@@ -659,120 +791,120 @@ class LuxWage {
             
             if (activity.type === 'new_employee') {
                 return `
-                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                        <div class="bg-blue-100 p-3 rounded-full mr-4">
+                    <div class="flex items-center p-2 md:p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-blue-100 p-2 md:p-3 rounded-full mr-2 md:mr-4">
                             <i class="fas fa-user text-blue-500"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
-                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
+                            <p class="font-medium text-gray-800 text-sm md:text-base">${activity.employeeName} - ${activity.message}</p>
+                            <p class="text-xs md:text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-1 md:p-2" data-timestamp="${activity.timestamp}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                 `;
             } else if (activity.type === 'payment') {
                 return `
-                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                        <div class="bg-green-100 p-3 rounded-full mr-4">
+                    <div class="flex items-center p-2 md:p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-green-100 p-2 md:p-3 rounded-full mr-2 md:mr-4">
                             <i class="fas fa-money-bill-wave text-green-500"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-medium text-gray-800">${activity.employeeName} isimli çalışana ${activity.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL ödeme yapıldı</p>
-                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
+                            <p class="font-medium text-gray-800 text-sm md:text-base">${activity.employeeName} isimli çalışana ${activity.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL ödeme yapıldı</p>
+                            <p class="text-xs md:text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-1 md:p-2" data-timestamp="${activity.timestamp}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                 `;
             } else if (activity.type === 'absence') {
                 return `
-                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                        <div class="bg-red-100 p-3 rounded-full mr-4">
+                    <div class="flex items-center p-2 md:p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-red-100 p-2 md:p-3 rounded-full mr-2 md:mr-4">
                             <i class="fas fa-calendar-times text-red-500"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-medium text-gray-800">${activity.employeeName} isimli çalışana devamsızlık kaydı (${activity.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL kesinti)</p>
-                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
+                            <p class="font-medium text-gray-800 text-sm md:text-base">${activity.employeeName} isimli çalışana devamsızlık kaydı (${activity.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL kesinti)</p>
+                            <p class="text-xs md:text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-1 md:p-2" data-timestamp="${activity.timestamp}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                 `;
             } else if (activity.type === 'warning') {
                 return `
-                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                        <div class="bg-yellow-100 p-3 rounded-full mr-4">
+                    <div class="flex items-center p-2 md:p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-yellow-100 p-2 md:p-3 rounded-full mr-2 md:mr-4">
                             <i class="fas fa-exclamation-triangle text-yellow-500"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
-                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
+                            <p class="font-medium text-gray-800 text-sm md:text-base">${activity.employeeName} - ${activity.message}</p>
+                            <p class="text-xs md:text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-1 md:p-2" data-timestamp="${activity.timestamp}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                 `;
             } else if (activity.type === 'work_stopped') {
                 return `
-                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                        <div class="bg-yellow-100 p-3 rounded-full mr-4">
+                    <div class="flex items-center p-2 md:p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-yellow-100 p-2 md:p-3 rounded-full mr-2 md:mr-4">
                             <i class="fas fa-pause-circle text-yellow-500"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
-                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
+                            <p class="font-medium text-gray-800 text-sm md:text-base">${activity.employeeName} - ${activity.message}</p>
+                            <p class="text-xs md:text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-1 md:p-2" data-timestamp="${activity.timestamp}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                 `;
             } else if (activity.type === 'work_resumed') {
                 return `
-                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                        <div class="bg-green-100 p-3 rounded-full mr-4">
+                    <div class="flex items-center p-2 md:p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-green-100 p-2 md:p-3 rounded-full mr-2 md:mr-4">
                             <i class="fas fa-play-circle text-green-500"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
-                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
+                            <p class="font-medium text-gray-800 text-sm md:text-base">${activity.employeeName} - ${activity.message}</p>
+                            <p class="text-xs md:text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-1 md:p-2" data-timestamp="${activity.timestamp}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                 `;
             } else if (activity.type === 'terminated') {
                 return `
-                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                        <div class="bg-orange-100 p-3 rounded-full mr-4">
+                    <div class="flex items-center p-2 md:p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-orange-100 p-2 md:p-3 rounded-full mr-2 md:mr-4">
                             <i class="fas fa-door-open text-orange-500"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
-                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
+                            <p class="font-medium text-gray-800 text-sm md:text-base">${activity.employeeName} - ${activity.message}</p>
+                            <p class="text-xs md:text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-1 md:p-2" data-timestamp="${activity.timestamp}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
                 `;
             } else if (activity.type === 'debt_warning') {
                 return `
-                    <div class="flex items-center p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
-                        <div class="bg-red-100 p-3 rounded-full mr-4">
+                    <div class="flex items-center p-2 md:p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
+                        <div class="bg-red-100 p-2 md:p-3 rounded-full mr-2 md:mr-4">
                             <i class="fas fa-exclamation-circle text-red-500"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-medium text-gray-800">${activity.employeeName} - ${activity.message}</p>
-                            <p class="text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
+                            <p class="font-medium text-gray-800 text-sm md:text-base">${activity.employeeName} - ${activity.message}</p>
+                            <p class="text-xs md:text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
-                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-2" data-timestamp="${activity.timestamp}">
+                        <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-1 md:p-2" data-timestamp="${activity.timestamp}">
                             <i class="fas fa-trash-alt"></i>
                         </button>
                     </div>
@@ -783,27 +915,39 @@ class LuxWage {
         recentActivityList.innerHTML = activitiesHTML;
     }
     
-    // Borç bazlı bildirim kontrolü (5.000, 10.000, 15.000...)
+    // Günlük kalan borç uyarısını activityHistory'ye kaydet
     checkDebtWarning(employee) {
-        if (!employee.startDate) return null;
+        if (!employee.startDate) return;
         
         // Sadece aktif çalışanlar için bildirim gönder
-        if (employee.status === 'inactive') return null;
+        if (employee.status === 'inactive' || employee.isStopped) return;
         
         const currentDebt = this.calculateCurrentDebt(employee);
+        if (currentDebt <= 0) return;
         
-        // Her 5.000 TL artışta bildirim
-        const threshold = 5000;
-        const debtLevel = Math.floor(currentDebt / threshold);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const todayStr = today.toISOString().split('T')[0];
         
-        if (debtLevel >= 1) {
+        if (!employee.activityHistory) employee.activityHistory = [];
+        
+        // Bugün için borç uyarısı zaten eklenmiş mi kontrol et
+        const alreadyWarned = employee.activityHistory.some(activity =>
+            activity.type === 'debt_warning' && activity.date === todayStr
+        );
+        
+        if (!alreadyWarned) {
             const debtDisplay = currentDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            return {
-                message: `Borç ${debtDisplay} TL'ye ulaştı`
-            };
+            employee.activityHistory.push({
+                type: 'debt_warning',
+                employeeName: employee.name,
+                message: `Kalan borç: ${debtDisplay} TL`,
+                date: todayStr,
+                timestamp: today.getTime()
+            });
+            showNotification(`${employee.name}: Kalan borç ${debtDisplay} TL`, 'warning');
+            this.saveData();
         }
-        
-        return null;
     }
     
     // Ödeme günü kontrolü
@@ -933,16 +1077,25 @@ class LuxWage {
         // Sadece aktif çalışanları filtrele
         const activeEmployees = this.employees.filter(emp => emp.status !== 'inactive');
         
+        // Özet bilgileri hesapla
+        const totalDebt = activeEmployees.reduce((sum, emp) => sum + this.calculateCurrentDebt(emp), 0);
+        const formattedTotalDebt = totalDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const totalSalary = activeEmployees.reduce((sum, emp) => sum + (emp.salaryAmount || 0), 0);
+        const formattedTotalSalary = totalSalary.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        const activeWorkingEmployees = activeEmployees.filter(emp => !emp.isStopped).length;
+        
         if (activeEmployees.length === 0) {
             employeesSection.innerHTML = `
                 <div class="bg-white rounded-xl shadow-lg p-8 text-center">
                     <i class="fas fa-users text-gray-300 text-6xl mb-4"></i>
                     <h3 class="text-xl font-bold text-gray-800 mb-2">Henüz çalışan yok</h3>
                     <p class="text-gray-500 mb-4">İlk çalışanınızı eklemek için butona tıklayın</p>
-                    <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-6 py-3 rounded-lg hover:bg-emerald-600 transition-colors">
-                        <i class="fas fa-user-plus mr-2"></i>
-                        Yeni İşçi Ekle
-                    </button>
+                    <div class="flex gap-3 justify-center flex-wrap">
+                        <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-5 py-2.5 md:px-6 md:py-3 rounded-lg hover:bg-emerald-600 transition-colors text-sm md:text-base">
+                            <i class="fas fa-user-plus mr-2"></i>
+                            Yeni İşçi Ekle
+                        </button>
+                    </div>
                 </div>
             `;
             return;
@@ -964,124 +1117,147 @@ class LuxWage {
             const rateValue = dailyRate || 0;
             const formattedDebt = debtValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const formattedDailyRate = rateValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            const totalWorkDays = dailyLogs.length;
+            const totalWorkDays = dailyLogs.filter(log => !log.isClosedDay).length;
             
             // Status check for today's earnings display
             const today = new Date();
-            const todayStatus = this.getStatusForDate(today);
+            const todayStatus = this.getStatusForDate(today, emp);
             const isPending = todayStatus === "Bekleniyor";
+            const isClosedDay = todayStatus === "Kapalı Gün";
             
             // Check if today is an absence day
             const todayStr = today.toISOString().split('T')[0];
             const isTodayAbsent = emp.absenceHistory && emp.absenceHistory.some(absence => absence.date === todayStr);
             
             // Dynamic styling based on status
-            let bgColor, borderColor, textColor, titleText, amountText;
+            let borderColor, textColor, titleText, amountText, iconBgColor, iconClass;
             
             if (emp.isStopped) {
                 // İş durdurulmuş - gri kart
-                bgColor = "bg-gray-500/70";
-                borderColor = "border-gray-500/70";
-                textColor = "text-white";
+                borderColor = "border-gray-200";
+                textColor = "text-gray-500";
                 titleText = "Çalışan Aktif Değil";
                 amountText = "İş Durduruldu";
+                iconBgColor = "bg-gray-500";
+                iconClass = "fa-pause";
+            } else if (isClosedDay) {
+                // Kapalı gün - mor/mavi kart
+                borderColor = "border-indigo-200";
+                textColor = "text-indigo-500";
+                titleText = "Kapalı Gün";
+                amountText = "Tatil";
+                iconBgColor = "bg-indigo-500";
+                iconClass = "fa-store-slash";
             } else if (isTodayAbsent) {
                 // Devamsızlık günü - kırmızı kart
-                bgColor = "bg-red-500/70";
-                borderColor = "border-red-500/70";
-                textColor = "text-white";
+                borderColor = "border-red-200";
+                textColor = "text-red-500";
                 titleText = "Bugün Gelmedi";
                 amountText = "Devamsızlık";
+                iconBgColor = "bg-red-500";
+                iconClass = "fa-calendar-times";
             } else if (isPending) {
                 // Bekleniyor - turuncu kart
-                bgColor = "bg-orange-500/70";
-                borderColor = "border-orange-500/70";
-                textColor = "text-white";
+                borderColor = "border-orange-200";
+                textColor = "text-orange-500";
                 titleText = "Bekleniyor";
                 amountText = `${formattedDailyRate} TL Eklenecek`;
+                iconBgColor = "bg-orange-500";
+                iconClass = "fa-clock";
             } else {
                 // Eklenecek Tutar - yeşil kart
-                bgColor = "bg-emerald-500/50";
-                borderColor = "border-emerald-500/50";
-                textColor = "text-emerald-400";
-                titleText = "Eklenecek Tutar";
+                borderColor = "border-emerald-200";
+                textColor = "text-emerald-600";
+                titleText = "Eklendi";
                 amountText = `+${formattedDailyRate} TL`;
+                iconBgColor = "bg-emerald-500";
+                iconClass = "fa-coins";
             }
             
             return `
-            <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <div class="bg-blue-100 p-3 rounded-full mr-4">
-                            <i class="fas fa-user text-blue-500 text-xl"></i>
+            <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow">
+                <div class="flex items-center justify-between mb-3 md:mb-4">
+                    <div class="flex items-center min-w-0">
+                        <div class="bg-blue-100 p-2 md:p-3 rounded-full mr-2 md:mr-4 shrink-0">
+                            <i class="fas fa-user text-blue-500 text-lg md:text-xl"></i>
                         </div>
-                        <div>
-                            <h3 class="font-bold text-gray-800">${emp.name}</h3>
-                            <p class="text-gray-500 text-sm">${emp.phone}</p>
-                            <div class="flex items-center mt-1 text-xs text-gray-400">
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-gray-800 text-base md:text-lg truncate">${emp.name}</h3>
+                            <p class="text-gray-500 text-xs md:text-sm">${emp.phone}</p>
+                            <div class="flex items-center mt-1 text-[10px] md:text-xs text-gray-400">
                                 <i class="fas fa-calendar-alt mr-1"></i>
-                                <span>İşe Başlama: ${startDateStr}</span>
+                                <span class="truncate">İşe Başlama: ${startDateStr}</span>
                             </div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-lg font-bold text-gray-800">${emp.salaryAmount.toLocaleString('tr-TR')} TL</p>
-                        <p class="text-sm text-gray-500">${emp.salaryType === 'weekly' ? 'Haftalık' : emp.salaryType === 'monthly' ? 'Aylık' : 'Günlük'}</p>
+                    <div class="text-right shrink-0 ml-2">
+                        <p class="text-base md:text-lg font-bold text-gray-800">${emp.salaryAmount.toLocaleString('tr-TR')} TL</p>
+                        <p class="text-xs md:text-sm text-gray-500">${emp.salaryType === 'weekly' ? 'Haftalık' : emp.salaryType === 'monthly' ? 'Aylık' : 'Günlük'}</p>
                     </div>
                 </div>
                 
-                <div class="bg-blue-50 rounded-lg p-3 mb-4">
+                <div class="bg-blue-50 rounded-lg p-2 md:p-3 mb-3 md:mb-4">
                     <div class="flex items-center">
-                        <i class="fas fa-clock text-blue-500 mr-2"></i>
-                        <span class="text-sm text-blue-700 font-medium">${totalWorkDays} gün çalışıyor</span>
+                        <i class="fas fa-clock text-blue-500 mr-2 text-xs md:text-sm"></i>
+                        <span class="text-xs md:text-sm text-blue-700 font-medium">${totalWorkDays} iş günü çalışıyor</span>
                     </div>
                 </div>
                 
                 ${emp.isStopped ? `
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-3 mb-4">
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-2 md:p-3 mb-3 md:mb-4">
                     <div class="flex items-center">
-                        <i class="fas fa-pause-circle text-yellow-500 mr-2"></i>
-                        <span class="text-sm text-yellow-700 font-medium">İş Durduruldu - Borç/Hak Ediş Hesaplanmıyor</span>
+                        <i class="fas fa-pause-circle text-yellow-500 mr-2 text-xs md:text-sm"></i>
+                        <span class="text-xs md:text-sm text-yellow-700 font-medium">İş Durduruldu - Borç/Hak Ediş Hesaplanmıyor</span>
                     </div>
                 </div>
                 ` : ''}
                 
-                <div class="flex items-center justify-between">
-                    <div class="flex gap-2 mt-3">
+                <div class="flex flex-wrap items-center justify-between gap-3 mt-3">
+                    <div class="flex flex-wrap items-center gap-3">
                         <!-- Borç Kutusu -->
-                        <div class="bg-gradient-to-br from-blue-500/70 to-blue-600/80 backdrop-blur-md border border-blue-300/60 shadow-md p-2 rounded-xl min-w-[120px]">
-                            <p class="text-[9px] text-blue-50 uppercase font-semibold tracking-wide">Borç</p>
-                            <p class="text-xs font-bold text-white">${formattedDebt} TL</p>
+                        <div class="flex items-center gap-2 md:gap-3 bg-gradient-to-br from-blue-50 to-white border border-blue-200 shadow-sm rounded-xl p-2 md:p-3 min-w-[120px] md:min-w-[150px] hover:shadow-md transition-shadow">
+                            <div class="bg-blue-500 text-white p-2 md:p-2.5 rounded-lg shadow-sm">
+                                <i class="fas fa-wallet text-xs md:text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] text-blue-600 uppercase font-bold tracking-wider">Borç</p>
+                                <p class="text-xs md:text-sm font-bold text-gray-800">${formattedDebt} TL</p>
+                            </div>
                         </div>
                         
                         <!-- Kazanç Kutusu -->
-                        <div class="${bgColor} backdrop-blur-md border ${borderColor} shadow-md p-2 rounded-xl min-w-[120px]">
-                            <p class="text-[9px] ${textColor} uppercase font-semibold tracking-wide">${titleText}</p>
-                            <p class="text-xs font-bold text-white">${amountText}</p>
+                        <div class="flex items-center gap-2 md:gap-3 bg-gradient-to-br ${isClosedDay ? 'from-indigo-50 to-white' : 'from-gray-50 to-white'} border ${borderColor} shadow-sm rounded-xl p-2 md:p-3 min-w-[120px] md:min-w-[150px] hover:shadow-md transition-shadow">
+                            <div class="${iconBgColor} text-white p-2 md:p-2.5 rounded-lg shadow-sm">
+                                <i class="fas ${iconClass} text-xs md:text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="text-[10px] ${textColor} uppercase font-bold tracking-wider">${titleText}</p>
+                                <p class="text-xs md:text-sm font-bold text-gray-800">${amountText}</p>
+                            </div>
                         </div>
                     </div>
-                    <div class="flex space-x-2">
-                        <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm">
+                    <div class="flex flex-wrap items-center gap-1.5 md:gap-2">
+                        <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-purple-600 transition-colors text-xs md:text-sm">
                             <i class="fas fa-info-circle mr-1"></i>
                             Detay
                         </button>
-                        <button data-index="${originalIndex}" class="absenceBtn bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
+                        <button data-index="${originalIndex}" class="absenceBtn bg-red-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-red-600 transition-colors text-xs md:text-sm">
                             <i class="fas fa-calendar-times mr-1"></i>
                             Devamsızlık
                         </button>
-                        <button data-index="${originalIndex}" class="toggleWorkBtn ${emp.isStopped ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-3 py-2 rounded-lg transition-colors text-sm">
+                        <button data-index="${originalIndex}" class="toggleWorkBtn ${emp.isStopped ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors text-xs md:text-sm">
                             <i class="fas ${emp.isStopped ? 'fa-play' : 'fa-pause'} mr-1"></i>
                             ${emp.isStopped ? 'Devam Ettir' : 'İşi Durdur'}
                         </button>
-                        <button data-index="${originalIndex}" class="paymentBtn bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm">
+                        <button data-index="${originalIndex}" class="paymentBtn bg-green-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-green-600 transition-colors text-xs md:text-sm">
                             <i class="fas fa-money-check-alt mr-1"></i>
                             Ödeme
                         </button>
-                        <button data-index="${originalIndex}" class="historyBtn bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                        <button data-index="${originalIndex}" class="historyBtn bg-blue-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-blue-600 transition-colors text-xs md:text-sm">
                             <i class="fas fa-history mr-1"></i>
                             Geçmiş
                         </button>
-                        <button data-index="${originalIndex}" class="terminateBtn bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm">
+                        <button data-index="${originalIndex}" class="terminateBtn bg-orange-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-orange-600 transition-colors text-xs md:text-sm">
                             <i class="fas fa-door-open mr-1"></i>
                             İşten Çıkar
                         </button>
@@ -1092,24 +1268,55 @@ class LuxWage {
         }).join('');
         
         employeesSection.innerHTML = `
-            <div class="flex items-center justify-between mb-4">
-                <div class="bg-white rounded-xl shadow-lg p-4 border-l-4 border-emerald-500 max-w-xl">
-                    <div class="flex items-center justify-between">
-                        <div>
-                            <p class="text-gray-500 text-sm">Toplam Çalışan</p>
-                            <p class="text-2xl font-bold text-gray-800">${activeEmployees.length}</p>
+            <div class="flex flex-col-reverse md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 mb-4">
+                <div class="w-full bg-white rounded-xl shadow-lg p-3 md:p-5 border-l-4 border-emerald-500 md:flex-1 min-w-0">
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
+                        <div class="flex items-center justify-between gap-2">
+                            <div class="min-w-0">
+                                <p class="text-[10px] md:text-xs text-gray-500 uppercase font-semibold tracking-wide truncate">Toplam Çalışan</p>
+                                <p class="text-lg md:text-2xl font-bold text-gray-800">${activeEmployees.length}</p>
+                            </div>
+                            <div class="bg-emerald-100 p-1.5 md:p-2 rounded-full shrink-0">
+                                <i class="fas fa-users text-emerald-500 text-sm md:text-xl"></i>
+                            </div>
                         </div>
-                        <div class="bg-emerald-100 p-2 rounded-full">
-                            <i class="fas fa-users text-emerald-500 text-xl"></i>
+                        <div class="flex items-center justify-between gap-2 md:border-l md:border-gray-200 md:pl-4">
+                            <div class="min-w-0">
+                                <p class="text-[10px] md:text-xs text-gray-500 uppercase font-semibold tracking-wide truncate">Aktif Çalışan</p>
+                                <p class="text-base md:text-xl font-bold text-emerald-600">${activeWorkingEmployees}</p>
+                            </div>
+                            <div class="bg-emerald-50 p-1.5 md:p-2 rounded-full shrink-0">
+                                <i class="fas fa-user-check text-emerald-500 text-sm md:text-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between gap-2 md:border-l md:border-gray-200 md:pl-4">
+                            <div class="min-w-0">
+                                <p class="text-[10px] md:text-xs text-gray-500 uppercase font-semibold tracking-wide truncate">Toplam Borç</p>
+                                <p class="text-base md:text-xl font-bold text-red-600 truncate">${formattedTotalDebt} TL</p>
+                            </div>
+                            <div class="bg-red-100 p-1.5 md:p-2 rounded-full shrink-0">
+                                <i class="fas fa-wallet text-red-500 text-sm md:text-lg"></i>
+                            </div>
+                        </div>
+                        <div class="flex items-center justify-between gap-2 md:border-l md:border-gray-200 md:pl-4">
+                            <div class="min-w-0">
+                                <p class="text-[10px] md:text-xs text-gray-500 uppercase font-semibold tracking-wide truncate">Toplam Maaş</p>
+                                <p class="text-base md:text-xl font-bold text-blue-600 truncate">${formattedTotalSalary} TL</p>
+                            </div>
+                            <div class="bg-blue-100 p-1.5 md:p-2 rounded-full shrink-0">
+                                <i class="fas fa-coins text-blue-500 text-sm md:text-lg"></i>
+                            </div>
                         </div>
                     </div>
                 </div>
-                <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-6 py-3 rounded-lg hover:bg-emerald-600 transition-colors">
-                    <i class="fas fa-user-plus mr-2"></i>
-                    Yeni İşçi Ekle
-                </button>
+                <div class="flex justify-end w-full md:w-auto">
+                    <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-5 py-2.5 md:px-6 md:py-3 rounded-lg hover:bg-emerald-600 transition-colors text-sm md:text-base">
+                        <i class="fas fa-user-plus mr-2"></i>
+                        Yeni İşçi Ekle
+                    </button>
+                </div>
             </div>
-            <div class="grid gap-4">
+            <div class="grid gap-3 md:gap-4">
                 ${employeesHTML}
             </div>
         `;
@@ -1141,42 +1348,42 @@ class LuxWage {
             const fixedDebt = this.calculateCurrentDebt(emp);
             
             return `
-            <div class="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-shadow border-l-4 border-gray-400">
-                <div class="flex items-center justify-between mb-4">
-                    <div class="flex items-center">
-                        <div class="bg-gray-100 p-3 rounded-full mr-4">
-                            <i class="fas fa-user-slash text-gray-500 text-xl"></i>
+            <div class="bg-white rounded-xl shadow-lg p-3 md:p-6 hover:shadow-xl transition-shadow border-l-4 border-gray-400">
+                <div class="flex items-center justify-between mb-2 md:mb-4">
+                    <div class="flex items-center min-w-0">
+                        <div class="bg-gray-100 p-1.5 md:p-3 rounded-full mr-2 md:mr-4 shrink-0">
+                            <i class="fas fa-user-slash text-gray-500 text-base md:text-xl"></i>
                         </div>
-                        <div>
-                            <h3 class="font-bold text-gray-800">${emp.name}</h3>
-                            <p class="text-gray-500 text-sm">${emp.phone}</p>
-                            <div class="flex items-center mt-1 text-xs text-gray-400">
+                        <div class="min-w-0">
+                            <h3 class="font-bold text-gray-800 text-sm md:text-base truncate">${emp.name}</h3>
+                            <p class="text-gray-500 text-[10px] md:text-sm truncate">${emp.phone}</p>
+                            <div class="flex items-center mt-1 text-[10px] md:text-xs text-gray-400">
                                 <i class="fas fa-calendar-times mr-1"></i>
-                                <span>Ayrılma Tarihi: ${departureDateStr}</span>
+                                <span class="truncate">Ayrılma: ${departureDateStr}</span>
                             </div>
                         </div>
                     </div>
-                    <div class="text-right">
-                        <p class="text-lg font-bold text-gray-800">${emp.salaryAmount.toLocaleString('tr-TR')} TL</p>
-                        <p class="text-sm text-gray-500">${emp.salaryType === 'weekly' ? 'Haftalık' : emp.salaryType === 'monthly' ? 'Aylık' : 'Günlük'}</p>
+                    <div class="text-right shrink-0 ml-1">
+                        <p class="text-sm md:text-lg font-bold text-gray-800">${emp.salaryAmount.toLocaleString('tr-TR')} TL</p>
+                        <p class="text-[10px] md:text-sm text-gray-500">${emp.salaryType === 'weekly' ? 'Haft.' : emp.salaryType === 'monthly' ? 'Ayl.' : 'Günl.'}</p>
                     </div>
                 </div>
                 
-                <div class="bg-gray-50 rounded-lg p-3 mb-4">
+                <div class="bg-gray-50 rounded-lg p-2 md:p-3 mb-2 md:mb-4">
                     <div class="flex items-center">
-                        <i class="fas fa-coins text-gray-500 mr-2"></i>
-                        <span class="text-sm text-gray-700 font-medium">Kalan Borç (Sabit): ${fixedDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
+                        <i class="fas fa-coins text-gray-500 mr-1.5 md:mr-2 text-xs md:text-sm"></i>
+                        <span class="text-xs md:text-sm text-gray-700 font-medium truncate">Borç: ${fixedDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                     </div>
                 </div>
                 
-                <div class="flex space-x-2">
-                    <button data-id="${originalIndex}" class="showPastHistoryBtn bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                <div class="flex flex-col gap-1.5 md:gap-2">
+                    <button data-id="${originalIndex}" class="showPastHistoryBtn bg-blue-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-blue-600 transition-colors text-xs md:text-sm">
                         <i class="fas fa-history mr-1"></i>
                         Geçmiş
                     </button>
-                    <button data-id="${originalIndex}" class="permanentlyDeleteBtn bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
+                    <button data-id="${originalIndex}" class="permanentlyDeleteBtn bg-red-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-red-600 transition-colors text-xs md:text-sm">
                         <i class="fas fa-trash mr-1"></i>
-                        Çalışan Geçmişini Sil
+                        Sil
                     </button>
                 </div>
             </div>
@@ -1184,11 +1391,7 @@ class LuxWage {
         }).join('');
         
         pastEmployeesSection.innerHTML = `
-            <div class="mb-4">
-                <h2 class="text-2xl font-bold text-gray-800 mb-2">Geçmiş Çalışanlar</h2>
-                <p class="text-gray-500 text-sm">İşten çıkarılan çalışanların arşivi</p>
-            </div>
-            <div class="grid gap-4">
+            <div class="grid grid-cols-2 gap-3 md:gap-4">
                 ${employeesHTML}
             </div>
         `;
@@ -1299,10 +1502,14 @@ class LuxWage {
         accountSection.innerHTML = `
             <div class="max-w-2xl mx-auto">
                 <div class="bg-white rounded-xl shadow-lg p-8">
-                    <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <h2 class="text-2xl font-bold text-gray-800 mb-4">
                         <i class="fas fa-user-cog text-blue-500 mr-2"></i>
                         Hesabım
                     </h2>
+                    
+                    <p class="text-gray-600 mb-6">
+                        Hesap bilgilerinizi buradan yönetebilir, ad soyad bilginizi güncelleyebilir ve şifrenizi değiştirebilirsiniz. Bilgileriniz güvenle saklanır ve sizin dışınızda paylaşılmaz.
+                    </p>
                     
                     <form id="accountForm" class="space-y-6">
                         <div>
@@ -1314,6 +1521,7 @@ class LuxWage {
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">İsim Soyisim</label>
                             <input type="text" id="accountName" value="${user.displayName || ''}" required class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500">
+                            <p class="text-xs text-gray-500 mt-1">Bu isim uygulama içinde size hitap etmek için kullanılır</p>
                         </div>
                         
                         <button type="submit" class="w-full bg-blue-500 text-white py-3 rounded-lg hover:bg-blue-600 transition-colors font-semibold">
@@ -1327,6 +1535,19 @@ class LuxWage {
                             <i class="fas fa-key mr-2"></i>
                             Şifreyi Değiştir
                         </button>
+                    </div>
+                    
+                    <div class="mt-6 bg-blue-50 rounded-lg p-5 border border-blue-100">
+                        <h3 class="font-semibold text-blue-800 mb-3 flex items-center">
+                            <i class="fas fa-shield-alt mr-2"></i>
+                            Hesap Güvenliği İpuçları
+                        </h3>
+                        <ul class="text-sm text-blue-700 space-y-2 list-disc list-inside">
+                            <li>Şifrenizi düzenli aralıklarla güncelleyin ve kolay tahmin edilebilir şifrelerden kaçının.</li>
+                            <li>Hesabınıza ait e-posta adresinin güncel ve aktif olduğundan emin olun.</li>
+                            <li>Şüpheli bir aktivite fark ederseniz hemen şifrenizi değiştirin.</li>
+                            <li>Ortak veya halka açık bilgisayarlarda oturumunuzu kapatmayı unutmayın.</li>
+                        </ul>
                     </div>
                 </div>
             </div>
@@ -1408,7 +1629,7 @@ class LuxWage {
         const selectedDate = this.parseDateInput(employeeStartDate.value);
         const salaryType = document.getElementById('salaryType')?.value;
         const salaryAmountInput = document.getElementById('salaryAmount')?.value || '';
-        const salaryAmount = parseFloat(salaryAmountInput.replace(/\./g, ''));
+        const salaryAmount = parseTurkishNumber(salaryAmountInput);
         const closedDaysCheckboxes = document.querySelectorAll('input[name="closedDays"]:checked');
         const closedDays = Array.from(closedDaysCheckboxes).map(cb => parseInt(cb.value, 10));
 
@@ -1447,14 +1668,13 @@ class LuxWage {
         const name = document.getElementById('employeeName').value.trim();
         const phone = document.getElementById('employeePhone').value.trim();
         const salaryType = document.getElementById('salaryType').value;
-        const salaryAmountInput = document.getElementById('salaryAmount').value;
-        const salaryAmount = parseInt(salaryAmountInput.replace(/\./g, ''), 10);
+        const salaryAmount = parseTurkishNumber(document.getElementById('salaryAmount').value);
         
         // Get selected closed days from checkboxes
         const closedDaysCheckboxes = document.querySelectorAll('input[name="closedDays"]:checked');
         const closedDays = Array.from(closedDaysCheckboxes).map(cb => parseInt(cb.value));
         
-        if (!name || !phone || !salaryType || isNaN(salaryAmount)) {
+        if (!name || !phone || !salaryType || isNaN(salaryAmount) || salaryAmount <= 0) {
             showNotification('Lütfen tüm alanları doldurun', 'error');
             return;
         }
@@ -1495,7 +1715,72 @@ class LuxWage {
         showNotification('İşçi başarıyla eklendi', 'success');
         this.renderEmployeesPage();
     }
-    
+
+    // Rastgele demo çalışanları ekle
+    addDemoEmployees() {
+        const firstNames = ['Ahmet', 'Mehmet', 'Ayşe', 'Fatma', 'Ali', 'Veli', 'Zeynep', 'Elif', 'Burak', 'Can', 'Emre', 'Sibel', 'Hakan', 'Murat', 'Selin', 'Cem', 'Buse', 'Gökhan', 'Derya', 'İbrahim'];
+        const lastNames = ['Yılmaz', 'Kaya', 'Demir', 'Şahin', 'Çelik', 'Aydın', 'Öztürk', 'Arslan', 'Doğan', 'Kılıç', 'Aslan', 'Kara', 'Koç', 'Yıldız', 'Akın'];
+        const salaryTypes = ['daily', 'weekly', 'monthly'];
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+
+        const generatePhone = () => {
+            const prefixes = ['530', '531', '532', '533', '534', '535', '536', '537', '538', '539', '540', '541', '542', '543', '544', '545', '546', '547', '548', '549', '505', '506', '507', '508', '509', '551', '552', '553', '554', '555', '559'];
+            const prefix = prefixes[Math.floor(Math.random() * prefixes.length)];
+            const suffix = Math.floor(Math.random() * 10000000).toString().padStart(7, '0');
+            const full = '0' + prefix + suffix;
+            return full.slice(0, 4) + ' ' + full.slice(4, 7) + ' ' + full.slice(7, 9) + ' ' + full.slice(9, 11);
+        };
+
+        const generateName = () => {
+            const first = firstNames[Math.floor(Math.random() * firstNames.length)];
+            const last = lastNames[Math.floor(Math.random() * lastNames.length)];
+            return `${first} ${last}`;
+        };
+
+        const generateStartDate = () => {
+            const daysAgo = Math.floor(Math.random() * 60) + 1;
+            const date = new Date(today);
+            date.setDate(date.getDate() - daysAgo);
+            return date.getTime();
+        };
+
+        const generateSalaryAmount = (type) => {
+            if (type === 'daily') return Math.floor(Math.random() * 1500) + 500;
+            if (type === 'weekly') return Math.floor(Math.random() * 8000) + 3000;
+            return Math.floor(Math.random() * 30000) + 10000;
+        };
+
+        const generateClosedDays = () => {
+            const allDays = [0, 1, 2, 3, 4, 5, 6];
+            const count = Math.floor(Math.random() * 3);
+            const shuffled = [...allDays].sort(() => Math.random() - 0.5);
+            return shuffled.slice(0, count);
+        };
+
+        const salaryType = salaryTypes[Math.floor(Math.random() * salaryTypes.length)];
+        const employee = {
+            id: Date.now(),
+            name: generateName(),
+            phone: generatePhone(),
+            salaryType,
+            salaryAmount: generateSalaryAmount(salaryType),
+            closedDays: generateClosedDays(),
+            debt: 0,
+            startDate: generateStartDate(),
+            absenceHistory: [],
+            paymentHistory: [],
+            dailyLogs: []
+        };
+        this.employees.push(employee);
+
+        this.saveData();
+        showNotification(`${employee.name} demo olarak eklendi`, 'success');
+        this.renderEmployeesPage();
+        this.renderHomePage();
+    }
+
     // İşçiyi işten çıkar (status: inactive)
     terminateEmployee(employeeIndex) {
         if (employeeIndex !== null && employeeIndex >= 0 && employeeIndex < this.employees.length) {
@@ -1598,25 +1883,30 @@ class LuxWage {
         this.pendingWorkStopIndex = null;
     }
 
-    // Günün durumunu belirle (7:00-18:00 kuralı)
-    getStatusForDate(date) {
+    // Günün durumunu belirle (08:00-18:00 kuralı)
+    getStatusForDate(date, employee = null) {
         const now = new Date();
         const currentHour = now.getHours();
         
         const today = new Date(now.toDateString());
         const target = new Date(date.toDateString());
 
-        // 1. Gelecek günler: Kesinlikle "Bekleniyor"
+        // 1. Kapalı gün kontrolü (çalışan bilgisi varsa)
+        if (employee && this.isClosedDay(target, employee)) {
+            return "Kapalı Gün";
+        }
+
+        // 2. Gelecek günler: Kesinlikle "Bekleniyor"
         if (target > today) return "Bekleniyor";
 
-        // 2. Bugün:
+        // 3. Bugün:
         if (target.getTime() === today.getTime()) {
-            if (currentHour < 7) return "Bekleniyor"; // 07:00 öncesi
-            if (currentHour >= 7 && currentHour < 18) return "Bekleniyor"; // 07:00 - 18:00 arası
+            if (currentHour < 8) return "Bekleniyor"; // 08:00 öncesi
+            if (currentHour >= 8 && currentHour < 18) return "Bekleniyor"; // 08:00 - 18:00 arası
             return "Eklendi"; // 18:00 sonrası
         }
 
-        // 3. Geçmiş günler: Kesinlikle "Eklendi"
+        // 4. Geçmiş günler: Kesinlikle "Eklendi"
         return "Eklendi";
     }
 
@@ -1689,8 +1979,8 @@ class LuxWage {
                 }
                 
                 // Determine status based on getStatusForDate function
-                const statusText = this.getStatusForDate(currentDate);
-                const status = statusText === 'Eklendi' ? 'added' : 'pending';
+                const statusText = this.getStatusForDate(currentDate, employee);
+                const status = statusText === 'Eklendi' ? 'added' : (statusText === 'Kapalı Gün' ? 'closed' : 'pending');
                 
                 // Check if work was stopped on this day
                 const isStopped = employee.isStopped || false;
@@ -1800,14 +2090,31 @@ class LuxWage {
         const employee = this.employees.find(emp => emp.id === employeeId);
         if (!employee) return;
         
-        // Tarih kontrolü: İşe başlamadan önceki tarihleri engelle
+        // Tarih kontrolü
         const startDate = new Date(employee.startDate);
         startDate.setHours(0, 0, 0, 0);
         const selectedDate = new Date(date);
         selectedDate.setHours(0, 0, 0, 0);
         
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const tenDaysAgo = new Date(today);
+        tenDaysAgo.setDate(today.getDate() - 10);
+        
+        // İşe başlamadan önceki tarihleri engelle
         if (selectedDate < startDate) {
             showNotification('İşe başlamadan önceki tarih için devamsızlık ekleyemezsiniz', 'error');
+            return;
+        }
+        
+        // Sadece bugün ve geçmiş 10 gün için izin ver
+        if (selectedDate > today) {
+            showNotification('Gelecek tarihe devamsızlık ekleyemezsiniz', 'error');
+            return;
+        }
+        
+        if (selectedDate < tenDaysAgo) {
+            showNotification('En fazla geçmiş 10 güne devamsızlık ekleyebilirsiniz', 'error');
             return;
         }
         
@@ -1833,8 +2140,6 @@ class LuxWage {
             return;
         }
         
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
         const isToday = selectedDate.getTime() === today.getTime();
         const isPast = selectedDate < today;
         
@@ -1845,19 +2150,18 @@ class LuxWage {
             employee.absenceHistory = [];
         }
         
-        // Bugün için devamsızlık ekleniyorsa, kesinti eklemiyoruz (çünkü bugün henüz para eklenmedi)
-        // Geçmiş için devamsızlık ekleniyorsa, kesinti ekliyoruz
+        // Devamsızlık geçmişine ekle
+        // Not: calculateCurrentDebt zaten devamsızlık günlerinde borç artışını engelliyor
+        // absenceEntry.deduction sadece görünüm/geçmiş için tutulur
         const absenceEntry = {
             date,
             timestamp: Date.now()
         };
         
         if (isPast) {
-            // Geçmiş tarih için kesinti ekle
             absenceEntry.deduction = deduction;
             showNotification(`Geçmiş devamsızlık kaydedildi. Kesinti: ${deduction.toFixed(2)} TL`, 'success');
-        } else {
-            // Bugün için kesinti ekleme (18:00'da da eklenmeyecek)
+        } else if (isToday) {
             absenceEntry.deduction = 0;
             showNotification(`Bugün için devamsızlık kaydedildi. Para eklenmeyecek`, 'success');
         }
@@ -1880,7 +2184,7 @@ class LuxWage {
     // Ödeme ekle
     addPayment() {
         const employeeId = parseInt(document.getElementById('paymentEmployeeId').value);
-        const amount = parseFloat(document.getElementById('paymentAmount').value);
+        const amount = parseTurkishNumber(document.getElementById('paymentAmount').value);
         
         if (isNaN(amount) || amount <= 0) {
             showNotification('Lütfen geçerli bir tutar girin', 'error');
@@ -1966,6 +2270,7 @@ class LuxWage {
         if (!employee.startDate) return '';
         
         const today = new Date();
+        const currentHour = today.getHours();
         const startDate = new Date(employee.startDate);
         startDate.setHours(0, 0, 0, 0);
         const todayDate = new Date(today);
@@ -1974,11 +2279,29 @@ class LuxWage {
         // Bugün işe başlama tarihinden önceyse
         if (startDate > todayDate) return '';
         
-        // Bugün kapalı gün ise
-        if (this.isClosedDay(today, employee)) return '';
-        
         const dailyWage = this.calculateDailyWage(employee);
         
+        // Bugün kapalı gün ise
+        if (this.isClosedDay(today, employee)) {
+            return `
+                <div class="bg-indigo-500/10 border border-indigo-500/10 px-3 py-1.5 rounded-lg text-xs">
+                    <span class="text-indigo-400">Durum: </span>
+                    <span class="text-indigo-300 font-bold">Kapalı Gün</span>
+                </div>
+            `;
+        }
+        
+        // Saat 18:00'den önce bekleniyor
+        if (currentHour < 18) {
+            return `
+                <div class="bg-orange-500/10 border border-orange-500/10 px-3 py-1.5 rounded-lg text-xs">
+                    <span class="text-orange-400">Kazanç: </span>
+                    <span class="text-orange-300 font-bold">${dailyWage.toFixed(2)} TL</span>
+                </div>
+            `;
+        }
+        
+        // Saat 18:00'den sonra eklendi
         return `
             <div class="bg-emerald-500/10 border border-emerald-500/10 px-3 py-1.5 rounded-lg text-xs">
                 <span class="text-emerald-400">Kazanç: </span>
@@ -2002,16 +2325,33 @@ class LuxWage {
         if (startDate > todayDate) return '';
         
         // Bugün kapalı gün ise
-        if (this.isClosedDay(today, employee)) return '';
+        if (this.isClosedDay(today, employee)) {
+            return `
+                <div class="bg-indigo-500/10 backdrop-blur-md border border-indigo-500/20 p-4 rounded-xl flex justify-between items-center">
+                    <span class="text-indigo-400 text-sm font-medium">Bugünün Durumu</span>
+                    <span class="text-indigo-300 font-bold text-lg">Kapalı Gün</span>
+                </div>
+            `;
+        }
         
         const dailyWage = this.calculateDailyWage(employee);
         
-        // Saat 18:00'den önceyse
-        if (currentHour < 18) {
+        // Saat 08:00'den önceyse kazanç henüz beklenmiyor
+        if (currentHour < 8) {
             return `
-                <div class="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 p-4 rounded-xl flex justify-between items-center hover:bg-emerald-500/20 transition-all">
-                    <span class="text-emerald-400 text-sm font-medium">Bugünün Kazancı</span>
-                    <span class="text-emerald-300 font-bold text-lg">+${dailyWage.toFixed(2)} TL</span>
+                <div class="bg-orange-500/10 backdrop-blur-md border border-orange-500/20 p-4 rounded-xl flex justify-between items-center">
+                    <span class="text-orange-400 text-sm font-medium">Bugünün Kazancı</span>
+                    <span class="text-orange-300 font-bold text-lg">${dailyWage.toFixed(2)} TL Eklenecek</span>
+                </div>
+            `;
+        }
+        
+        // Saat 08:00 - 18:00 arası
+        if (currentHour >= 8 && currentHour < 18) {
+            return `
+                <div class="bg-orange-500/10 backdrop-blur-md border border-orange-500/20 p-4 rounded-xl flex justify-between items-center">
+                    <span class="text-orange-400 text-sm font-medium">Bugünün Kazancı</span>
+                    <span class="text-orange-300 font-bold text-lg">${dailyWage.toFixed(2)} TL Eklenecek</span>
                 </div>
             `;
         }
@@ -2020,7 +2360,7 @@ class LuxWage {
         return `
             <div class="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 p-4 rounded-xl flex justify-between items-center hover:bg-emerald-500/20 transition-all">
                 <span class="text-emerald-400 text-sm font-medium">Bugünün Kazancı</span>
-                <span class="text-emerald-300 font-bold text-lg">+${dailyWage.toFixed(2)} TL</span>
+                <span class="text-emerald-300 font-bold text-lg">+${dailyWage.toFixed(2)} TL Eklendi</span>
             </div>
         `;
     }
@@ -2176,6 +2516,81 @@ class LuxWage {
         return totalDebt;
     }
 
+    // Belirli bir tarihe kadar olan borcu hesapla
+    calculateDebtUpToDate(employee, upToDateStr) {
+        if (!employee.startDate) return 0;
+        
+        const startDate = new Date(employee.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        
+        const upToDate = new Date(upToDateStr + 'T00:00:00');
+        let endDate = new Date(upToDate);
+        
+        // İş durdurulmuşsa ve seçilen tarih durdurma tarihinden sonraysa, durdurma tarihine kadar hesapla
+        if (employee.isStopped && employee.workStopDate) {
+            const workStopDate = new Date(employee.workStopDate);
+            workStopDate.setHours(0, 0, 0, 0);
+            if (upToDate > workStopDate) {
+                endDate = workStopDate;
+            }
+        }
+        
+        // İşten çıkarılmışsa ve seçilen tarih ayrılma tarihinden sonraysa, ayrılma tarihine kadar hesapla
+        if (employee.status === 'inactive' && employee.departureDate) {
+            const departureDate = new Date(employee.departureDate);
+            departureDate.setHours(0, 0, 0, 0);
+            if (upToDate >= departureDate) {
+                endDate = new Date(departureDate);
+                endDate.setDate(endDate.getDate() - 1);
+            }
+        }
+        
+        if (startDate > endDate) return 0;
+        
+        const dailyWage = this.calculateDailyWage(employee);
+        let totalDebt = 0;
+        
+        const currentDate = new Date(startDate);
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const currentHour = new Date().getHours();
+        
+        while (currentDate <= endDate) {
+            const currentDateStr = currentDate.toISOString().split('T')[0];
+            const isToday = currentDate.getTime() === today.getTime();
+            
+            if (!this.isClosedDay(currentDate, employee)) {
+                const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+                
+                if (isAbsentDay) {
+                    totalDebt -= dailyWage;
+                } else {
+                    if (isToday) {
+                        if (currentHour >= 18) {
+                            totalDebt += dailyWage;
+                        }
+                    } else {
+                        totalDebt += dailyWage;
+                    }
+                }
+            }
+            currentDate.setDate(currentDate.getDate() + 1);
+        }
+        
+        // Seçilen tarihe kadar yapılan ödemeleri çıkar
+        if (employee.paymentHistory && employee.paymentHistory.length > 0) {
+            employee.paymentHistory.forEach(payment => {
+                const paymentDate = new Date(payment.date);
+                paymentDate.setHours(0, 0, 0, 0);
+                if (paymentDate <= endDate) {
+                    totalDebt -= Math.abs(Number(payment.amount) || 0);
+                }
+            });
+        }
+        
+        return totalDebt;
+    }
+
     // Devamsızlık kesintisini hesapla
     calculateAbsenceDeduction() {
         const employeeId = parseInt(document.getElementById('absenceEmployeeId').value);
@@ -2204,7 +2619,7 @@ class LuxWage {
         currentDebtStr = currentDebtStr.replace(/\./g, '').replace(',', '.');
         const currentDebt = parseFloat(currentDebtStr) || 0;
         
-        const paymentAmount = parseFloat(document.getElementById('paymentAmount').value) || 0;
+        const paymentAmount = parseTurkishNumber(document.getElementById('paymentAmount').value);
         const remaining = Math.max(0, currentDebt - paymentAmount);
         document.getElementById('remainingDebt').textContent = remaining.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL';
     }
@@ -2240,40 +2655,75 @@ function openAbsenceModal(employeeIndex) {
     document.getElementById('absenceDeduction').textContent = '0 TL';
     document.getElementById('wageCalculation').textContent = 'Yevmiye hesaplanıyor...';
     
-    // Tarih seçimini kısıtla: sadece işe başlama tarihinden bugüne kadar
+    // Tarih seçimini kısıtla: bugün ve geçmiş 10 gün, işe başlamadan önce değil
     const startDate = new Date(employee.startDate);
-    const startDateStr = startDate.toISOString().split('T')[0];
+    startDate.setHours(0, 0, 0, 0);
     const today = new Date();
+    today.setHours(0, 0, 0, 0);
     const todayStr = today.toISOString().split('T')[0];
     
+    const tenDaysAgo = new Date(today);
+    tenDaysAgo.setDate(today.getDate() - 10);
+    
+    const minDate = startDate > tenDaysAgo ? startDate : tenDaysAgo;
+    const minDateStr = minDate.toISOString().split('T')[0];
+    
     const absenceDateInput = document.getElementById('absenceDate');
-    absenceDateInput.min = startDateStr;
+    absenceDateInput.min = minDateStr;
     absenceDateInput.max = todayStr;
     
     // Tarih değiştiğinde kontrol et
-    absenceDateInput.onchange = function() {
-        const selectedDate = new Date(this.value);
+    const submitBtn = document.getElementById('absenceSubmitBtn');
+    const warningEl = document.getElementById('absenceDateWarning');
+    
+    function validateAbsenceDate() {
+        const selectedDate = new Date(absenceDateInput.value);
+        selectedDate.setHours(0, 0, 0, 0);
         const selectedDateStr = selectedDate.toISOString().split('T')[0];
+        
+        // Varsayılan durumları sıfırla
+        absenceDateInput.classList.remove('border-red-500', 'bg-red-50');
+        absenceDateInput.classList.add('border-gray-300');
+        if (warningEl) warningEl.classList.add('hidden');
+        if (submitBtn) submitBtn.disabled = false;
+        
+        if (!absenceDateInput.value) return false;
         
         // İşe başlamadan önceki tarih kontrolü
         if (selectedDate < startDate) {
             showNotification('İşe başlamadan önceki tarih seçilemez', 'error');
-            this.value = '';
-            return;
+            absenceDateInput.value = '';
+            return false;
+        }
+        
+        // En fazla geçmiş 10 gün kontrolü
+        if (selectedDate < tenDaysAgo) {
+            showNotification('En fazla geçmiş 10 güne devamsızlık ekleyebilirsiniz', 'error');
+            absenceDateInput.value = '';
+            return false;
+        }
+        
+        // Gelecek tarih kontrolü
+        if (selectedDate > today) {
+            showNotification('Gelecek tarihe devamsızlık eklenemez', 'error');
+            absenceDateInput.value = '';
+            return false;
         }
         
         // Tatil günü kontrolü
         if (luxwage.isClosedDay(selectedDate, employee)) {
             showNotification('Bu gün tatil günü, devamsızlık eklenemez', 'error');
-            this.value = '';
-            return;
+            absenceDateInput.value = '';
+            return false;
         }
         
-        // Aynı güne tekrar devamsızlık kontrolü
+        // Aynı güne tekrar devamsızlık kontrolü - kırmızı pasif yap
         if (employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === selectedDateStr)) {
-            showNotification('Bu güne zaten devamsızlık kaydedilmiş', 'error');
-            this.value = '';
-            return;
+            absenceDateInput.classList.remove('border-gray-300');
+            absenceDateInput.classList.add('border-red-500', 'bg-red-50');
+            if (warningEl) warningEl.classList.remove('hidden');
+            if (submitBtn) submitBtn.disabled = true;
+            return false;
         }
         
         // İş durdurulan gün kontrolü
@@ -2282,10 +2732,14 @@ function openAbsenceModal(employeeIndex) {
         
         if (isWorkStoppedOnDay) {
             showNotification('İş durdurulan güne devamsızlık eklenemez', 'error');
-            this.value = '';
-            return;
+            absenceDateInput.value = '';
+            return false;
         }
-    };
+        
+        return true;
+    }
+    
+    absenceDateInput.onchange = validateAbsenceDate;
     
     openModal('absenceModal');
 };
@@ -2338,8 +2792,41 @@ function showHistory(employeeIndex) {
         });
     }
     
+    // Varsayılan olarak geçerli yıl ve ay
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const currentMonth = now.getMonth() + 1;
+    
+    // Yıl seçeneklerini oluştur (son 3 yıl)
+    let yearOptions = '';
+    for (let y = currentYear; y >= currentYear - 2; y--) {
+        yearOptions += `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`;
+    }
+    
+    // Ay seçeneklerini oluştur
+    const monthNames = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık'];
+    let monthOptions = '';
+    monthNames.forEach((name, index) => {
+        const monthValue = index + 1;
+        monthOptions += `<option value="${monthValue}" ${monthValue === currentMonth ? 'selected' : ''}>${name}</option>`;
+    });
+    
     // Kategori butonları ve içerik oluştur
     let html = `
+        <div class="flex flex-wrap items-center gap-3 mb-4 p-3 bg-gray-50 rounded-lg">
+            <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 font-medium">Yıl:</label>
+                <select id="historyYearSelect" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white" onchange="filterHistory('all', ${employeeIndex})">
+                    ${yearOptions}
+                </select>
+            </div>
+            <div class="flex items-center gap-2">
+                <label class="text-sm text-gray-600 font-medium">Ay:</label>
+                <select id="historyMonthSelect" class="px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-blue-500 focus:border-blue-500 bg-white" onchange="filterHistory('all', ${employeeIndex})">
+                    ${monthOptions}
+                </select>
+            </div>
+        </div>
         <div class="flex gap-2 mb-4 flex-wrap">
             <button onclick="filterHistory('all', ${employeeIndex})" class="history-filter-btn px-4 py-2 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors" data-category="all">
                 Tümü
@@ -2355,7 +2842,7 @@ function showHistory(employeeIndex) {
             </button>
         </div>
         <div id="historyContentInner">
-            ${generateHistoryContent(employee, recentPayments, recentAbsences, 'all')}
+            ${generateHistoryContent(employee, recentPayments, recentAbsences, 'all', currentYear, currentMonth)}
         </div>
     `;
     
@@ -2533,6 +3020,7 @@ function calculateDebtNotifications(employee) {
                 notifications.push({
                     employeeName: employee.name,
                     date: weekEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
+                    isoDate: weekEnd.toISOString().split('T')[0],
                     periodDebt: periodDebt,
                     totalDebt: totalDebtAtPeriod,
                     periodLabel: 'Haftalık'
@@ -2591,6 +3079,7 @@ function calculateDebtNotifications(employee) {
                 notifications.push({
                     employeeName: employee.name,
                     date: monthEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
+                    isoDate: monthEnd.toISOString().split('T')[0],
                     periodDebt: periodDebt,
                     totalDebt: totalDebtAtPeriod,
                     periodLabel: 'Aylık'
@@ -2648,16 +3137,25 @@ function calculateDebtAtDate(employee, targetDate) {
 }
 
 // Geçmiş içeriğini oluştur
-function generateHistoryContent(employee, recentPayments, recentAbsences, category) {
+function generateHistoryContent(employee, recentPayments, recentAbsences, category, selectedYear, selectedMonth) {
     let html = '';
     
-    if (category === 'debt') {
+    if (category === 'debt' || category === 'all') {
         // Borç bildirimlerini göster (bildirim kartları formatında)
-        const debtNotifications = calculateDebtNotifications(employee);
+        let debtNotifications = calculateDebtNotifications(employee);
         
-        if (debtNotifications.length === 0) {
+        // Seçili yıl ve aya göre filtrele
+        if (selectedYear && selectedMonth) {
+            debtNotifications = debtNotifications.filter(notification => {
+                if (!notification.isoDate) return false;
+                const notificationDate = new Date(notification.isoDate + 'T00:00:00');
+                return notificationDate.getFullYear() === selectedYear && notificationDate.getMonth() + 1 === selectedMonth;
+            });
+        }
+        
+        if (debtNotifications.length === 0 && category === 'debt') {
             html = '<p class="text-gray-500 text-center">Henüz borç bildirimi yok</p>';
-        } else {
+        } else if (debtNotifications.length > 0) {
             html += '<h3 class="font-bold text-gray-800 mb-3">Borç Bildirimleri</h3>';
             
             debtNotifications.forEach(notification => {
@@ -2684,7 +3182,9 @@ function generateHistoryContent(employee, recentPayments, recentAbsences, catego
             });
         }
         
-        return html;
+        if (category === 'debt') {
+            return html;
+        }
     }
     
     if (category === 'all' || category === 'payments') {
@@ -2799,7 +3299,7 @@ function generateHistoryContent(employee, recentPayments, recentAbsences, catego
     }
     
     if (html === '') {
-        html = '<p class="text-gray-500 text-center">Son 12 ayda kayıt yok</p>';
+        html = '<p class="text-gray-500 text-center">Seçili dönemde kayıt yok</p>';
     }
     
     return html;
@@ -2809,6 +3309,12 @@ function generateHistoryContent(employee, recentPayments, recentAbsences, catego
 function filterHistory(category, employeeIndex) {
     const employee = luxwage.employees[employeeIndex];
     if (!employee) return;
+    
+    // Seçili yıl ve ayı al
+    const yearSelect = document.getElementById('historyYearSelect');
+    const monthSelect = document.getElementById('historyMonthSelect');
+    const selectedYear = yearSelect ? parseInt(yearSelect.value) : new Date().getFullYear();
+    const selectedMonth = monthSelect ? parseInt(monthSelect.value) : new Date().getMonth() + 1;
     
     // Buton stillerini güncelle
     document.querySelectorAll('.history-filter-btn').forEach(btn => {
@@ -2821,37 +3327,75 @@ function filterHistory(category, employeeIndex) {
         }
     });
     
-    // Son 12 ayı hesapla
-    const twelveMonthsAgo = new Date();
-    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12);
-    
-    // Ödeme geçmişini filtrele (son 12 ay)
+    // Ödeme geçmişini filtrele (seçili yıl ve ay)
     let recentPayments = [];
     if (employee.paymentHistory && employee.paymentHistory.length > 0) {
         recentPayments = employee.paymentHistory.filter(payment => {
-            const paymentDate = new Date(payment.date);
-            return paymentDate >= twelveMonthsAgo;
+            const paymentDate = new Date(payment.date + 'T00:00:00');
+            return paymentDate.getFullYear() === selectedYear && paymentDate.getMonth() + 1 === selectedMonth;
         });
     }
     
-    // Devamsızlık geçmişini filtrele (son 12 ay)
+    // Devamsızlık geçmişini filtrele (seçili yıl ve ay)
     let recentAbsences = [];
     if (employee.absenceHistory && employee.absenceHistory.length > 0) {
         recentAbsences = employee.absenceHistory.filter(absence => {
-            const absenceDate = new Date(absence.date);
-            return absenceDate >= twelveMonthsAgo;
+            const absenceDate = new Date(absence.date + 'T00:00:00');
+            return absenceDate.getFullYear() === selectedYear && absenceDate.getMonth() + 1 === selectedMonth;
         });
     }
     
     // İçeriği güncelle
     const historyContentInner = document.getElementById('historyContentInner');
     if (historyContentInner) {
-        historyContentInner.innerHTML = generateHistoryContent(employee, recentPayments, recentAbsences, category);
+        historyContentInner.innerHTML = generateHistoryContent(employee, recentPayments, recentAbsences, category, selectedYear, selectedMonth);
+    }
+}
+
+// Aylık / yıllık ödeme görünümünü ayarla
+function setPaymentPeriodView(view) {
+    const monthlyBtn = document.getElementById('paymentMonthlyBtn');
+    const yearlyBtn = document.getElementById('paymentYearlyBtn');
+    const titleEl = document.getElementById('paymentPeriodTitle');
+    const valueEl = document.getElementById('paymentPeriodValue');
+    const labelEl = document.getElementById('paymentPeriodLabel');
+    
+    if (!valueEl) return;
+    
+    const activeClass = 'bg-blue-600 text-white font-semibold shadow-sm';
+    const inactiveClass = 'text-gray-600 hover:text-gray-800 hover:bg-gray-200 font-medium';
+    
+    if (view === 'yearly') {
+        valueEl.textContent = window.yearlyPaymentsAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL';
+        if (labelEl) labelEl.textContent = 'Bu yıl';
+        if (titleEl) titleEl.textContent = 'Yıllık Toplam Ödeme';
+        if (monthlyBtn) {
+            monthlyBtn.className = monthlyBtn.className.replace(activeClass, inactiveClass).replace('bg-blue-600', '').replace('text-white', '');
+            monthlyBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm');
+            monthlyBtn.classList.add('text-gray-600', 'hover:text-gray-800', 'hover:bg-gray-200', 'font-medium');
+        }
+        if (yearlyBtn) {
+            yearlyBtn.classList.remove('text-gray-600', 'hover:text-gray-800', 'hover:bg-gray-200', 'font-medium');
+            yearlyBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm', 'font-semibold');
+        }
+    } else {
+        valueEl.textContent = window.monthlyPaymentsAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL';
+        if (labelEl) labelEl.textContent = 'Bu ay';
+        if (titleEl) titleEl.textContent = 'Aylık Toplam Ödeme';
+        if (yearlyBtn) {
+            yearlyBtn.classList.remove('bg-blue-600', 'text-white', 'shadow-sm', 'font-semibold');
+            yearlyBtn.classList.add('text-gray-600', 'hover:text-gray-800', 'hover:bg-gray-200', 'font-medium');
+        }
+        if (monthlyBtn) {
+            monthlyBtn.classList.remove('text-gray-600', 'hover:text-gray-800', 'hover:bg-gray-200', 'font-medium');
+            monthlyBtn.classList.add('bg-blue-600', 'text-white', 'shadow-sm', 'font-semibold');
+        }
     }
 }
 
 // calculateDebtInfo fonksiyonunu window objesine ekle (generateHistoryContent içinde kullanım için)
 window.calculateDebtInfo = calculateDebtInfo;
+window.setPaymentPeriodView = setPaymentPeriodView;
 
 // Devamsızlığı sil
 function deleteAbsence(employeeIndex, absenceIndex) {
@@ -2882,8 +3426,9 @@ function openDailyDetails(employeeId) {
     
     const dailyDetailsList = document.getElementById('dailyDetailsList');
     
-    // 10 günlük günlük hesapla ve göster
-    const dailyLogs = luxwage.calculateDailyLogs(employee);
+    // Günlük hareket dökümünü hesapla ve son 30 günü göster
+    const allDailyLogs = luxwage.calculateDailyLogs(employee);
+    const dailyLogs = allDailyLogs.slice(0, 30);
     
     // Çalışma süresi bilgisi
     let workDurationInfo = '';
@@ -2901,7 +3446,7 @@ function openDailyDetails(employeeId) {
         const today = new Date(todayStr + 'T00:00:00');
         
         // Başlangıç tarihinden bugüne kadar geçen toplam gün sayısını hesapla (tüm günler, kapalı günler dahil)
-        const daysWorked = dailyLogs.length;
+        const daysWorked = allDailyLogs.length;
         
         const formattedStartDate = startDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
         
@@ -2934,7 +3479,7 @@ function openDailyDetails(employeeId) {
                     <div class="text-right">
                         <p class="text-sm text-blue-700">
                             <i class="fas fa-list mr-2"></i>
-                            <strong>Gösterilen:</strong> Son ${Math.min(dailyLogs.length, 10)} gün
+                            <strong>Gösterilen:</strong> Son 30 gün
                         </p>
                     </div>
                 </div>
@@ -2949,9 +3494,12 @@ function openDailyDetails(employeeId) {
         dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Tarih</th>';
         dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Günlük Tutar</th>';
         dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Durum</th>';
+        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Toplam Borç</th>';
         dailyLogsHTML += '</tr></thead><tbody>';
         
         dailyLogs.forEach(log => {
+            const debtUpToDate = luxwage.calculateDebtUpToDate(employee, log.date);
+            const formattedDebt = debtUpToDate.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const dateObj = new Date(log.date);
             const formattedDate = dateObj.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
             
@@ -2994,6 +3542,7 @@ function openDailyDetails(employeeId) {
                         ${log.amount > 0 ? log.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL' : '-'}
                     </td>
                     <td class="px-4 py-3 text-sm ${statusClass}">${statusText}${deductionText}</td>
+                    <td class="px-4 py-3 text-sm font-bold ${debtUpToDate >= 0 ? 'text-purple-700' : 'text-green-600'}">${formattedDebt} TL</td>
                 </tr>
             `;
         });
@@ -3440,7 +3989,7 @@ document.addEventListener('DOMContentLoaded', function() {
         if (e.target && e.target.id === 'addEmployeeBtn') {
             openModal('employeeModal');
         }
-        
+
         // Employee action buttons with data-index
         if (e.target && e.target.classList.contains('absenceBtn')) {
             const index = e.target.getAttribute('data-index');

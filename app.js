@@ -649,6 +649,22 @@ document.addEventListener('DOMContentLoaded', function() {
     // Login formu
     const loginForm = document.getElementById('loginForm');
     if (loginForm) {
+        // Şifre görünürlük butonu
+        const toggleLoginPassword = document.getElementById('toggleLoginPassword');
+        const loginPasswordInput = document.getElementById('loginPassword');
+        if (toggleLoginPassword && loginPasswordInput) {
+            toggleLoginPassword.addEventListener('click', function() {
+                const isPassword = loginPasswordInput.type === 'password';
+                loginPasswordInput.type = isPassword ? 'text' : 'password';
+                const icon = toggleLoginPassword.querySelector('i');
+                if (icon) {
+                    icon.classList.toggle('fa-eye', !isPassword);
+                    icon.classList.toggle('fa-eye-slash', isPassword);
+                }
+                toggleLoginPassword.setAttribute('aria-label', isPassword ? 'Şifreyi gizle' : 'Şifreyi göster');
+            });
+        }
+
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();
             const email = document.getElementById('loginEmail').value.trim();

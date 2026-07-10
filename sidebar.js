@@ -41,22 +41,49 @@ onAuthStateChanged(auth, (user) => {
 });
 
 // Sidebar toggle and overlay
-const sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
 const sidebarOverlay = document.getElementById('sidebarOverlay');
-const sidebar = document.querySelector('.sidebar');
+const sidebar = document.querySelector('aside');
+const mobileMenuToggle = document.getElementById('mobileMenuToggle');
+const mobileMenuIcon = document.getElementById('mobileMenuIcon');
 
 function closeSidebar() {
-    if (sidebar) sidebar.classList.remove('open');
+    if (sidebar) {
+        sidebar.classList.remove('translate-x-0');
+        sidebar.classList.add('-translate-x-full');
+    }
     if (sidebarOverlay) sidebarOverlay.classList.remove('open');
+    if (mobileMenuIcon) {
+        mobileMenuIcon.classList.remove('fa-times');
+        mobileMenuIcon.classList.add('fa-bars');
+    }
+}
+
+function openSidebar() {
+    if (sidebar) {
+        sidebar.classList.remove('-translate-x-full');
+        sidebar.classList.add('translate-x-0');
+    }
+    if (sidebarOverlay) sidebarOverlay.classList.add('open');
+    if (mobileMenuIcon) {
+        mobileMenuIcon.classList.remove('fa-bars');
+        mobileMenuIcon.classList.add('fa-times');
+    }
+}
+
+function isSidebarOpen() {
+    return sidebar && sidebar.classList.contains('translate-x-0');
 }
 
 function toggleSidebar() {
-    if (sidebar) sidebar.classList.toggle('open');
-    if (sidebarOverlay) sidebarOverlay.classList.toggle('open');
+    if (isSidebarOpen()) {
+        closeSidebar();
+    } else {
+        openSidebar();
+    }
 }
 
-if (sidebarToggleBtn) {
-    sidebarToggleBtn.addEventListener('click', function() {
+if (mobileMenuToggle) {
+    mobileMenuToggle.addEventListener('click', function() {
         toggleSidebar();
     });
 }
@@ -66,6 +93,36 @@ if (sidebarOverlay) {
         closeSidebar();
     });
 }
+
+// Sayfayı paylaş butonları
+document.querySelectorAll('.share-page-btn').forEach(btn => {
+    btn.addEventListener('click', async function() {
+        const shareData = {
+            title: document.title,
+            text: 'LuxWage - Maaş ve Devamsızlık Takip Sistemi',
+            url: window.location.href
+        };
+
+        if (navigator.share) {
+            try {
+                await navigator.share(shareData);
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Paylaşım hatası:', err);
+                }
+            }
+        } else if (navigator.clipboard) {
+            try {
+                await navigator.clipboard.writeText(window.location.href);
+                alert('Link panoya kopyalandı!');
+            } catch (err) {
+                console.error('Kopyalama hatası:', err);
+            }
+        } else {
+            alert('Tarayıcınız paylaşımı desteklemiyor.');
+        }
+    });
+});
 
 document.querySelectorAll('.nav-item').forEach(item => {
     item.addEventListener('click', function() {
