@@ -280,6 +280,19 @@ document.addEventListener('DOMContentLoaded', function() {
         loginPassword.addEventListener('input', clearLoginError);
     }
     
+    const toggleLoginPassword = document.getElementById('toggleLoginPassword');
+    if (toggleLoginPassword && loginPassword) {
+        toggleLoginPassword.addEventListener('click', function() {
+            const isPassword = loginPassword.type === 'password';
+            loginPassword.type = isPassword ? 'text' : 'password';
+            const icon = toggleLoginPassword.querySelector('i');
+            if (icon) {
+                icon.classList.toggle('fa-eye', !isPassword);
+                icon.classList.toggle('fa-eye-slash', isPassword);
+            }
+        });
+    }
+    
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
             e.preventDefault();

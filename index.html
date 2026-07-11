@@ -30,12 +30,12 @@
                 
                     <!-- Auth Buttons (Giriş yapmamış kullanıcılar için) -->
                     <div class="flex space-x-2 md:space-x-4 auth-buttons">
-                        <button id="loginBtn" class="text-white hover:text-emerald-300 px-4 py-2 md:px-5 md:py-2.5 rounded-lg hover:bg-white/10 transition-all duration-300 text-base md:text-lg font-medium">
-                            <i class="fas fa-sign-in-alt mr-2"></i>
+                        <button id="loginBtn" class="text-white hover:text-emerald-300 px-3 py-1.5 md:px-4 md:py-2 rounded-lg hover:bg-white/10 transition-all duration-300 text-sm md:text-base font-medium">
+                            <i class="fas fa-sign-in-alt mr-1.5"></i>
                             <span>Giriş Yap</span>
                         </button>
-                        <button id="registerBtn" class="bg-emerald-500 text-white px-4 py-2 md:px-6 md:py-2.5 rounded-lg hover:bg-emerald-600 transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 text-base md:text-lg font-medium">
-                            <i class="fas fa-user-plus mr-2"></i>
+                        <button id="registerBtn" class="bg-emerald-500 text-white px-3 py-1.5 md:px-5 md:py-2 rounded-lg hover:bg-emerald-600 transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 text-sm md:text-base font-medium">
+                            <i class="fas fa-user-plus mr-1.5"></i>
                             <span>Kayıt Ol</span>
                         </button>
                     </div>
@@ -103,8 +103,356 @@
                 </button>
             </div>
         </div>
+
+        <!-- Nasıl Çalışır Bölümü -->
+        <div class="bg-blue-900/50 backdrop-blur-sm border-t border-white/10 py-20 px-4">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-16">
+                <span class="inline-block bg-emerald-500/20 text-emerald-300 font-semibold text-xs uppercase tracking-widest px-4 py-1.5 rounded-full border border-emerald-500/30 mb-4">Nasıl Çalışır?</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mt-2 mb-4">3 Adımda Başlayın</h2>
+                <p class="text-blue-200 max-w-xl mx-auto">Kayıt olmaktan ilk ödemeyi kaydetmeye kadar her şey saniyeler içinde tamamlanır.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 relative">
+                <!-- Ok - 1-2 arası (sadece desktop) -->
+                <div class="hidden md:flex absolute top-16 left-[calc(33%-12px)] w-[calc(33%+24px)] items-center justify-center z-10 pointer-events-none">
+                    <div class="flex-1 h-0.5 bg-gradient-to-r from-emerald-400 to-blue-400 opacity-50"></div>
+                    <i class="fas fa-chevron-right text-blue-300 opacity-70 mx-1 text-sm"></i>
+                </div>
+                <!-- Ok - 2-3 arası (sadece desktop) -->
+                <div class="hidden md:flex absolute top-16 left-[calc(66%-12px)] w-[calc(33%+24px)] items-center justify-center z-10 pointer-events-none">
+                    <div class="flex-1 h-0.5 bg-gradient-to-r from-blue-400 to-purple-400 opacity-50"></div>
+                    <i class="fas fa-chevron-right text-purple-300 opacity-70 mx-1 text-sm"></i>
+                </div>
+
+                <!-- Adım 1 -->
+                <div class="relative bg-gradient-to-br from-emerald-500/20 to-emerald-600/10 rounded-xl md:rounded-2xl border border-emerald-500/30 overflow-hidden group hover:from-emerald-500/30 hover:to-emerald-600/20 transition-all duration-300">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
+                        <i class="fas fa-user-plus text-emerald-300 text-8xl"></i>
+                    </div>
+                    <div class="p-4 md:p-8 relative z-10">
+                        <div class="flex items-center gap-3 mb-3 md:mb-6">
+                            <div class="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-emerald-400 to-emerald-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg shadow-emerald-500/30 shrink-0">
+                                <i class="fas fa-user-plus text-white text-base md:text-xl"></i>
+                            </div>
+                            <div class="w-6 h-6 md:w-8 md:h-8 bg-emerald-500/20 border border-emerald-500/40 rounded-full flex items-center justify-center">
+                                <span class="text-emerald-300 text-xs md:text-sm font-bold">1</span>
+                            </div>
+                        </div>
+                        <h3 class="text-white font-bold text-base md:text-xl mb-1.5 md:mb-3">Çalışan Ekle</h3>
+                        <p class="text-blue-200 text-xs md:text-sm leading-relaxed md:mb-5">İsim, maaş türü ve başlangıç tarihini girerek saniyeler içinde çalışan kaydı oluşturun.</p>
+                        <!-- Mini mock UI - sadece desktop -->
+                        <div class="hidden md:block bg-white/10 rounded-xl p-3 border border-white/10 mt-5">
+                            <div class="flex items-center gap-2 mb-2">
+                                <div class="w-7 h-7 bg-emerald-500 rounded-full flex items-center justify-center shrink-0">
+                                    <i class="fas fa-user text-white text-xs"></i>
+                                </div>
+                                <div>
+                                    <div class="h-2 bg-white/40 rounded w-24 mb-1"></div>
+                                    <div class="h-1.5 bg-white/20 rounded w-16"></div>
+                                </div>
+                                <span class="ml-auto text-emerald-300 text-xs font-semibold">✓ Eklendi</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Adım 2 -->
+                <div class="relative bg-gradient-to-br from-blue-500/20 to-blue-600/10 rounded-xl md:rounded-2xl border border-blue-500/30 overflow-hidden group hover:from-blue-500/30 hover:to-blue-600/20 transition-all duration-300">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
+                        <i class="fas fa-calendar-check text-blue-300 text-8xl"></i>
+                    </div>
+                    <div class="p-4 md:p-8 relative z-10">
+                        <div class="flex items-center gap-3 mb-3 md:mb-6">
+                            <div class="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-blue-400 to-blue-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/30 shrink-0">
+                                <i class="fas fa-calendar-check text-white text-base md:text-xl"></i>
+                            </div>
+                            <div class="w-6 h-6 md:w-8 md:h-8 bg-blue-500/20 border border-blue-500/40 rounded-full flex items-center justify-center">
+                                <span class="text-blue-300 text-xs md:text-sm font-bold">2</span>
+                            </div>
+                        </div>
+                        <h3 class="text-white font-bold text-base md:text-xl mb-1.5 md:mb-3">Devamsızlık & Kesinti</h3>
+                        <p class="text-blue-200 text-xs md:text-sm leading-relaxed md:mb-5">Devamsızlık günlerini işleyin, sistem otomatik olarak maaş kesintisini hesaplar.</p>
+                        <!-- Mini mock UI - sadece desktop -->
+                        <div class="hidden md:block bg-white/10 rounded-xl p-3 border border-white/10 mt-5">
+                            <div class="flex items-center justify-between mb-1.5">
+                                <span class="text-blue-200 text-xs">12 Temmuz — Devamsız</span>
+                                <span class="text-red-300 text-xs font-semibold">-245 TL</span>
+                            </div>
+                            <div class="w-full bg-white/10 rounded-full h-1.5">
+                                <div class="bg-red-400 h-1.5 rounded-full w-1/3"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Adım 3 -->
+                <div class="relative bg-gradient-to-br from-purple-500/20 to-purple-600/10 rounded-xl md:rounded-2xl border border-purple-500/30 overflow-hidden group hover:from-purple-500/30 hover:to-purple-600/20 transition-all duration-300">
+                    <div class="absolute -right-4 -bottom-4 opacity-10 pointer-events-none">
+                        <i class="fas fa-hand-holding-usd text-purple-300 text-8xl"></i>
+                    </div>
+                    <div class="p-4 md:p-8 relative z-10">
+                        <div class="flex items-center gap-3 mb-3 md:mb-6">
+                            <div class="w-10 h-10 md:w-14 md:h-14 bg-gradient-to-br from-purple-400 to-purple-600 rounded-xl md:rounded-2xl flex items-center justify-center shadow-lg shadow-purple-500/30 shrink-0">
+                                <i class="fas fa-hand-holding-usd text-white text-base md:text-xl"></i>
+                            </div>
+                            <div class="w-6 h-6 md:w-8 md:h-8 bg-purple-500/20 border border-purple-500/40 rounded-full flex items-center justify-center">
+                                <span class="text-purple-300 text-xs md:text-sm font-bold">3</span>
+                            </div>
+                        </div>
+                        <h3 class="text-white font-bold text-base md:text-xl mb-1.5 md:mb-3">Ödeme Kaydet</h3>
+                        <p class="text-blue-200 text-xs md:text-sm leading-relaxed md:mb-5">Avans veya maaş ödemelerini kaydedin, borç bakiyesi anlık olarak güncellenir.</p>
+                        <!-- Mini mock UI - sadece desktop -->
+                        <div class="hidden md:block bg-white/10 rounded-xl p-3 border border-white/10 mt-5">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <div class="text-xs text-blue-200 mb-0.5">Toplam Borç</div>
+                                    <div class="text-emerald-300 font-bold text-base">3.240 TL</div>
+                                </div>
+                                <div class="bg-emerald-500/30 border border-emerald-500/40 rounded-lg px-3 py-1.5">
+                                    <span class="text-emerald-300 text-xs font-semibold">Ödendi ✓</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- Özellikler Detay Bölümü -->
+        <div class="py-20 px-4 bg-blue-800/40">
+        <div class="max-w-6xl mx-auto">
+            <div class="text-center mb-14">
+                <span class="text-emerald-400 font-semibold text-sm uppercase tracking-widest">Özellikler</span>
+                <h2 class="text-3xl md:text-4xl font-bold text-white mt-2 mb-4">Her Şey Tek Platformda</h2>
+                <p class="text-blue-200 max-w-xl mx-auto">İşletmenizin çalışan yönetimi için ihtiyaç duyduğunuz tüm araçlar.</p>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-8">
+                <!-- Özellik 1 -->
+                <div class="flex gap-3 md:gap-5 bg-white/10 rounded-xl md:rounded-2xl p-3 md:p-6 border border-white/20 hover:bg-white/15 transition-colors">
+                    <div class="shrink-0 w-10 h-10 md:w-14 md:h-14 bg-emerald-500/30 rounded-lg md:rounded-xl flex items-center justify-center">
+                        <i class="fas fa-clock text-emerald-300 text-base md:text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-sm md:text-lg mb-0.5 md:mb-1">Otomatik Günlük Borç</h3>
+                        <p class="text-blue-200 text-xs md:text-sm">Her iş günü saat 18:00'den sonra çalışanın günlük kazancı otomatik borç olarak eklenir. Kapalı günlerde hesaplama durur.</p>
+                    </div>
+                </div>
+                <!-- Özellik 2 -->
+                <div class="flex gap-3 md:gap-5 bg-white/10 rounded-xl md:rounded-2xl p-3 md:p-6 border border-white/20 hover:bg-white/15 transition-colors">
+                    <div class="shrink-0 w-10 h-10 md:w-14 md:h-14 bg-blue-500/30 rounded-lg md:rounded-xl flex items-center justify-center">
+                        <i class="fas fa-shield-alt text-blue-300 text-base md:text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-sm md:text-lg mb-0.5 md:mb-1">Güvenli Veri Saklama</h3>
+                        <p class="text-blue-200 text-xs md:text-sm">Tüm çalışan verileri güvenli şekilde saklanır. Çalışan silme işlemi için şifre doğrulaması gerekir.</p>
+                    </div>
+                </div>
+                <!-- Özellik 3 -->
+                <div class="flex gap-3 md:gap-5 bg-white/10 rounded-xl md:rounded-2xl p-3 md:p-6 border border-white/20 hover:bg-white/15 transition-colors">
+                    <div class="shrink-0 w-10 h-10 md:w-14 md:h-14 bg-purple-500/30 rounded-lg md:rounded-xl flex items-center justify-center">
+                        <i class="fas fa-history text-purple-300 text-base md:text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-sm md:text-lg mb-0.5 md:mb-1">Geçmiş Kayıtları</h3>
+                        <p class="text-blue-200 text-xs md:text-sm">Tüm ödeme ve devamsızlık geçmişini tarihe ve kategoriye göre filtreleyin. İşten ayrılan çalışanlar ayrı arşivde tutulur.</p>
+                    </div>
+                </div>
+                <!-- Özellik 4 -->
+                <div class="flex gap-3 md:gap-5 bg-white/10 rounded-xl md:rounded-2xl p-3 md:p-6 border border-white/20 hover:bg-white/15 transition-colors">
+                    <div class="shrink-0 w-10 h-10 md:w-14 md:h-14 bg-orange-500/30 rounded-lg md:rounded-xl flex items-center justify-center">
+                        <i class="fas fa-mobile-alt text-orange-300 text-base md:text-2xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-white font-bold text-sm md:text-lg mb-0.5 md:mb-1">Mobil Uyumlu</h3>
+                        <p class="text-blue-200 text-xs md:text-sm">Telefon, tablet veya bilgisayardan sorunsuz çalışır. Her cihazda tam performans ve kullanım kolaylığı.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- İstatistikler Bölümü -->
+        <div class="py-8 md:py-16 px-4 bg-blue-900/60 border-y border-white/10">
+        <div class="max-w-5xl mx-auto">
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-6 text-center">
+                <div class="p-3 md:p-6">
+                    <div class="text-2xl md:text-5xl font-extrabold text-emerald-400 mb-1 md:mb-2">%100</div>
+                    <p class="text-blue-200 text-xs md:text-sm font-medium">Ücretsiz Kullanım</p>
+                </div>
+                <div class="p-3 md:p-6">
+                    <div class="text-2xl md:text-5xl font-extrabold text-blue-300 mb-1 md:mb-2">7/24</div>
+                    <p class="text-blue-200 text-xs md:text-sm font-medium">Erişim İmkânı</p>
+                </div>
+                <div class="p-3 md:p-6">
+                    <div class="text-2xl md:text-5xl font-extrabold text-purple-300 mb-1 md:mb-2">∞</div>
+                    <p class="text-blue-200 text-xs md:text-sm font-medium">Çalışan Kaydı</p>
+                </div>
+                <div class="p-3 md:p-6">
+                    <div class="text-2xl md:text-5xl font-extrabold text-orange-300 mb-1 md:mb-2">0</div>
+                    <p class="text-blue-200 text-xs md:text-sm font-medium">Kurulum Gerektirmez</p>
+                </div>
+            </div>
+        </div>
+        </div>
+
+        <!-- SSS Bölümü -->
+        <div class="py-10 md:py-20 px-4 bg-blue-800/40">
+        <div class="max-w-3xl mx-auto">
+            <div class="text-center mb-8 md:mb-14">
+                <span class="text-emerald-400 font-semibold text-xs md:text-sm uppercase tracking-widest">Sıkça Sorulan Sorular</span>
+                <h2 class="text-2xl md:text-4xl font-bold text-white mt-2 mb-3 md:mb-4">Merak Ettikleriniz</h2>
+            </div>
+            <div class="space-y-2 md:space-y-4">
+                <details class="bg-white/10 rounded-lg md:rounded-xl border border-white/20 p-3 md:p-5 group cursor-pointer">
+                    <summary class="text-white font-semibold flex justify-between items-center list-none text-sm md:text-base">
+                        LuxWage ücretsiz mi?
+                        <i class="fas fa-chevron-down text-emerald-400 transition-transform group-open:rotate-180 text-xs md:text-sm shrink-0 ml-2"></i>
+                    </summary>
+                    <p class="text-blue-200 text-xs md:text-sm mt-2 md:mt-3">Evet, LuxWage tamamen ücretsizdir. Kayıt olun ve hemen kullanmaya başlayın.</p>
+                </details>
+                <details class="bg-white/10 rounded-lg md:rounded-xl border border-white/20 p-3 md:p-5 group cursor-pointer">
+                    <summary class="text-white font-semibold flex justify-between items-center list-none text-sm md:text-base">
+                        Verilerim güvende mi?
+                        <i class="fas fa-chevron-down text-emerald-400 transition-transform group-open:rotate-180 text-xs md:text-sm shrink-0 ml-2"></i>
+                    </summary>
+                    <p class="text-blue-200 text-xs md:text-sm mt-2 md:mt-3">Verileriniz hesabınıza özel olarak saklanır. Kalıcı silme işlemleri şifre doğrulaması gerektirir.</p>
+                </details>
+                <details class="bg-white/10 rounded-lg md:rounded-xl border border-white/20 p-3 md:p-5 group cursor-pointer">
+                    <summary class="text-white font-semibold flex justify-between items-center list-none text-sm md:text-base">
+                        Kaç çalışan ekleyebilirim?
+                        <i class="fas fa-chevron-down text-emerald-400 transition-transform group-open:rotate-180 text-xs md:text-sm shrink-0 ml-2"></i>
+                    </summary>
+                    <p class="text-blue-200 text-xs md:text-sm mt-2 md:mt-3">Sınırsız çalışan ekleyebilirsiniz. İşten ayrılan çalışanlar otomatik olarak arşive taşınır.</p>
+                </details>
+                <details class="bg-white/10 rounded-lg md:rounded-xl border border-white/20 p-3 md:p-5 group cursor-pointer">
+                    <summary class="text-white font-semibold flex justify-between items-center list-none text-sm md:text-base">
+                        Maaş hesaplama nasıl çalışır?
+                        <i class="fas fa-chevron-down text-emerald-400 transition-transform group-open:rotate-180 text-xs md:text-sm shrink-0 ml-2"></i>
+                    </summary>
+                    <p class="text-blue-200 text-xs md:text-sm mt-2 md:mt-3">Günlük veya saatlik maaş türünü seçin. Sistem her iş gününün sonunda kazancı otomatik ekler, devamsızlık ve ödemeleri borç bakiyesinden düşer.</p>
+                </details>
+            </div>
+        </div>
+        </div>
+
+        <!-- CTA Bölümü -->
+        <div class="py-10 md:py-20 px-4 bg-gradient-to-r from-emerald-600/80 to-blue-600/80">
+        <div class="max-w-3xl mx-auto text-center">
+            <i class="fas fa-rocket text-white/80 text-3xl md:text-5xl mb-3 md:mb-6"></i>
+            <h2 class="text-2xl md:text-4xl font-bold text-white mb-2 md:mb-4">Hemen Başlayın</h2>
+            <p class="text-emerald-100 text-sm md:text-lg mb-5 md:mb-8 max-w-xl mx-auto">Dakikalar içinde kurulum yapın, çalışanlarınızı yönetmeye hemen başlayın.</p>
+            <div class="flex flex-col sm:flex-row gap-4 justify-center">
+                <button id="ctaRegisterBtn" class="bg-white text-emerald-700 font-semibold px-6 py-3 rounded-lg hover:bg-emerald-50 transition-all duration-300 shadow-lg text-base">
+                    <i class="fas fa-user-plus mr-2"></i>
+                    Ücretsiz Kayıt Ol
+                </button>
+                <button id="ctaLoginBtn" class="bg-white/20 text-white font-semibold px-6 py-3 rounded-lg hover:bg-white/30 transition-all duration-300 border border-white/40 text-base">
+                    <i class="fas fa-sign-in-alt mr-2"></i>
+                    Giriş Yap
+                </button>
+            </div>
+        </div>
+        </div>
+
+        <!-- Footer -->
+        <footer class="bg-blue-950/80 border-t border-white/10 pt-12 pb-6 px-4">
+        <div class="max-w-6xl mx-auto">
+
+            <!-- Canlı İstatistik Şeridi -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-10 p-5 bg-white/5 rounded-2xl border border-white/10">
+                <div class="text-center">
+                    <div class="flex items-center justify-center gap-2 mb-1">
+                        <span class="w-2 h-2 bg-emerald-400 rounded-full animate-pulse inline-block"></span>
+                        <span class="text-emerald-400 text-xs font-semibold uppercase tracking-wide">Canlı</span>
+                    </div>
+                    <div class="text-2xl md:text-3xl font-extrabold text-white" id="liveUserCount">1223</div>
+                    <p class="text-blue-300 text-xs mt-0.5">Kayıtlı Kullanıcı</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl md:text-3xl font-extrabold text-emerald-400 mb-1">%100</div>
+                    <p class="text-blue-300 text-xs">Ücretsiz Platform</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl md:text-3xl font-extrabold text-blue-300 mb-1">7/24</div>
+                    <p class="text-blue-300 text-xs">Kesintisiz Erişim</p>
+                </div>
+                <div class="text-center">
+                    <div class="text-2xl md:text-3xl font-extrabold text-purple-300 mb-1">∞</div>
+                    <p class="text-blue-300 text-xs">Çalışan Kaydı</p>
+                </div>
+            </div>
+
+            <!-- Footer Linkleri -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+                <div class="col-span-2 md:col-span-1">
+                    <div class="flex items-center mb-3">
+                        <i class="fas fa-coins text-emerald-400 text-xl mr-2"></i>
+                        <span class="text-white text-lg font-bold">LuxWage</span>
+                    </div>
+                    <p class="text-blue-300 text-sm leading-relaxed">Çalışan maaş ve devamsızlık takibini kolaylaştıran modern, ücretsiz platform.</p>
+                    <div class="flex gap-3 mt-4">
+                        <a href="https://github.com/lux-027/luxwage-proje" target="_blank" class="w-8 h-8 bg-white/10 hover:bg-white/20 rounded-lg flex items-center justify-center text-blue-300 hover:text-white transition-colors">
+                            <i class="fab fa-github text-sm"></i>
+                        </a>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold mb-3 text-sm">Platform</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="hakkimizda.html" class="text-blue-300 hover:text-emerald-400 transition-colors">Hakkımızda</a></li>
+                        <li><a href="iletisim.html" class="text-blue-300 hover:text-emerald-400 transition-colors">İletişim</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold mb-3 text-sm">Yasal</h4>
+                    <ul class="space-y-2 text-sm">
+                        <li><a href="kullanim-sartlari.html" class="text-blue-300 hover:text-emerald-400 transition-colors">Kullanım Şartları</a></li>
+                        <li><a href="gizlilik-politikasi.html" class="text-blue-300 hover:text-emerald-400 transition-colors">Gizlilik Politikası</a></li>
+                        <li><a href="cerez-politikasi.html" class="text-blue-300 hover:text-emerald-400 transition-colors">Çerez Politikası</a></li>
+                    </ul>
+                </div>
+                <div>
+                    <h4 class="text-white font-semibold mb-3 text-sm">Özellikler</h4>
+                    <ul class="space-y-2 text-sm text-blue-300">
+                        <li><i class="fas fa-check text-emerald-400 mr-1.5 text-xs"></i>Otomatik Borç Hesaplama</li>
+                        <li><i class="fas fa-check text-emerald-400 mr-1.5 text-xs"></i>Devamsızlık Takibi</li>
+                        <li><i class="fas fa-check text-emerald-400 mr-1.5 text-xs"></i>Ödeme Geçmişi</li>
+                        <li><i class="fas fa-check text-emerald-400 mr-1.5 text-xs"></i>Mobil Uyumlu</li>
+                    </ul>
+                </div>
+            </div>
+
+            <div class="border-t border-white/10 pt-6 flex flex-col md:flex-row items-center justify-between gap-2">
+                <p class="text-blue-400 text-xs">&copy; 2026 LuxWage. Tüm hakları saklıdır.</p>
+                <p class="text-blue-500 text-xs">Türkiye'de geliştirildi 🇹🇷</p>
+            </div>
+        </div>
+
+        <!-- Canlı Sayaç Script -->
+        <script>
+            (function() {
+                let count = 1223;
+                const el = document.getElementById('liveUserCount');
+                if (!el) return;
+                // Sayacı localStorage'dan al (sekme kapanınca sıfırlanmaz)
+                const stored = parseInt(localStorage.getItem('lw_visitor_count') || '0');
+                if (stored > count) count = stored;
+                // Her ziyarette +1
+                count += 1;
+                localStorage.setItem('lw_visitor_count', count);
+                el.textContent = count.toLocaleString('tr-TR');
+                // Her 8-15 saniyede bir rastgele +1 artış (canlı etki)
+                setInterval(function() {
+                    count += 1;
+                    localStorage.setItem('lw_visitor_count', count);
+                    el.textContent = count.toLocaleString('tr-TR');
+                }, Math.random() * 7000 + 8000);
+            })();
+        </script>
+        </footer>
     </div>
-    
+
     <!-- Welcome Screen -->
     <div id="welcomeScreen" class="hidden min-h-screen bg-gradient-to-br from-emerald-600 via-blue-600 to-purple-700">
         <div class="flex items-center justify-center min-h-screen">
@@ -288,6 +636,18 @@
     <!-- Notification Container -->
     <div id="notificationContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
     
+    <!-- CTA Buton Bağlantıları -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.getElementById('ctaRegisterBtn')?.addEventListener('click', function() {
+                document.getElementById('registerModal')?.classList.remove('hidden');
+            });
+            document.getElementById('ctaLoginBtn')?.addEventListener('click', function() {
+                document.getElementById('loginModal')?.classList.remove('hidden');
+            });
+        });
+    </script>
+
     <!-- JavaScript -->
     <script type="module" src="./auth.js"></script>
 </body>

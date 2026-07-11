@@ -29,14 +29,17 @@ function logout() {
 
 // Firebase Auth State Listener
 onAuthStateChanged(auth, (user) => {
+    if (!user) {
+        window.location.href = 'index.html';
+        return;
+    }
+
     const userEmailHeader = document.getElementById('userEmailHeader');
     const userEmailText = userEmailHeader?.querySelector('span:last-child');
 
-    if (user && userEmailHeader && userEmailText) {
+    if (userEmailHeader && userEmailText) {
         userEmailText.textContent = user.email;
         userEmailHeader.classList.remove('hidden');
-    } else if (userEmailHeader) {
-        userEmailHeader.classList.add('hidden');
     }
 });
 
