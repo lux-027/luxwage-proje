@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /dashboard.html
+Disallow: /og-generator.html
+Disallow: /favicon-preview.html
+
+Sitemap: https://luxwage.pro/sitemap.xml
