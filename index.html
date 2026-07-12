@@ -82,6 +82,7 @@
             .hero-title { animation: fadeSlideUp .8s ease both; }
             .hero-sub   { animation: fadeSlideUp .8s .2s ease both; }
             .hero-cards { animation: fadeSlideUp .8s .35s ease both; }
+            .hero-welcome { animation: fadeSlideUp .8s .5s ease both; }
             .card-3d {
                 transform-style: preserve-3d;
                 transition: transform .4s ease, box-shadow .4s ease;
@@ -174,14 +175,15 @@
                 </div>
 
                 <!-- STATE B -->
-                <div id="dashboardWelcome" style="display:none;" class="flex flex-col items-center gap-4">
+                <div id="dashboardWelcome" style="display:none;" class="hero-welcome flex flex-col items-center gap-4">
                     <!-- 3D Hoşgeldin Kartı -->
                     <div style="
                         background: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 100%);
                         backdrop-filter: blur(24px);
                         border: 1px solid rgba(255,255,255,0.15);
                         border-radius: 24px;
-                        padding: 16px 32px;
+                        padding: 16px 48px;
+                        min-width: 320px;
                         box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.15) inset;
                         transform: perspective(600px) rotateX(2deg);
                         transition: transform 0.3s ease, box-shadow 0.3s ease;
