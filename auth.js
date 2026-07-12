@@ -94,6 +94,7 @@ function showNotification(message, type = 'info') {
 
 // Modal Fonksiyonları
 function openLoginModal() {
+    closeModals();
     const modal = document.getElementById('loginModal');
     if (modal) {
         modal.style.display = 'flex';
@@ -101,6 +102,7 @@ function openLoginModal() {
 }
 
 function openRegisterModal() {
+    closeModals();
     const modal = document.getElementById('registerModal');
     if (modal) {
         modal.style.display = 'flex';
@@ -428,6 +430,18 @@ document.addEventListener('DOMContentLoaded', function() {
         openRegisterModal();
     });
     
+    // Login → Register ve Register → Login geçiş (event delegation - dinamik elementler için)
+    document.addEventListener('click', function(e) {
+        if (e.target.closest('#switchToRegisterBtn')) {
+            e.preventDefault();
+            openRegisterModal();
+        }
+        if (e.target.closest('#switchToLoginBtn')) {
+            e.preventDefault();
+            openLoginModal();
+        }
+    });
+
     // Close register modal button event listener
     document.getElementById('closeRegisterModalBtn')?.addEventListener('click', function() {
         closeModals();

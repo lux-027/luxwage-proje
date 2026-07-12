@@ -1024,7 +1024,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Formun altına kayıt ol linki ekle
         const registerLink = document.createElement('div');
         registerLink.className = 'text-center mt-4';
-        registerLink.innerHTML = '<p class="text-sm text-gray-600">Hesabınız yok mu? <a href="#" onclick="window.closeModals(); window.openRegisterModal();" class="text-emerald-500 hover:text-emerald-600 font-medium">Kayıt Ol</a></p>';
+        registerLink.innerHTML = '<p class="text-sm text-gray-600">Hesabınız yok mu? <a href="#" id="switchToRegisterBtn" class="text-emerald-500 hover:text-emerald-600 font-medium">Kayıt Ol</a></p>';
         loginForm.appendChild(registerLink);
     }
     
@@ -1033,7 +1033,7 @@ document.addEventListener('DOMContentLoaded', function() {
         // Formun altına giriş yap linki ekle
         const loginLink = document.createElement('div');
         loginLink.className = 'text-center mt-4';
-        loginLink.innerHTML = '<p class="text-sm text-gray-600">Zaten hesabınız var mı? <a href="#" onclick="window.closeModals(); window.openLoginModal();" class="text-blue-500 hover:text-blue-600 font-medium">Giriş Yap</a></p>';
+        loginLink.innerHTML = '<p class="text-sm text-gray-600">Zaten hesabınız var mı? <a href="#" id="switchToLoginBtn" class="text-blue-500 hover:text-blue-600 font-medium">Giriş Yap</a></p>';
         registerForm.appendChild(loginLink);
     }
 });
