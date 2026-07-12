@@ -1261,9 +1261,9 @@ class LuxWage {
                 ` : ''}
                 
                 <div class="flex flex-wrap items-center justify-between gap-2 mt-3">
-                    <div class="flex items-center gap-1.5 min-w-0 flex-shrink-0">
+                    <div class="flex items-center gap-1.5 shrink-0">
                         <!-- Borç Kutusu -->
-                        <div class="flex items-center gap-1 md:gap-3 bg-gradient-to-br from-blue-50 to-white border border-blue-200 shadow-sm rounded-xl p-1.5 md:p-3 hover:shadow-md transition-shadow min-w-0">
+                        <div class="flex items-center gap-1 md:gap-3 bg-gradient-to-br from-blue-50 to-white border border-blue-200 shadow-sm rounded-xl p-1.5 md:p-3 hover:shadow-md transition-shadow" style="min-width:100px">
                             <div class="bg-blue-500 text-white p-1 md:p-2.5 rounded-lg shadow-sm shrink-0">
                                 <i class="fas fa-wallet text-[10px] md:text-sm"></i>
                             </div>
@@ -1274,7 +1274,7 @@ class LuxWage {
                         </div>
                         
                         <!-- Kazanç Kutusu -->
-                        <div class="flex items-center gap-1 md:gap-3 bg-gradient-to-br ${isClosedDay ? 'from-indigo-50 to-white' : 'from-gray-50 to-white'} border ${borderColor} shadow-sm rounded-xl p-1.5 md:p-3 hover:shadow-md transition-shadow min-w-0">
+                        <div class="flex items-center gap-1 md:gap-3 bg-gradient-to-br ${isClosedDay ? 'from-indigo-50 to-white' : 'from-gray-50 to-white'} border ${borderColor} shadow-sm rounded-xl p-1.5 md:p-3 hover:shadow-md transition-shadow" style="min-width:100px">
                             <div class="${iconBgColor} text-white p-1 md:p-2.5 rounded-lg shadow-sm shrink-0">
                                 <i class="fas ${iconClass} text-[10px] md:text-sm"></i>
                             </div>
@@ -1349,10 +1349,10 @@ class LuxWage {
         }).join('');
         
         employeesSection.innerHTML = `
-            <div class="flex flex-col-reverse md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 mb-4">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-3 md:gap-4 mb-4">
                 <div class="w-full bg-white rounded-xl shadow-lg p-3 md:p-5 border-l-4 border-emerald-500 md:flex-1 min-w-0">
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 md:gap-4">
-                        <div class="flex items-center justify-between gap-2">
+                    <div class="grid grid-cols-2 md:grid-cols-4 divide-x divide-gray-200 gap-y-3 md:gap-y-0">
+                        <div class="flex items-center justify-between gap-2 px-2 md:px-4 first:pl-0">
                             <div class="min-w-0">
                                 <p class="text-[10px] md:text-xs text-gray-500 uppercase font-semibold tracking-wide truncate">Toplam Çalışan</p>
                                 <p class="text-lg md:text-2xl font-bold text-gray-800">${activeEmployees.length}</p>
@@ -1361,7 +1361,7 @@ class LuxWage {
                                 <i class="fas fa-users text-emerald-500 text-sm md:text-xl"></i>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between gap-2 md:border-l md:border-gray-200 md:pl-4">
+                        <div class="flex items-center justify-between gap-2 px-2 md:px-4">
                             <div class="min-w-0">
                                 <p class="text-[10px] md:text-xs text-gray-500 uppercase font-semibold tracking-wide truncate">Aktif Çalışan</p>
                                 <p class="text-base md:text-xl font-bold text-emerald-600">${activeWorkingEmployees}</p>
@@ -1370,7 +1370,7 @@ class LuxWage {
                                 <i class="fas fa-user-check text-emerald-500 text-sm md:text-lg"></i>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between gap-2 md:border-l md:border-gray-200 md:pl-4">
+                        <div class="flex items-center justify-between gap-2 px-2 md:px-4">
                             <div class="min-w-0">
                                 <p class="text-[10px] md:text-xs text-gray-500 uppercase font-semibold tracking-wide truncate">Toplam Borç</p>
                                 <p class="text-base md:text-xl font-bold text-red-600 truncate">${formattedTotalDebt} TL</p>
@@ -1379,7 +1379,7 @@ class LuxWage {
                                 <i class="fas fa-wallet text-red-500 text-sm md:text-lg"></i>
                             </div>
                         </div>
-                        <div class="flex items-center justify-between gap-2 md:border-l md:border-gray-200 md:pl-4">
+                        <div class="flex items-center justify-between gap-2 px-2 md:px-4">
                             <div class="min-w-0">
                                 <p class="text-[10px] md:text-xs text-gray-500 uppercase font-semibold tracking-wide truncate">Toplam Maaş</p>
                                 <p class="text-base md:text-xl font-bold text-blue-600 truncate">${formattedTotalSalary} TL</p>
@@ -1390,10 +1390,10 @@ class LuxWage {
                         </div>
                     </div>
                 </div>
-                <div class="flex justify-end w-full md:w-auto">
-                    <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-3 py-1.5 md:px-6 md:py-3 rounded-lg hover:bg-emerald-600 transition-colors text-xs md:text-base">
-                        <i class="fas fa-user-plus mr-2"></i>
-                        Yeni İşçi Ekle
+                <div class="w-full md:w-auto">
+                    <button id="addEmployeeBtn" class="w-full md:w-auto bg-emerald-500 text-white px-3 py-2 md:px-6 md:py-3 rounded-lg hover:bg-emerald-600 transition-colors text-xs md:text-base flex items-center justify-center md:justify-start gap-2">
+                        <i class="fas fa-user-plus"></i>
+                        <span>Yeni İşçi Ekle</span>
                     </button>
                 </div>
             </div>
@@ -2484,50 +2484,38 @@ class LuxWage {
         
         if (!employee.startDate) return 0;
         
-        // İş durdurulmuşsa borç artışı durdur
+        // İş durdurulmuşsa borç artışı durdur - workStopDate'e kadar hesapla
         if (employee.isStopped) {
-            // Mevcut borcu göster ama yeni borç ekleme
             const dailyWage = this.calculateDailyWage(employee);
             let totalDebt = 0;
             const toLocalStr = (d) => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
             
-            // İş durdurulma tarihine kadar borç hesapla
             const startDate = new Date(employee.startDate);
             startDate.setHours(0, 0, 0, 0);
             
-            // İş durdurulma tarihini bul (son çalışma günü)
-            const dailyLogs = this.calculateDailyLogs(employee);
-            if (dailyLogs.length > 0) {
-                const lastWorkDate = new Date(dailyLogs[dailyLogs.length - 1].date);
-                const currentDate = new Date(startDate);
-                while (currentDate <= lastWorkDate) {
-                    if (!this.isClosedDay(currentDate, employee)) {
-                        const currentDateStr = toLocalStr(currentDate);
-                        const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
-                        
-                        // Devamsızlık günü ise borç çıkar
-                        if (isAbsentDay) {
-                            totalDebt -= dailyWage;
-                        } else {
-                            // Normal gün için borç ekle
-                            totalDebt += dailyWage;
-                        }
+            // İş durdurulma tarihine kadar hesapla (workStopDate varsa o güne, yoksa bugüne kadar)
+            const stopDate = employee.workStopDate ? new Date(employee.workStopDate) : new Date();
+            stopDate.setHours(0, 0, 0, 0);
+            
+            const currentDate = new Date(startDate);
+            while (currentDate < stopDate) {
+                if (!this.isClosedDay(currentDate, employee)) {
+                    const currentDateStr = toLocalStr(currentDate);
+                    const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+                    if (!isAbsentDay) {
+                        totalDebt += dailyWage;
                     }
-                    currentDate.setDate(currentDate.getDate() + 1);
                 }
+                currentDate.setDate(currentDate.getDate() + 1);
             }
             
             // Ödemeleri çıkar
             if (employee.paymentHistory && employee.paymentHistory.length > 0) {
                 employee.paymentHistory.forEach(payment => {
-                    console.log('Ödeme verisi:', payment);
                     totalDebt -= Math.abs(Number(payment.amount) || 0);
                 });
             }
             
-            // Devamsızlık kesintilerini EKLEME - zaten devamsızlık günlerinde borç eklenmedi
-            
-            console.log('İş durdurulmuş borç:', totalDebt);
             return totalDebt;
         }
         
@@ -4311,6 +4299,57 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    // Mobil bildirime içerik ekle (dışarıdan çağrılabilir)
+    window.addMobileNotification = function(title, message, type = 'info') {
+        const list = document.getElementById('mobileNotifList');
+        const badge = document.getElementById('mobileNotifBadge');
+        if (!list) return;
+
+        const colors = { info: 'blue', success: 'green', warning: 'yellow', error: 'red' };
+        const icons = { info: 'fa-info-circle', success: 'fa-check-circle', warning: 'fa-exclamation-triangle', error: 'fa-times-circle' };
+        const c = colors[type] || 'blue';
+        const ic = icons[type] || 'fa-info-circle';
+
+        // "Henüz bildirim yok" varsa temizle
+        if (list.querySelector('.fa-bell-slash')) list.innerHTML = '';
+
+        const item = document.createElement('div');
+        item.className = `flex gap-3 px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors`;
+        item.innerHTML = `
+            <div class="shrink-0 mt-0.5">
+                <i class="fas ${ic} text-${c}-500"></i>
+            </div>
+            <div class="min-w-0">
+                <p class="text-xs font-semibold text-gray-800">${title}</p>
+                <p class="text-[11px] text-gray-500 mt-0.5 leading-relaxed">${message}</p>
+            </div>`;
+        list.prepend(item);
+
+        // Badge güncelle
+        if (badge) {
+            const count = list.querySelectorAll('.border-b').length;
+            badge.textContent = count > 9 ? '9+' : count;
+            badge.classList.remove('hidden');
+        }
+    };
+
+    // Mobil bildirim paneli toggle
+    document.getElementById('mobileNotifBtn')?.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const panel = document.getElementById('mobileNotifPanel');
+        panel?.classList.toggle('hidden');
+    });
+
+    document.getElementById('mobileNotifClose')?.addEventListener('click', function() {
+        document.getElementById('mobileNotifPanel')?.classList.add('hidden');
+    });
+
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('#mobileNotifBtn') && !e.target.closest('#mobileNotifPanel')) {
+            document.getElementById('mobileNotifPanel')?.classList.add('hidden');
+        }
+    });
+
     // Account form event listener
     document.addEventListener('submit', function(e) {
         if (e.target && e.target.id === 'accountForm') {
