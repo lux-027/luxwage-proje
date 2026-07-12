@@ -57,16 +57,17 @@
                     
                     <!-- Kullanıcı Profili (Giriş yapıldığında) -->
                     <div id="userProfile" style="display: none;" class="flex items-center">
-                        <div class="flex items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-1.5 py-1 md:px-4 md:py-2 gap-2 md:gap-3">
-                            <div class="bg-emerald-500 w-6 h-6 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0">
+                        <div class="flex items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-xl px-2 py-1.5 md:px-4 md:py-2 gap-2 md:gap-3">
+                            <div class="bg-emerald-500 w-7 h-7 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0">
                                 <i class="fas fa-user text-white text-xs md:text-base"></i>
                             </div>
-                            <div class="text-white">
-                                <p id="userNameDisplay" class="font-semibold text-xs md:text-sm">Kullanıcı Adı</p>
-                                <p id="userEmailDisplay" class="hidden md:block text-xs text-blue-200">kullanici@ornek.com</p>
+                            <div class="text-white min-w-0">
+                                <p id="userNameDisplay" class="font-semibold text-xs md:text-sm truncate max-w-[90px] md:max-w-[160px]">Kullanıcı Adı</p>
+                                <p id="userEmailDisplay" class="hidden md:block text-xs text-blue-200 truncate max-w-[160px]">kullanici@ornek.com</p>
                             </div>
-                            <button id="logoutBtn" class="ml-1 md:ml-2 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-lg transition-all duration-200">
-                                <i class="fas fa-sign-out-alt text-sm md:text-base"></i>
+                            <button id="logoutBtn" class="ml-1 flex items-center gap-1.5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-2.5 py-1.5 md:px-3 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 shrink-0 shadow-sm">
+                                <i class="fas fa-sign-out-alt"></i>
+                                <span class="hidden md:inline">Çıkış</span>
                             </button>
                         </div>
                     </div>
@@ -173,10 +174,30 @@
                 </div>
 
                 <!-- STATE B -->
-                <button id="dashboardButton" style="display: none;" class="glow-btn bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-base md:text-lg px-7 py-3.5 md:px-10 md:py-5 rounded-2xl hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-2xl transform hover:scale-105 font-bold tracking-wide">
-                    <i class="fas fa-rocket mr-2.5"></i>
-                    LuxWage'e Başlayın
-                </button>
+                <div id="dashboardWelcome" style="display:none;" class="flex flex-col items-center gap-4">
+                    <!-- 3D Hoşgeldin Kartı -->
+                    <div style="
+                        background: linear-gradient(135deg, rgba(255,255,255,0.12) 0%, rgba(255,255,255,0.04) 100%);
+                        backdrop-filter: blur(20px);
+                        border: 1px solid rgba(255,255,255,0.18);
+                        border-radius: 20px;
+                        padding: 14px 28px;
+                        box-shadow: 0 8px 32px rgba(0,0,0,0.25), 0 2px 0 rgba(255,255,255,0.12) inset, 0 -2px 0 rgba(0,0,0,0.15) inset;
+                        transform: perspective(600px) rotateX(2deg);
+                        transition: transform 0.3s ease, box-shadow 0.3s ease;
+                    "
+                    onmouseover="this.style.transform='perspective(600px) rotateX(0deg) scale(1.03)';this.style.boxShadow='0 16px 48px rgba(52,211,153,0.2), 0 2px 0 rgba(255,255,255,0.15) inset'"
+                    onmouseout="this.style.transform='perspective(600px) rotateX(2deg)';this.style.boxShadow='0 8px 32px rgba(0,0,0,0.25), 0 2px 0 rgba(255,255,255,0.12) inset, 0 -2px 0 rgba(0,0,0,0.15) inset'"
+                    >
+                        <p class="text-white/90 text-sm md:text-base font-medium tracking-wide text-center" style="text-shadow: 0 1px 8px rgba(0,0,0,0.3)">
+                            👋 Hoş geldin, <span id="heroUserName" class="font-extrabold" style="background: linear-gradient(90deg, #34d399, #60a5fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;"></span>!
+                        </p>
+                    </div>
+                    <button id="dashboardButton" style="display: none;" class="glow-btn bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-base md:text-lg px-7 py-3.5 md:px-10 md:py-5 rounded-2xl hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-2xl transform hover:scale-105 font-bold tracking-wide">
+                        <i class="fas fa-rocket mr-2.5"></i>
+                        LuxWage'e Başlayın
+                    </button>
+                </div>
             </div>
         </div>
 

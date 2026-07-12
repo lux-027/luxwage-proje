@@ -247,6 +247,10 @@ onAuthStateChanged(auth, (user) => {
         // STATE B: Giriş yapmış kullanıcı için
         if (visitorMessage) visitorMessage.style.display = 'none';
         if (dashboardButton) dashboardButton.style.display = 'inline-block';
+        const dashboardWelcome = document.getElementById('dashboardWelcome');
+        const heroUserName = document.getElementById('heroUserName');
+        if (dashboardWelcome) dashboardWelcome.style.display = 'flex';
+        if (heroUserName) heroUserName.textContent = user.displayName ? user.displayName.split(' ')[0] : user.email.split('@')[0];
         
         // Landing page'i göster
         if (landingPage) landingPage.style.display = 'block';
@@ -259,6 +263,8 @@ onAuthStateChanged(auth, (user) => {
         // STATE A: Çıkış yapmış kullanıcı için
         if (visitorMessage) visitorMessage.style.display = 'block';
         if (dashboardButton) dashboardButton.style.display = 'none';
+        const dashboardWelcomeOut = document.getElementById('dashboardWelcome');
+        if (dashboardWelcomeOut) dashboardWelcomeOut.style.display = 'none';
         
         // Landing page'i göster
         if (landingPage) landingPage.style.display = 'block';
