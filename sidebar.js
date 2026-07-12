@@ -97,34 +97,70 @@ if (sidebarOverlay) {
     });
 }
 
-// Sayfayı paylaş butonları
-document.querySelectorAll('.share-page-btn').forEach(btn => {
-    btn.addEventListener('click', async function() {
-        const shareData = {
-            title: document.title,
-            text: 'LuxWage - Maaş ve Devamsızlık Takip Sistemi',
-            url: window.location.href
-        };
+// Sayfayı paylaş butonları - Share Modal
+const SHARE_URL = 'https://luxwage.vercel.app';
+const SHARE_TEXT = 'LuxWage ile çalışanlarınızın maaş, devamsızlık ve ödeme süreçlerini kolayca yönetin. Ücretsiz deneyin!';
 
-        if (navigator.share) {
-            try {
-                await navigator.share(shareData);
-            } catch (err) {
-                if (err.name !== 'AbortError') {
-                    console.error('Paylaşım hatası:', err);
-                }
-            }
-        } else if (navigator.clipboard) {
-            try {
-                await navigator.clipboard.writeText(window.location.href);
-                alert('Link panoya kopyalandı!');
-            } catch (err) {
-                console.error('Kopyalama hatası:', err);
-            }
-        } else {
-            alert('Tarayıcınız paylaşımı desteklemiyor.');
-        }
+function openShareModal() {
+    const modal = document.getElementById('shareModal');
+    if (!modal) return;
+    const linkEl = document.getElementById('shareLinkText');
+    if (linkEl) linkEl.textContent = SHARE_URL;
+    modal.classList.remove('hidden');
+}
+
+function closeShareModal() {
+    document.getElementById('shareModal')?.classList.add('hidden');
+}
+
+document.querySelectorAll('.share-page-btn').forEach(btn => {
+    btn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        openShareModal();
     });
+});
+
+document.getElementById('shareModalClose')?.addEventListener('click', closeShareModal);
+
+document.getElementById('shareModal')?.addEventListener('click', function(e) {
+    if (e.target === this) closeShareModal();
+});
+
+document.getElementById('copyLinkBtn')?.addEventListener('click', async function() {
+    try {
+        await navigator.clipboard.writeText(SHARE_URL);
+        this.innerHTML = '<i class="fas fa-check mr-1"></i>Kopyalandı!';
+        this.classList.replace('text-blue-600', 'text-green-600');
+        setTimeout(() => {
+            this.innerHTML = '<i class="fas fa-copy mr-1"></i>Kopyala';
+            this.classList.replace('text-green-600', 'text-blue-600');
+        }, 2000);
+    } catch {
+        prompt('Linki kopyala:', SHARE_URL);
+    }
+});
+
+document.getElementById('shareWhatsapp')?.addEventListener('click', function() {
+    window.open(`https://wa.me/?text=${encodeURIComponent(SHARE_TEXT + '\n' + SHARE_URL)}`, '_blank');
+});
+
+document.getElementById('shareTelegram')?.addEventListener('click', function() {
+    window.open(`https://t.me/share/url?url=${encodeURIComponent(SHARE_URL)}&text=${encodeURIComponent(SHARE_TEXT)}`, '_blank');
+});
+
+document.getElementById('shareNative')?.addEventListener('click', async function() {
+    if (navigator.share) {
+        try {
+            await navigator.share({ title: 'LuxWage', text: SHARE_TEXT, url: SHARE_URL });
+        } catch (err) {
+            if (err.name !== 'AbortError') console.error(err);
+        }
+    } else {
+        try {
+            await navigator.clipboard.writeText(SHARE_URL);
+            alert('Link panoya kopyalandı!');
+        } catch { prompt('Linki kopyala:', SHARE_URL); }
+    }
 });
 
 document.querySelectorAll('.nav-item').forEach(item => {

@@ -736,6 +736,53 @@
     <!-- Notification Container -->
     <div id="notificationContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
     
+    <!-- Share Modal -->
+    <div id="shareModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[9999] flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <!-- Üst gradient başlık -->
+            <div class="bg-gradient-to-br from-blue-600 via-blue-500 to-emerald-500 px-6 pt-8 pb-12 text-center relative">
+                <button id="shareModalClose" class="absolute top-4 right-4 text-white/70 hover:text-white transition-colors">
+                    <i class="fas fa-times text-lg"></i>
+                </button>
+                <!-- Logo -->
+                <div class="bg-white/20 backdrop-blur-sm w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3 shadow-lg">
+                    <i class="fas fa-coins text-white text-2xl"></i>
+                </div>
+                <h2 class="text-white font-bold text-2xl tracking-tight">LuxWage</h2>
+                <p class="text-blue-100 text-sm mt-1">Maaş & Devamsızlık Takip Sistemi</p>
+            </div>
+            <!-- İçerik -->
+            <div class="-mt-6 mx-4 bg-white rounded-2xl shadow-lg px-5 py-5 mb-4">
+                <p class="text-gray-600 text-sm text-center leading-relaxed mb-4">
+                    Çalışanlarınızın maaş, devamsızlık ve ödeme süreçlerini kolayca yönetin. <strong class="text-gray-800">Ücretsiz deneyin!</strong>
+                </p>
+                <!-- Link kutusu -->
+                <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 mb-4">
+                    <i class="fas fa-link text-gray-400 text-xs shrink-0"></i>
+                    <span id="shareLinkText" class="text-xs text-gray-600 truncate flex-1">luxwage.vercel.app</span>
+                    <button id="copyLinkBtn" class="text-blue-600 hover:text-blue-700 text-xs font-semibold shrink-0 transition-colors">
+                        <i class="fas fa-copy mr-1"></i>Kopyala
+                    </button>
+                </div>
+                <!-- Paylaşım butonları -->
+                <div class="grid grid-cols-3 gap-2">
+                    <button id="shareWhatsapp" class="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-green-50 hover:bg-green-100 transition-colors">
+                        <i class="fab fa-whatsapp text-green-500 text-xl"></i>
+                        <span class="text-[10px] text-gray-600 font-medium">WhatsApp</span>
+                    </button>
+                    <button id="shareTelegram" class="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors">
+                        <i class="fab fa-telegram text-blue-500 text-xl"></i>
+                        <span class="text-[10px] text-gray-600 font-medium">Telegram</span>
+                    </button>
+                    <button id="shareNative" class="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
+                        <i class="fas fa-share-alt text-gray-500 text-xl"></i>
+                        <span class="text-[10px] text-gray-600 font-medium">Diğer</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- JavaScript -->
     <script type="module" src="./dashboard.js"></script>
     <script type="module" src="./sidebar.js"></script>
