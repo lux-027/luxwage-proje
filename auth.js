@@ -226,7 +226,13 @@ onAuthStateChanged(auth, (user) => {
     }
     
     if (user) {
-        // Kullanıcı giriş yapmış
+        // Email doğrulanmamışsa oturum kapat, ziyaretçi gibi davran
+        if (!user.emailVerified) {
+            signOut(auth);
+            return;
+        }
+
+        // Kullanıcı giriş yapmış ve email doğrulanmış
         if (authButtons) authButtons.style.display = 'none';
         if (userProfile) userProfile.style.display = 'flex';
         
@@ -392,6 +398,13 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // Gerçek email format kontrolü
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
+            if (!emailRegex.test(email)) {
+                showNotification('Geçerli bir e-posta adresi girin (örn: ad@gmail.com)', 'error');
+                return;
+            }
+
             if (password.length < 6) {
                 showNotification('Şifre en az 6 karakter olmalıdır', 'error');
                 return;
@@ -402,21 +415,24 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
 
+            // Kaydet butonunu disable et (çift tıklamayı önle)
+            const submitBtn = registerForm.querySelector('button[type="submit"]');
+            if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'Kayıt yapılıyor...'; }
+
             // Firebase ile kullanıcı oluştur
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
                     return updateProfile(user, { displayName: name })
                         .then(() => sendEmailVerification(user))
+                        .then(() => signOut(auth))
                         .then(() => {
                             registerForm.reset();
                             closeModals();
                             // Doğrulama maili gönderildi bilgisi
                             const verifyModal = document.getElementById('emailVerifyModal');
                             if (verifyModal) verifyModal.style.display = 'flex';
-                            else showNotification('Kayıt başarılı! ' + email + ' adresine doğrulama maili gönderildi. Lütfen mailinizi onaylayın.', 'success');
-                            // Kayıt sonrası oturumu kapat - mail doğrulanmadan giriş yapılmasın
-                            signOut(auth);
+                            else showNotification('Kayıt başarılı! ' + email + ' adresine doğrulama maili gönderildi.', 'success');
                         });
                 })
                 .catch((error) => {
@@ -428,12 +444,15 @@ document.addEventListener('DOMContentLoaded', function() {
                     } else if (error.code === 'auth/weak-password') {
                         errorMessage = 'Şifre çok zayıf. En az 6 karakter olmalıdır.';
                     } else if (error.code === 'auth/invalid-email') {
-                        errorMessage = 'Geçersiz e-posta adresi.';
+                        errorMessage = 'Geçersiz e-posta adresi formatı.';
                     } else if (error.code === 'auth/network-request-failed') {
                         errorMessage = 'Ağ hatası. Lütfen internet bağlantınızı kontrol edin.';
                     }
                     
                     showNotification(errorMessage, 'error');
+                })
+                .finally(() => {
+                    if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = 'Kayıt Ol'; }
                 });
         });
     }
