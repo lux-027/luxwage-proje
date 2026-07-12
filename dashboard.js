@@ -1284,30 +1284,56 @@ class LuxWage {
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-wrap items-center gap-1 md:gap-2">
-                        <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-1.5 py-1 md:px-3 md:py-2 rounded-lg hover:bg-purple-600 transition-colors text-[10px] md:text-sm">
-                            <i class="fas fa-info-circle mr-0.5 md:mr-1"></i>
-                            <span>Detay</span>
+                    <!-- Mobil butonlar -->
+                    <div class="flex items-center gap-1 md:hidden">
+                        <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-2 py-1.5 rounded-lg hover:bg-purple-600 transition-colors text-[10px]">
+                            <i class="fas fa-info-circle mr-0.5"></i>Detay
                         </button>
-                        <button data-id="${emp.id}" class="absenceBtn bg-red-500 text-white px-1.5 py-1 md:px-3 md:py-2 rounded-lg hover:bg-red-600 transition-colors text-[10px] md:text-sm">
-                            <i class="fas fa-calendar-times mr-0.5 md:mr-1"></i>
-                            <span>Devamsızlık</span>
+                        <button data-id="${emp.id}" class="historyBtn bg-blue-500 text-white px-2 py-1.5 rounded-lg hover:bg-blue-600 transition-colors text-[10px]">
+                            <i class="fas fa-history mr-0.5"></i>Geçmiş
                         </button>
-                        <button data-id="${emp.id}" class="toggleWorkBtn ${emp.isStopped ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-1.5 py-1 md:px-3 md:py-2 rounded-lg transition-colors text-[10px] md:text-sm">
-                            <i class="fas ${emp.isStopped ? 'fa-play' : 'fa-pause'} mr-0.5 md:mr-1"></i>
-                            <span>${emp.isStopped ? 'Devam Ettir' : 'İşi Durdur'}</span>
+                        <!-- İşlemler Dropdown -->
+                        <div class="relative">
+                            <button data-id="${emp.id}" class="actionsMenuBtn bg-gray-700 text-white px-2 py-1.5 rounded-lg hover:bg-gray-800 transition-colors text-[10px] flex items-center gap-0.5">
+                                <i class="fas fa-ellipsis-v"></i>
+                                <span>İşlemler</span>
+                            </button>
+                            <div class="actionsDropdown hidden absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 min-w-[150px] overflow-hidden">
+                                <button data-id="${emp.id}" class="absenceBtn w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors">
+                                    <i class="fas fa-calendar-times w-4"></i>Devamsızlık
+                                </button>
+                                <button data-id="${emp.id}" class="toggleWorkBtn w-full flex items-center gap-2 px-3 py-2 text-xs ${emp.isStopped ? 'text-green-600 hover:bg-green-50' : 'text-yellow-600 hover:bg-yellow-50'} transition-colors">
+                                    <i class="fas ${emp.isStopped ? 'fa-play' : 'fa-pause'} w-4"></i>${emp.isStopped ? 'Devam Ettir' : 'İşi Durdur'}
+                                </button>
+                                <button data-id="${emp.id}" class="paymentBtn w-full flex items-center gap-2 px-3 py-2 text-xs text-green-600 hover:bg-green-50 transition-colors">
+                                    <i class="fas fa-money-check-alt w-4"></i>Ödeme
+                                </button>
+                                <div class="border-t border-gray-100"></div>
+                                <button data-id="${emp.id}" class="terminateBtn w-full flex items-center gap-2 px-3 py-2 text-xs text-orange-600 hover:bg-orange-50 transition-colors">
+                                    <i class="fas fa-door-open w-4"></i>İşten Çıkar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Masaüstü butonlar -->
+                    <div class="hidden md:flex flex-wrap items-center gap-2">
+                        <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm">
+                            <i class="fas fa-info-circle mr-1"></i>Detay
                         </button>
-                        <button data-id="${emp.id}" class="paymentBtn bg-green-500 text-white px-1.5 py-1 md:px-3 md:py-2 rounded-lg hover:bg-green-600 transition-colors text-[10px] md:text-sm">
-                            <i class="fas fa-money-check-alt mr-0.5 md:mr-1"></i>
-                            <span>Ödeme</span>
+                        <button data-id="${emp.id}" class="absenceBtn bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
+                            <i class="fas fa-calendar-times mr-1"></i>Devamsızlık
                         </button>
-                        <button data-id="${emp.id}" class="historyBtn bg-blue-500 text-white px-1.5 py-1 md:px-3 md:py-2 rounded-lg hover:bg-blue-600 transition-colors text-[10px] md:text-sm">
-                            <i class="fas fa-history mr-0.5 md:mr-1"></i>
-                            <span>Geçmiş</span>
+                        <button data-id="${emp.id}" class="toggleWorkBtn ${emp.isStopped ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-3 py-2 rounded-lg transition-colors text-sm">
+                            <i class="fas ${emp.isStopped ? 'fa-play' : 'fa-pause'} mr-1"></i>${emp.isStopped ? 'Devam Ettir' : 'İşi Durdur'}
                         </button>
-                        <button data-id="${emp.id}" class="terminateBtn bg-orange-500 text-white px-1.5 py-1 md:px-3 md:py-2 rounded-lg hover:bg-orange-600 transition-colors text-[10px] md:text-sm">
-                            <i class="fas fa-door-open mr-0.5 md:mr-1"></i>
-                            <span>İşten Çıkar</span>
+                        <button data-id="${emp.id}" class="paymentBtn bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm">
+                            <i class="fas fa-money-check-alt mr-1"></i>Ödeme
+                        </button>
+                        <button data-id="${emp.id}" class="historyBtn bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                            <i class="fas fa-history mr-1"></i>Geçmiş
+                        </button>
+                        <button data-id="${emp.id}" class="terminateBtn bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm">
+                            <i class="fas fa-door-open mr-1"></i>İşten Çıkar
                         </button>
                     </div>
                 </div>
@@ -4145,6 +4171,29 @@ document.addEventListener('DOMContentLoaded', function() {
     document.addEventListener('click', function(e) {
         if (e.target && e.target.id === 'addEmployeeBtn') {
             openModal('employeeModal');
+        }
+
+        // İşlemler dropdown toggle
+        const actionsBtn = e.target.closest('.actionsMenuBtn');
+        if (actionsBtn) {
+            const dropdown = actionsBtn.closest('.relative').querySelector('.actionsDropdown');
+            // Diğer tüm dropdownları kapat
+            document.querySelectorAll('.actionsDropdown').forEach(d => {
+                if (d !== dropdown) d.classList.add('hidden');
+            });
+            dropdown.classList.toggle('hidden');
+            e.stopPropagation();
+            return;
+        }
+
+        // Dropdown dışına tıklanınca kapat
+        if (!e.target.closest('.actionsDropdown') && !e.target.closest('.actionsMenuBtn')) {
+            document.querySelectorAll('.actionsDropdown').forEach(d => d.classList.add('hidden'));
+        }
+
+        // Dropdown içindeki bir butona tıklanınca dropdown'ı kapat
+        if (e.target.closest('.actionsDropdown')) {
+            document.querySelectorAll('.actionsDropdown').forEach(d => d.classList.add('hidden'));
         }
 
         // Employee action buttons with data-id (employee ID)
