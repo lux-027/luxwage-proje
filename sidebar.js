@@ -98,7 +98,7 @@ if (sidebarOverlay) {
 }
 
 // Sayfayı paylaş butonları - Share Modal
-const SHARE_URL = 'https://luxwage.vercel.app';
+const SHARE_URL = 'https://luxwage.pro';
 const SHARE_TEXT = 'LuxWage ile çalışanlarınızın maaş, devamsızlık ve ödeme süreçlerini kolayca yönetin. Ücretsiz deneyin!';
 
 function openShareModal() {
