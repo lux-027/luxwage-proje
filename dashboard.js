@@ -4299,54 +4299,69 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
-    // Mobil bildirime içerik ekle (dışarıdan çağrılabilir)
+    // Bildirime içerik ekle (mobil + desktop)
     window.addMobileNotification = function(title, message, type = 'info') {
-        const list = document.getElementById('mobileNotifList');
-        const badge = document.getElementById('mobileNotifBadge');
-        if (!list) return;
-
-        const colors = { info: 'blue', success: 'green', warning: 'yellow', error: 'red' };
         const icons = { info: 'fa-info-circle', success: 'fa-check-circle', warning: 'fa-exclamation-triangle', error: 'fa-times-circle' };
-        const c = colors[type] || 'blue';
+        const colors = { info: 'text-blue-500', success: 'text-green-500', warning: 'text-yellow-500', error: 'text-red-500' };
         const ic = icons[type] || 'fa-info-circle';
+        const cl = colors[type] || 'text-blue-500';
 
-        // "Henüz bildirim yok" varsa temizle
-        if (list.querySelector('.fa-bell-slash')) list.innerHTML = '';
+        const buildItem = () => {
+            const item = document.createElement('div');
+            item.className = 'flex gap-3 px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors';
+            item.innerHTML = `
+                <div class="shrink-0 mt-0.5"><i class="fas ${ic} ${cl}"></i></div>
+                <div class="min-w-0">
+                    <p class="text-xs font-semibold text-gray-800">${title}</p>
+                    <p class="text-[11px] text-gray-500 mt-0.5 leading-relaxed">${message}</p>
+                </div>`;
+            return item;
+        };
 
-        const item = document.createElement('div');
-        item.className = `flex gap-3 px-4 py-3 border-b border-gray-50 hover:bg-gray-50 transition-colors`;
-        item.innerHTML = `
-            <div class="shrink-0 mt-0.5">
-                <i class="fas ${ic} text-${c}-500"></i>
-            </div>
-            <div class="min-w-0">
-                <p class="text-xs font-semibold text-gray-800">${title}</p>
-                <p class="text-[11px] text-gray-500 mt-0.5 leading-relaxed">${message}</p>
-            </div>`;
-        list.prepend(item);
+        ['mobileNotifList', 'desktopNotifList'].forEach(id => {
+            const list = document.getElementById(id);
+            if (!list) return;
+            if (list.querySelector('.fa-bell-slash')) list.innerHTML = '';
+            list.prepend(buildItem());
+        });
 
         // Badge güncelle
-        if (badge) {
-            const count = list.querySelectorAll('.border-b').length;
+        ['mobileNotifBadge', 'desktopNotifBadge'].forEach(id => {
+            const badge = document.getElementById(id);
+            if (!badge) return;
+            const listId = id.replace('Badge', 'List');
+            const count = document.getElementById(listId)?.querySelectorAll('.border-b').length || 0;
             badge.textContent = count > 9 ? '9+' : count;
             badge.classList.remove('hidden');
-        }
+        });
     };
 
     // Mobil bildirim paneli toggle
     document.getElementById('mobileNotifBtn')?.addEventListener('click', function(e) {
         e.stopPropagation();
-        const panel = document.getElementById('mobileNotifPanel');
-        panel?.classList.toggle('hidden');
+        document.getElementById('mobileNotifPanel')?.classList.toggle('hidden');
+        document.getElementById('desktopNotifPanel')?.classList.add('hidden');
     });
-
     document.getElementById('mobileNotifClose')?.addEventListener('click', function() {
         document.getElementById('mobileNotifPanel')?.classList.add('hidden');
+    });
+
+    // Desktop bildirim paneli toggle
+    document.getElementById('desktopNotifBtn')?.addEventListener('click', function(e) {
+        e.stopPropagation();
+        document.getElementById('desktopNotifPanel')?.classList.toggle('hidden');
+        document.getElementById('mobileNotifPanel')?.classList.add('hidden');
+    });
+    document.getElementById('desktopNotifClose')?.addEventListener('click', function() {
+        document.getElementById('desktopNotifPanel')?.classList.add('hidden');
     });
 
     document.addEventListener('click', function(e) {
         if (!e.target.closest('#mobileNotifBtn') && !e.target.closest('#mobileNotifPanel')) {
             document.getElementById('mobileNotifPanel')?.classList.add('hidden');
+        }
+        if (!e.target.closest('#desktopNotifBtn') && !e.target.closest('#desktopNotifPanel')) {
+            document.getElementById('desktopNotifPanel')?.classList.add('hidden');
         }
     });
 
