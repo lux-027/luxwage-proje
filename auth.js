@@ -1,6 +1,6 @@
 // Firebase CDN Import'ları
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail, sendEmailVerification, GoogleAuthProvider, signInWithPopup } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -15,6 +15,7 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
 // Toast Notification Sistemi
 function showNotification(message, type = 'info') {
@@ -226,8 +227,10 @@ onAuthStateChanged(auth, (user) => {
     }
     
     if (user) {
-        // Email doğrulanmamışsa oturum kapat, ziyaretçi gibi davran
-        if (!user.emailVerified) {
+        // Google ile giriş yapanların email'i zaten doğrulanmıştır
+        // Normal email/şifre girişinde doğrulama zorunlu
+        const isGoogleUser = user.providerData && user.providerData.some(p => p.providerId === 'google.com');
+        if (!user.emailVerified && !isGoogleUser) {
             signOut(auth);
             return;
         }
@@ -482,6 +485,24 @@ document.addEventListener('DOMContentLoaded', function() {
         openRegisterModal();
     });
     
+    // Google ile giriş / kayıt
+    function handleGoogleSignIn() {
+        signInWithPopup(auth, googleProvider)
+            .then((result) => {
+                closeModals();
+                showNotification('Google ile giriş başarılı! Hoş geldiniz 👋', 'success');
+            })
+            .catch((error) => {
+                if (error.code === 'auth/popup-closed-by-user') return;
+                if (error.code === 'auth/cancelled-popup-request') return;
+                console.error('Google giriş hatası:', error);
+                showNotification('Google ile giriş başarısız oldu. Tekrar deneyin.', 'error');
+            });
+    }
+
+    document.getElementById('googleLoginBtn')?.addEventListener('click', handleGoogleSignIn);
+    document.getElementById('googleRegisterBtn')?.addEventListener('click', handleGoogleSignIn);
+
     // Email verify modal kapat
     document.getElementById('closeVerifyModalBtn')?.addEventListener('click', function() {
         const modal = document.getElementById('emailVerifyModal');
