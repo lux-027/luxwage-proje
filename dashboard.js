@@ -1295,15 +1295,22 @@ class LuxWage {
                         <!-- İşlemler Dropdown -->
                         <div class="relative">
                             <button data-id="${emp.id}" class="actionsMenuBtn bg-gray-700 text-white px-2 py-1.5 rounded-lg hover:bg-gray-800 transition-colors text-[10px] flex items-center gap-0.5">
-                                <i class="fas fa-ellipsis-v"></i>
-                                <span>İşlemler</span>
+                                <i class="fas fa-ellipsis-v mr-0.5"></i>
+                                <span>Diğer İşlemler</span>
                             </button>
-                            <div class="actionsDropdown hidden absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 min-w-[150px] overflow-hidden">
+                            <div class="actionsDropdown hidden absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 min-w-[150px] overflow-visible">
                                 <button data-id="${emp.id}" class="absenceBtn w-full flex items-center gap-2 px-3 py-2 text-xs text-red-600 hover:bg-red-50 transition-colors">
                                     <i class="fas fa-calendar-times w-4"></i>Devamsızlık
                                 </button>
                                 <button data-id="${emp.id}" class="toggleWorkBtn w-full flex items-center gap-2 px-3 py-2 text-xs ${emp.isStopped ? 'text-green-600 hover:bg-green-50' : 'text-yellow-600 hover:bg-yellow-50'} transition-colors">
-                                    <i class="fas ${emp.isStopped ? 'fa-play' : 'fa-pause'} w-4"></i>${emp.isStopped ? 'Devam Ettir' : 'İşi Durdur'}
+                                    <i class="fas ${emp.isStopped ? 'fa-play' : 'fa-pause'} w-4"></i>
+                                    <span>${emp.isStopped ? 'Devam Ettir' : 'İşi Durdur'}</span>
+                                    ${!emp.isStopped ? `<span class="ml-auto group relative inline-block">
+                                        <i class="fas fa-exclamation-circle text-yellow-400 cursor-help"></i>
+                                        <div class="pointer-events-none absolute right-0 bottom-full mb-2 w-56 bg-gray-900 text-white text-[11px] rounded-xl px-3 py-2 opacity-0 group-hover:opacity-100 transition-opacity z-[999] leading-relaxed shadow-2xl" style="white-space:normal;">
+                                            ⚠️ <strong>Dikkat:</strong> İşi durdurduğunuzda, siz tekrar <em>"Devam Ettir"</em> butonuna basana kadar bu işçinin borç ve hak ediş hesaplaması durur.
+                                        </div>
+                                    </span>` : ''}
                                 </button>
                                 <button data-id="${emp.id}" class="paymentBtn w-full flex items-center gap-2 px-3 py-2 text-xs text-green-600 hover:bg-green-50 transition-colors">
                                     <i class="fas fa-money-check-alt w-4"></i>Ödeme
@@ -1892,30 +1899,10 @@ class LuxWage {
                 const modal = document.getElementById('workStopModal');
                 if (modal) modal.classList.remove('hidden');
             } else {
-                // İş devam ettirilecek
-                employee.isStopped = false;
-                employee.workResumeDate = Date.now();
-                this.saveData();
-                this.renderEmployeesPage();
-                showNotification('Çalışanın işi devam ettirildi', 'success');
-                
-                // İş devam ettirme bildirimi ekle
-                if (!employee.activityHistory) employee.activityHistory = [];
-                employee.activityHistory.push({
-                    type: 'work_resumed',
-                    employeeName: employee.name,
-                    message: 'İşi devam ettirildi',
-                    timestamp: Date.now()
-                });
-                this.saveData();
-                
-                // Günlük detaylar modalı açıksa ve aynı çalışanı gösteriyorsa, yenile
-                if (window.currentDailyDetailsEmployeeId === employee.id) {
-                    const dailyDetailsModal = document.getElementById('dailyDetailsModal');
-                    if (dailyDetailsModal && !dailyDetailsModal.classList.contains('hidden')) {
-                        openDailyDetails(employee.id);
-                    }
-                }
+                // İş devam ettirilecek - modal göster
+                this.pendingWorkResumeId = employee.id;
+                const resumeModal = document.getElementById('workResumeModal');
+                if (resumeModal) resumeModal.classList.remove('hidden');
             }
         }
     }
@@ -1956,6 +1943,53 @@ class LuxWage {
         const modal = document.getElementById('workStopModal');
         if (modal) modal.classList.add('hidden');
         this.pendingWorkStopId = null;
+    }
+
+    // İşi devam ettir (bugünden veya yarından)
+    confirmWorkResume(startFromToday) {
+        const employee = this.pendingWorkResumeId ? this.findEmployeeById(this.pendingWorkResumeId) : null;
+        if (employee) {
+            employee.isStopped = false;
+            const now = new Date();
+            if (startFromToday) {
+                // Bugün gece yarısından itibaren
+                const today = new Date(now);
+                today.setHours(0, 0, 0, 0);
+                employee.workResumeDate = today.getTime();
+            } else {
+                // Yarın gece yarısından itibaren
+                const tomorrow = new Date(now);
+                tomorrow.setDate(tomorrow.getDate() + 1);
+                tomorrow.setHours(0, 0, 0, 0);
+                employee.workResumeDate = tomorrow.getTime();
+            }
+            this.saveData();
+            this.renderEmployeesPage();
+            showNotification('Çalışanın işi devam ettirildi', 'success');
+
+            if (!employee.activityHistory) employee.activityHistory = [];
+            employee.activityHistory.push({
+                type: 'work_resumed',
+                employeeName: employee.name,
+                message: startFromToday ? 'İşi bugünden devam ettirildi' : 'İşi yarından devam ettirildi',
+                timestamp: Date.now()
+            });
+            this.saveData();
+
+            if (window.currentDailyDetailsEmployeeId === employee.id) {
+                const dailyDetailsModal = document.getElementById('dailyDetailsModal');
+                if (dailyDetailsModal && !dailyDetailsModal.classList.contains('hidden')) {
+                    openDailyDetails(employee.id);
+                }
+            }
+        }
+        this.closeWorkResumeModal();
+    }
+
+    closeWorkResumeModal() {
+        const modal = document.getElementById('workResumeModal');
+        if (modal) modal.classList.add('hidden');
+        this.pendingWorkResumeId = null;
     }
 
     // Günün durumunu belirle (06:00-18:00 kuralı)
@@ -4053,6 +4087,18 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('confirmWorkStopBtn')?.addEventListener('click', function() {
         luxwage.confirmWorkStop();
     });
+
+    document.getElementById('resumeTodayBtn')?.addEventListener('click', function() {
+        luxwage.confirmWorkResume(true);
+    });
+
+    document.getElementById('resumeTomorrowBtn')?.addEventListener('click', function() {
+        luxwage.confirmWorkResume(false);
+    });
+
+    document.getElementById('cancelWorkResumeBtn')?.addEventListener('click', function() {
+        luxwage.closeWorkResumeModal();
+    });
     
     // Logout modal event listeners
     document.getElementById('cancelLogoutBtn')?.addEventListener('click', function() {
@@ -4228,8 +4274,9 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        if (e.target && e.target.classList.contains('toggleWorkBtn')) {
-            const employeeId = parseInt(e.target.getAttribute('data-id'));
+        const toggleBtn = e.target.closest('.toggleWorkBtn');
+        if (toggleBtn) {
+            const employeeId = parseInt(toggleBtn.getAttribute('data-id'));
             luxwage.toggleWorkStatus(employeeId);
         }
         
