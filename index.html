@@ -30,28 +30,24 @@
                 
                     <!-- Auth Buttons (Giriş yapmamış kullanıcılar için) -->
                     <div class="flex space-x-2 md:space-x-4 auth-buttons">
-                        <button id="loginBtn" class="text-white hover:text-emerald-300 px-3 py-1.5 md:px-4 md:py-2 rounded-lg hover:bg-white/10 transition-all duration-300 text-sm md:text-base font-medium">
+                        <button id="loginBtn" class="bg-emerald-500 text-white px-3 py-1.5 md:px-5 md:py-2 rounded-lg hover:bg-emerald-600 transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 text-sm md:text-base font-medium">
                             <i class="fas fa-sign-in-alt mr-1.5"></i>
                             <span>Giriş Yap</span>
-                        </button>
-                        <button id="registerBtn" class="bg-emerald-500 text-white px-3 py-1.5 md:px-5 md:py-2 rounded-lg hover:bg-emerald-600 transition-all duration-300 shadow-lg hover:shadow-emerald-500/25 text-sm md:text-base font-medium">
-                            <i class="fas fa-user-plus mr-1.5"></i>
-                            <span>Kayıt Ol</span>
                         </button>
                     </div>
                     
                     <!-- Kullanıcı Profili (Giriş yapıldığında) -->
-                    <div id="userProfile" style="display: none;" class="flex items-center gap-2 md:gap-6">
-                        <div class="flex items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-2 py-1.5 md:px-4 md:py-2">
-                            <div class="bg-emerald-500 w-8 h-8 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-2 md:mr-3">
-                                <i class="fas fa-user text-white text-sm md:text-base"></i>
+                    <div id="userProfile" style="display: none;" class="flex flex-col items-end gap-1.5 md:flex-row md:items-center md:gap-6">
+                        <div class="flex items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-1.5 py-1 md:px-4 md:py-2">
+                            <div class="bg-emerald-500 w-6 h-6 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-1.5 md:mr-3">
+                                <i class="fas fa-user text-white text-xs md:text-base"></i>
                             </div>
                             <div class="text-white">
                                 <p id="userNameDisplay" class="font-semibold text-xs md:text-sm">Kullanıcı Adı</p>
                                 <p id="userEmailDisplay" class="hidden md:block text-xs text-blue-200">kullanici@ornek.com</p>
                             </div>
                         </div>
-                        <button id="logoutBtn" class="bg-red-500/80 hover:bg-red-600 text-white px-3 py-2 md:px-4 md:py-2 rounded-lg transition-all duration-300 flex items-center space-x-1.5 md:space-x-2 shadow-lg hover:shadow-red-500/30 text-sm md:text-base">
+                        <button id="logoutBtn" class="bg-red-500/80 hover:bg-red-600 text-white px-2 py-1 md:px-4 md:py-2 rounded-lg transition-all duration-300 flex items-center space-x-1 md:space-x-2 shadow-lg hover:shadow-red-500/30 text-xs md:text-base">
                             <i class="fas fa-sign-out-alt"></i>
                             <span>Çıkış Yap</span>
                         </button>
@@ -60,45 +56,107 @@
         </nav>
         
         <!-- Hero Section -->
+        <style>
+            @keyframes floatY { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+            @keyframes fadeSlideUp { from{opacity:0;transform:translateY(32px)} to{opacity:1;transform:translateY(0)} }
+            @keyframes glowPulse { 0%,100%{box-shadow:0 0 24px 4px rgba(52,211,153,.25)} 50%{box-shadow:0 0 48px 12px rgba(52,211,153,.45)} }
+            .hero-title { animation: fadeSlideUp .8s ease both; }
+            .hero-sub   { animation: fadeSlideUp .8s .2s ease both; }
+            .hero-cards { animation: fadeSlideUp .8s .35s ease both; }
+            .card-3d {
+                transform-style: preserve-3d;
+                transition: transform .4s ease, box-shadow .4s ease;
+                background: linear-gradient(135deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.04) 100%);
+                backdrop-filter: blur(16px);
+                border: 1px solid rgba(255,255,255,.18);
+                box-shadow: 0 8px 32px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.15);
+            }
+            .card-3d:hover {
+                transform: translateY(-10px) rotateX(4deg) rotateY(-3deg) scale(1.03);
+                box-shadow: 0 24px 48px rgba(0,0,0,.4), 0 0 32px rgba(52,211,153,.2), inset 0 1px 0 rgba(255,255,255,.2);
+            }
+            .card-icon-wrap {
+                width:56px; height:56px;
+                border-radius:16px;
+                display:flex; align-items:center; justify-content:center;
+                margin:0 auto 14px;
+                background: linear-gradient(135deg,rgba(52,211,153,.25),rgba(59,130,246,.2));
+                box-shadow: 0 4px 16px rgba(52,211,153,.2), inset 0 1px 0 rgba(255,255,255,.15);
+                animation: floatY 3s ease-in-out infinite;
+            }
+            .card-icon-wrap:nth-child(1) { animation-delay:0s; }
+            .glow-btn { animation: glowPulse 2.5s ease-in-out infinite; }
+            .badge-pill {
+                display:inline-flex; align-items:center; gap:6px;
+                background:rgba(52,211,153,.15); border:1px solid rgba(52,211,153,.35);
+                border-radius:999px; padding:4px 14px;
+                font-size:.75rem; color:#6ee7b7; font-weight:600; letter-spacing:.05em;
+                margin-bottom:18px;
+                animation: fadeSlideUp .6s ease both;
+            }
+        </style>
+
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[80vh] flex flex-col justify-center">
             <div class="text-center">
-                <h1 class="text-4xl sm:text-5xl md:text-7xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 to-blue-300 mt-12 md:mt-0 mb-8">
-                    Çalışan Yönetiminin Modern Yolu
+
+                <!-- Üst rozet -->
+                <div class="badge-pill">
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block"></span>
+                    Akıllı Maaş Yönetimi
+                </div>
+
+                <!-- Başlık -->
+                <h1 class="hero-title text-3xl sm:text-5xl md:text-7xl font-extrabold leading-tight mb-5 md:mb-7">
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-blue-300 drop-shadow-[0_2px_24px_rgba(52,211,153,.5)]">
+                        Çalışan Yönetiminin
+                    </span>
+                    <br>
+                    <span class="text-transparent bg-clip-text bg-gradient-to-r from-blue-300 via-indigo-200 to-emerald-300 drop-shadow-[0_2px_24px_rgba(99,102,241,.4)]">
+                        Modern Yolu
+                    </span>
                 </h1>
-                <p class="text-xl text-gray-200 mb-10 max-w-3xl mx-auto">
-                    LuxWage ile çalışanlarınızın maaş, avans ve devamsızlık durumlarını kolayca takip edin. 
-                    Kurumsal, şık ve kullanıcı dostu arayüz ile yönetimi basitleştirin.
+
+                <!-- Alt yazı -->
+                <p class="hero-sub text-base md:text-xl text-blue-100/80 mb-8 md:mb-12 max-w-2xl mx-auto leading-relaxed">
+                    LuxWage ile çalışanlarınızın maaş, avans ve devamsızlık durumlarını kolayca takip edin.
+                    <span class="text-emerald-300 font-medium">Kurumsal, şık</span> ve kullanıcı dostu arayüz ile yönetimi basitleştirin.
                 </p>
-                
+
                 <!-- Feature Cards -->
-                <div class="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-8 mb-8 md:mb-12 max-w-5xl mx-auto">
-                    <div class="w-full max-w-sm bg-white/10 backdrop-blur-md rounded-xl p-5 md:p-8 border border-white/20 hover:-translate-y-2 transition-transform duration-300">
-                        <i class="fas fa-users text-emerald-400 text-3xl md:text-4xl mb-3 md:mb-4"></i>
-                        <h3 class="text-white font-semibold text-base md:text-lg mb-1 md:mb-2">Çalışan Yönetimi</h3>
-                        <p class="text-blue-100 text-sm md:text-base">Tüm çalışanlarınızı tek yerden yönetin</p>
+                <div class="hero-cards grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6 mb-8 md:mb-12 max-w-4xl mx-auto">
+                    <div class="card-3d rounded-2xl p-5 md:p-7">
+                        <div class="card-icon-wrap">
+                            <i class="fas fa-users text-emerald-300 text-xl md:text-2xl"></i>
+                        </div>
+                        <h3 class="text-white font-bold text-sm md:text-base mb-1">Çalışan Yönetimi</h3>
+                        <p class="text-blue-200/70 text-xs md:text-sm">Tüm çalışanlarınızı tek yerden yönetin</p>
                     </div>
-                    <div class="w-full max-w-sm bg-white/10 backdrop-blur-md rounded-xl p-5 md:p-8 border border-white/20 hover:-translate-y-2 transition-transform duration-300">
-                        <i class="fas fa-chart-line text-emerald-400 text-3xl md:text-4xl mb-3 md:mb-4"></i>
-                        <h3 class="text-white font-semibold text-base md:text-lg mb-1 md:mb-2">Detaylı Raporlama</h3>
-                        <p class="text-blue-100 text-sm md:text-base">Ödeme geçmişini ve istatistikleri görün</p>
+                    <div class="card-3d rounded-2xl p-5 md:p-7">
+                        <div class="card-icon-wrap" style="animation-delay:.4s">
+                            <i class="fas fa-chart-line text-blue-300 text-xl md:text-2xl"></i>
+                        </div>
+                        <h3 class="text-white font-bold text-sm md:text-base mb-1">Detaylı Raporlama</h3>
+                        <p class="text-blue-200/70 text-xs md:text-sm">Ödeme geçmişini ve istatistikleri görün</p>
                     </div>
-                    <div class="col-span-2 md:col-span-1 w-full max-w-none md:max-w-sm mx-auto bg-white/10 backdrop-blur-md rounded-xl p-5 md:p-8 border border-white/20 hover:-translate-y-2 transition-transform duration-300">
-                        <i class="fas fa-calculator text-emerald-400 text-3xl md:text-4xl mb-3 md:mb-4"></i>
-                        <h3 class="text-white font-semibold text-base md:text-lg mb-1 md:mb-2">Otomatik Hesaplama</h3>
-                        <p class="text-blue-100 text-sm md:text-base">Devamsızlık kesintilerini otomatik hesaplayın</p>
+                    <div class="col-span-2 md:col-span-1 card-3d rounded-2xl p-5 md:p-7">
+                        <div class="card-icon-wrap" style="animation-delay:.8s">
+                            <i class="fas fa-calculator text-teal-300 text-xl md:text-2xl"></i>
+                        </div>
+                        <h3 class="text-white font-bold text-sm md:text-base mb-1">Otomatik Hesaplama</h3>
+                        <p class="text-blue-200/70 text-xs md:text-sm">Devamsızlık kesintilerini otomatik hesaplayın</p>
                     </div>
                 </div>
-                
-                <!-- STATE A: Çıkış Yapmış/Ziyaretçi -->
+
+                <!-- STATE A -->
                 <div id="visitorMessage" class="text-center">
-                    <p class="text-xl text-blue-100 mb-4 max-w-2xl mx-auto">
-                        LuxWage'e Hoş Geldiniz. Lütfen devam etmek için giriş yapın veya kayıt olun.
+                    <p class="text-base md:text-lg text-blue-200/70 mb-4 max-w-xl mx-auto">
+                        LuxWage'e Hoş Geldiniz. Devam etmek için giriş yapın veya kayıt olun.
                     </p>
                 </div>
-                
-                <!-- STATE B: Giriş Yapmış Kullanıcı -->
-                <button id="dashboardButton" style="display: none;" class="bg-emerald-500 text-white text-lg px-10 py-5 rounded-xl hover:bg-emerald-600 transition-all duration-300 shadow-2xl hover:shadow-emerald-500/50 transform hover:scale-105 font-semibold">
-                    <i class="fas fa-rocket mr-3"></i>
+
+                <!-- STATE B -->
+                <button id="dashboardButton" style="display: none;" class="glow-btn bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-base md:text-lg px-7 py-3.5 md:px-10 md:py-5 rounded-2xl hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-2xl transform hover:scale-105 font-bold tracking-wide">
+                    <i class="fas fa-rocket mr-2.5"></i>
                     LuxWage'e Başlayın
                 </button>
             </div>
@@ -550,6 +608,12 @@
                         İptal
                     </button>
                 </div>
+                <div class="text-center pt-2 border-t border-gray-100 mt-2">
+                    <span class="text-sm text-gray-500">Hesabın yok mu?</span>
+                    <button type="button" id="switchToRegisterBtn" class="text-sm text-emerald-600 hover:text-emerald-700 font-semibold ml-1 underline">
+                        Kayıt Ol
+                    </button>
+                </div>
             </form>
         </div>
     </div>
@@ -618,14 +682,12 @@
     <!-- Notification Container -->
     <div id="notificationContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
     
-    <!-- CTA Buton Bağlantıları -->
+    <!-- Kayıt Ol geçiş butonu -->
     <script>
         document.addEventListener('DOMContentLoaded', function() {
-            document.getElementById('ctaRegisterBtn')?.addEventListener('click', function() {
+            document.getElementById('switchToRegisterBtn')?.addEventListener('click', function() {
+                document.getElementById('loginModal')?.classList.add('hidden');
                 document.getElementById('registerModal')?.classList.remove('hidden');
-            });
-            document.getElementById('ctaLoginBtn')?.addEventListener('click', function() {
-                document.getElementById('loginModal')?.classList.remove('hidden');
             });
         });
     </script>
