@@ -10,8 +10,8 @@
     <meta property="og:type" content="website">
     <meta property="og:url" content="https://luxwage.pro/">
     <meta property="og:title" content="LuxWage - Maaş & Devamsızlık Takip Sistemi">
-    <meta property="og:description" content="Çalışanlarınızın maaş, devamsızlık ve ödeme süreçlerini kolayca yönetin. Ücretsiz deneyin!">
-    <meta property="og:image" content="https://luxwage.pro/og-image.svg">
+    <meta property="og:description" content="💼 Maaş takibi • 📅 Devamsızlık yönetimi • 💰 Ödeme geçmişi. Tüm çalışan süreçlerinizi tek yerden yönetin. Ücretsiz deneyin!">
+    <meta property="og:image" content="https://luxwage.pro/og-image.png">
     <meta property="og:image:width" content="1200">
     <meta property="og:image:height" content="630">
     <meta property="og:site_name" content="LuxWage">
@@ -20,10 +20,10 @@
     <meta name="twitter:card" content="summary_large_image">
     <meta name="twitter:url" content="https://luxwage.pro/">
     <meta name="twitter:title" content="LuxWage - Maaş & Devamsızlık Takip Sistemi">
-    <meta name="twitter:description" content="Çalışanlarınızın maaş, devamsızlık ve ödeme süreçlerini kolayca yönetin. Ücretsiz deneyin!">
-    <meta name="twitter:image" content="https://luxwage.pro/og-image.svg">
+    <meta name="twitter:description" content="💼 Maaş takibi • 📅 Devamsızlık yönetimi • 💰 Ödeme geçmişi. Tüm çalışan süreçlerinizi tek yerden yönetin.">
+    <meta name="twitter:image" content="https://luxwage.pro/og-image.png">
     <!-- SEO -->
-    <meta name="description" content="Çalışanlarınızın maaş, devamsızlık ve ödeme süreçlerini kolayca yönetin. Ücretsiz deneyin!">
+    <meta name="description" content="💼 Maaş takibi • 📅 Devamsızlık yönetimi • 💰 Ödeme geçmişi. Tüm çalışan süreçlerinizi tek yerden yönetin.">
     
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -535,6 +535,24 @@
         </div>
     </div>
     
+    <!-- Email Verify Modal -->
+    <div id="emailVerifyModal" class="fixed inset-0 bg-black bg-opacity-60 z-50 hidden flex items-center justify-center">
+        <div class="bg-white rounded-2xl shadow-2xl w-full max-w-sm mx-4 p-8 text-center">
+            <div class="bg-emerald-100 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-envelope-open-text text-emerald-500 text-2xl"></i>
+            </div>
+            <h3 class="text-xl font-bold text-gray-800 mb-2">E-postanızı Doğrulayın</h3>
+            <p class="text-gray-500 text-sm mb-6">Kayıt başarılı! E-posta adresinize bir doğrulama linki gönderdik. Lütfen mailinizi kontrol edin ve linke tıklayarak hesabınızı aktif edin.</p>
+            <div class="bg-blue-50 rounded-lg px-4 py-3 mb-5 text-sm text-blue-700">
+                <i class="fas fa-info-circle mr-1"></i>
+                Spam/Gereksiz klasörünü de kontrol etmeyi unutmayın.
+            </div>
+            <button id="closeVerifyModalBtn" class="w-full bg-emerald-500 text-white py-2.5 rounded-lg hover:bg-emerald-600 transition-colors font-semibold">
+                Tamam, Anladım
+            </button>
+        </div>
+    </div>
+
     <!-- Register Modal -->
     <div id="registerModal" class="fixed inset-0 bg-black bg-opacity-50 z-50 hidden flex items-center justify-center">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 p-6">
@@ -561,12 +579,22 @@
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Şifre</label>
-                    <input type="password" id="registerPassword" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="En az 6 karakter">
+                    <div class="relative">
+                        <input type="password" id="registerPassword" required class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="En az 6 karakter">
+                        <button type="button" id="toggleRegisterPassword" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none" aria-label="Şifreyi göster">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">Şifre Tekrar</label>
-                    <input type="password" id="registerPasswordConfirm" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Şifrenizi tekrar girin">
+                    <div class="relative">
+                        <input type="password" id="registerPasswordConfirm" required class="w-full px-4 py-2 pr-10 border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Şifrenizi tekrar girin">
+                        <button type="button" id="toggleRegisterPasswordConfirm" class="absolute inset-y-0 right-0 px-3 flex items-center text-gray-500 hover:text-gray-700 focus:outline-none" aria-label="Şifreyi göster">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="flex space-x-3">

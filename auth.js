@@ -1,6 +1,6 @@
 // Firebase CDN Import'ları
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, onAuthStateChanged, signOut, updateProfile, sendPasswordResetEmail, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -294,6 +294,28 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         });
     }
+
+    // Register şifre göster/gizle
+    const toggleRegPw = document.getElementById('toggleRegisterPassword');
+    const regPw = document.getElementById('registerPassword');
+    if (toggleRegPw && regPw) {
+        toggleRegPw.addEventListener('click', function() {
+            const isPass = regPw.type === 'password';
+            regPw.type = isPass ? 'text' : 'password';
+            toggleRegPw.querySelector('i').classList.toggle('fa-eye', !isPass);
+            toggleRegPw.querySelector('i').classList.toggle('fa-eye-slash', isPass);
+        });
+    }
+    const toggleRegPwConfirm = document.getElementById('toggleRegisterPasswordConfirm');
+    const regPwConfirm = document.getElementById('registerPasswordConfirm');
+    if (toggleRegPwConfirm && regPwConfirm) {
+        toggleRegPwConfirm.addEventListener('click', function() {
+            const isPass = regPwConfirm.type === 'password';
+            regPwConfirm.type = isPass ? 'text' : 'password';
+            toggleRegPwConfirm.querySelector('i').classList.toggle('fa-eye', !isPass);
+            toggleRegPwConfirm.querySelector('i').classList.toggle('fa-eye-slash', isPass);
+        });
+    }
     
     if (loginForm) {
         loginForm.addEventListener('submit', function(e) {
@@ -310,9 +332,18 @@ document.addEventListener('DOMContentLoaded', function() {
             signInWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
-                    showNotification('Giriş başarılı!', 'success');
-                    
-                    // Formu temizle ve hatayı gizle
+
+                    // Email doğrulanmamışsa engelle
+                    if (!user.emailVerified) {
+                        signOut(auth);
+                        if (loginErrorMsg) {
+                            loginErrorMsg.textContent = 'E-posta adresiniz doğrulanmamış. Lütfen gelen kutunuzu kontrol edin.';
+                            loginErrorMsg.classList.remove('hidden');
+                        }
+                        return;
+                    }
+
+                    showNotification('Giriş başarılı! Hoş geldiniz 👋', 'success');
                     loginForm.reset();
                     clearLoginError();
                     closeModals();
@@ -375,15 +406,17 @@ document.addEventListener('DOMContentLoaded', function() {
             createUserWithEmailAndPassword(auth, email, password)
                 .then((userCredential) => {
                     const user = userCredential.user;
-                    
-                    // Kullanıcı profilini güncelle (displayName)
                     return updateProfile(user, { displayName: name })
+                        .then(() => sendEmailVerification(user))
                         .then(() => {
-                            showNotification('Kayıt başarılı! Hoş geldiniz, ' + name, 'success');
-                            
-                            // Formları temizle
                             registerForm.reset();
                             closeModals();
+                            // Doğrulama maili gönderildi bilgisi
+                            const verifyModal = document.getElementById('emailVerifyModal');
+                            if (verifyModal) verifyModal.style.display = 'flex';
+                            else showNotification('Kayıt başarılı! ' + email + ' adresine doğrulama maili gönderildi. Lütfen mailinizi onaylayın.', 'success');
+                            // Kayıt sonrası oturumu kapat - mail doğrulanmadan giriş yapılmasın
+                            signOut(auth);
                         });
                 })
                 .catch((error) => {
@@ -430,6 +463,12 @@ document.addEventListener('DOMContentLoaded', function() {
         openRegisterModal();
     });
     
+    // Email verify modal kapat
+    document.getElementById('closeVerifyModalBtn')?.addEventListener('click', function() {
+        const modal = document.getElementById('emailVerifyModal');
+        if (modal) modal.style.display = 'none';
+    });
+
     // Login → Register ve Register → Login geçiş (event delegation - dinamik elementler için)
     document.addEventListener('click', function(e) {
         if (e.target.closest('#switchToRegisterBtn')) {

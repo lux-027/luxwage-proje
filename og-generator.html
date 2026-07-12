@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head><meta charset="UTF-8"><title>OG Image Generator</title></head>
+<body style="margin:0;background:#0f172a;display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:20px;font-family:Arial">
+<p style="color:#94a3b8;font-size:14px">Önizleme — indirmek için butona tıkla</p>
+<canvas id="c" width="1200" height="630" style="max-width:900px;border-radius:16px;box-shadow:0 25px 60px rgba(0,0,0,0.6)"></canvas>
+<button onclick="download()" style="padding:14px 40px;background:#2563eb;color:white;border:none;border-radius:10px;font-size:18px;cursor:pointer;font-weight:bold;letter-spacing:.5px">
+  ⬇&nbsp; og-image.png olarak indir
+</button>
+<script>
+const c = document.getElementById('c');
+const ctx = c.getContext('2d');
+const W = 1200, H = 630;
+
+function roundRect(ctx, x, y, w, h, r) {
+  ctx.beginPath();
+  ctx.moveTo(x+r,y); ctx.lineTo(x+w-r,y);
+  ctx.quadraticCurveTo(x+w,y,x+w,y+r);
+  ctx.lineTo(x+w,y+h-r);
+  ctx.quadraticCurveTo(x+w,y+h,x+w-r,y+h);
+  ctx.lineTo(x+r,y+h);
+  ctx.quadraticCurveTo(x,y+h,x,y+h-r);
+  ctx.lineTo(x,y+r);
+  ctx.quadraticCurveTo(x,y,x+r,y);
+  ctx.closePath();
+}
+
+// ── BG: derin mavi ──────────────────────────────
+const bg = ctx.createLinearGradient(0, 0, W, H);
+bg.addColorStop(0,   '#0f172a');  // slate-900
+bg.addColorStop(0.5, '#1e3a8a');  // blue-900
+bg.addColorStop(1,   '#1d4ed8');  // blue-700
+ctx.fillStyle = bg;
+ctx.fillRect(0, 0, W, H);
+
+// ── Dekoratif daireler ──────────────────────────
+[{x:1080,y:80,r:220},{x:120,y:560,r:160},{x:600,y:-40,r:200}].forEach(d=>{
+  ctx.beginPath(); ctx.arc(d.x,d.y,d.r,0,Math.PI*2);
+  ctx.fillStyle='rgba(59,130,246,0.12)'; ctx.fill();
+});
+
+// Sağ altta yeşil aksan dairesi
+ctx.beginPath(); ctx.arc(1100,560,130,0,Math.PI*2);
+ctx.fillStyle='rgba(52,211,153,0.08)'; ctx.fill();
+
+// ── Logo kartı (gradient kare, fa-coins tarzı) ──
+const lx = 536, ly = 150, lsize = 130, lradius = 28;
+const logoGrd = ctx.createLinearGradient(lx, ly, lx+lsize, ly+lsize);
+logoGrd.addColorStop(0,'#34d399');
+logoGrd.addColorStop(1,'#3b82f6');
+
+ctx.shadowColor = 'rgba(52,211,153,0.45)';
+ctx.shadowBlur = 36;
+ctx.fillStyle = logoGrd;
+roundRect(ctx, lx, ly, lsize, lsize, lradius);
+ctx.fill();
+ctx.shadowBlur = 0;
+
+ctx.strokeStyle = 'rgba(255,255,255,0.3)';
+ctx.lineWidth = 2;
+roundRect(ctx, lx, ly, lsize, lsize, lradius);
+ctx.stroke();
+
+// Coins: 3 katlı para yığını
+const cx2 = lx + lsize/2;
+const coinColors = ['rgba(255,255,255,0.22)','rgba(255,255,255,0.40)','rgba(255,255,255,0.65)','rgba(255,255,255,0.92)'];
+const coinY = [ly+88, ly+78, ly+68, ly+58];
+const coinRx = 34, coinRy = 11;
+
+coinColors.forEach((col, i) => {
+  if(i < 3) {
+    ctx.fillStyle = col;
+    ctx.beginPath(); ctx.ellipse(cx2, coinY[i]+coinRy, coinRx, coinRy, 0, 0, Math.PI*2); ctx.fill();
+    ctx.fillRect(cx2-coinRx, coinY[i], coinRx*2, coinRy);
+  }
+  ctx.fillStyle = i===3 ? 'white' : col;
+  ctx.beginPath(); ctx.ellipse(cx2, coinY[i], coinRx, coinRy, 0, 0, Math.PI*2); ctx.fill();
+});
+
+// ₺ üstte
+ctx.fillStyle = '#10b981';
+ctx.font = 'bold 22px Arial';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('₺', cx2, coinY[3]);
+
+// ── LuxWage metni ───────────────────────────────
+ctx.textBaseline = 'alphabetic';
+ctx.fillStyle = 'white';
+ctx.font = 'bold 86px Arial';
+ctx.fillText('LuxWage', 600, 358);
+
+// ── Alt çizgi aksan ─────────────────────────────
+const lineGrd = ctx.createLinearGradient(350, 0, 850, 0);
+lineGrd.addColorStop(0,'rgba(52,211,153,0)');
+lineGrd.addColorStop(0.3,'rgba(52,211,153,0.9)');
+lineGrd.addColorStop(0.7,'rgba(59,130,246,0.9)');
+lineGrd.addColorStop(1,'rgba(59,130,246,0)');
+ctx.fillStyle = lineGrd;
+ctx.fillRect(350, 372, 500, 3);
+
+// ── Subtitle ────────────────────────────────────
+ctx.fillStyle = 'rgba(186,230,253,0.95)';  // blue-200
+ctx.font = '32px Arial';
+ctx.fillText('Maaş & Devamsızlık Takip Sistemi', 600, 425);
+
+// ── Feature badges ──────────────────────────────
+const badges = [
+  { icon:'💼', text:'Maaş Takibi' },
+  { icon:'📅', text:'Devamsızlık' },
+  { icon:'💰', text:'Ödemeler' }
+];
+const bw = 230, bh = 52, gap = 20;
+const totalW = badges.length * bw + (badges.length-1) * gap;
+let bx = (W - totalW) / 2;
+
+badges.forEach(b => {
+  ctx.fillStyle = 'rgba(255,255,255,0.1)';
+  roundRect(ctx, bx, 455, bw, bh, 26); ctx.fill();
+  ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+  ctx.lineWidth = 1;
+  roundRect(ctx, bx, 455, bw, bh, 26); ctx.stroke();
+
+  ctx.fillStyle = 'rgba(255,255,255,0.9)';
+  ctx.font = '20px Arial';
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText(`${b.icon}  ${b.text}`, bx + bw/2, 455 + bh/2);
+  bx += bw + gap;
+});
+
+// ── URL badge ───────────────────────────────────
+ctx.fillStyle = 'rgba(255,255,255,0.08)';
+roundRect(ctx, 480, 530, 240, 44, 22); ctx.fill();
+ctx.strokeStyle = 'rgba(52,211,153,0.6)';
+ctx.lineWidth = 1.5;
+roundRect(ctx, 480, 530, 240, 44, 22); ctx.stroke();
+ctx.fillStyle = '#34d399';
+ctx.font = 'bold 21px Arial';
+ctx.textAlign = 'center';
+ctx.textBaseline = 'middle';
+ctx.fillText('🌐  luxwage.pro', 600, 552);
+
+function download() {
+  const a = document.createElement('a');
+  a.download = 'og-image.png';
+  a.href = c.toDataURL('image/png');
+  a.click();
+}
+</script>
+</body>
+</html>
