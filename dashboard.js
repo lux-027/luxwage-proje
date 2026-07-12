@@ -1260,54 +1260,54 @@ class LuxWage {
                 </div>
                 ` : ''}
                 
-                <div class="flex flex-wrap items-center justify-between gap-3 mt-3">
-                    <div class="flex items-center gap-2 min-w-0 flex-shrink-0">
+                <div class="flex flex-wrap items-center justify-between gap-2 mt-3">
+                    <div class="flex items-center gap-1.5 min-w-0 flex-shrink-0">
                         <!-- Borç Kutusu -->
-                        <div class="flex items-center gap-1.5 md:gap-3 bg-gradient-to-br from-blue-50 to-white border border-blue-200 shadow-sm rounded-xl p-2 md:p-3 hover:shadow-md transition-shadow min-w-0">
-                            <div class="bg-blue-500 text-white p-1.5 md:p-2.5 rounded-lg shadow-sm shrink-0">
-                                <i class="fas fa-wallet text-xs md:text-sm"></i>
+                        <div class="flex items-center gap-1 md:gap-3 bg-gradient-to-br from-blue-50 to-white border border-blue-200 shadow-sm rounded-xl p-1.5 md:p-3 hover:shadow-md transition-shadow min-w-0">
+                            <div class="bg-blue-500 text-white p-1 md:p-2.5 rounded-lg shadow-sm shrink-0">
+                                <i class="fas fa-wallet text-[10px] md:text-sm"></i>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-[9px] md:text-[10px] text-blue-600 uppercase font-bold tracking-wider whitespace-nowrap">Borç</p>
-                                <p class="text-xs md:text-sm font-bold text-gray-800 whitespace-nowrap">${formattedDebt} TL</p>
+                                <p class="text-[8px] md:text-[10px] text-blue-600 uppercase font-bold tracking-wider whitespace-nowrap">Borç</p>
+                                <p class="text-[10px] md:text-sm font-bold text-gray-800 whitespace-nowrap">${formattedDebt} TL</p>
                             </div>
                         </div>
                         
                         <!-- Kazanç Kutusu -->
-                        <div class="flex items-center gap-1.5 md:gap-3 bg-gradient-to-br ${isClosedDay ? 'from-indigo-50 to-white' : 'from-gray-50 to-white'} border ${borderColor} shadow-sm rounded-xl p-2 md:p-3 hover:shadow-md transition-shadow min-w-0">
-                            <div class="${iconBgColor} text-white p-1.5 md:p-2.5 rounded-lg shadow-sm shrink-0">
-                                <i class="fas ${iconClass} text-xs md:text-sm"></i>
+                        <div class="flex items-center gap-1 md:gap-3 bg-gradient-to-br ${isClosedDay ? 'from-indigo-50 to-white' : 'from-gray-50 to-white'} border ${borderColor} shadow-sm rounded-xl p-1.5 md:p-3 hover:shadow-md transition-shadow min-w-0">
+                            <div class="${iconBgColor} text-white p-1 md:p-2.5 rounded-lg shadow-sm shrink-0">
+                                <i class="fas ${iconClass} text-[10px] md:text-sm"></i>
                             </div>
                             <div class="min-w-0">
-                                <p class="text-[9px] md:text-[10px] ${textColor} uppercase font-bold tracking-wider whitespace-nowrap">${titleText}</p>
-                                <p class="text-xs md:text-sm font-bold text-gray-800 whitespace-nowrap">${amountText}</p>
+                                <p class="text-[8px] md:text-[10px] ${textColor} uppercase font-bold tracking-wider whitespace-nowrap">${titleText}</p>
+                                <p class="text-[10px] md:text-sm font-bold text-gray-800 whitespace-nowrap">${amountText}</p>
                             </div>
                         </div>
                     </div>
-                    <div class="flex flex-wrap items-center gap-1.5 md:gap-2">
-                        <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-purple-600 transition-colors text-xs md:text-sm">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Detay
+                    <div class="flex flex-wrap items-center gap-1 md:gap-2">
+                        <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-1.5 py-1 md:px-3 md:py-2 rounded-lg hover:bg-purple-600 transition-colors text-[10px] md:text-sm">
+                            <i class="fas fa-info-circle mr-0.5 md:mr-1"></i>
+                            <span>Detay</span>
                         </button>
-                        <button data-id="${emp.id}" class="absenceBtn bg-red-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-red-600 transition-colors text-xs md:text-sm">
-                            <i class="fas fa-calendar-times mr-1"></i>
-                            Devamsızlık
+                        <button data-id="${emp.id}" class="absenceBtn bg-red-500 text-white px-1.5 py-1 md:px-3 md:py-2 rounded-lg hover:bg-red-600 transition-colors text-[10px] md:text-sm">
+                            <i class="fas fa-calendar-times mr-0.5 md:mr-1"></i>
+                            <span>Devamsızlık</span>
                         </button>
-                        <button data-id="${emp.id}" class="toggleWorkBtn ${emp.isStopped ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg transition-colors text-xs md:text-sm">
-                            <i class="fas ${emp.isStopped ? 'fa-play' : 'fa-pause'} mr-1"></i>
-                            ${emp.isStopped ? 'Devam Ettir' : 'İşi Durdur'}
+                        <button data-id="${emp.id}" class="toggleWorkBtn ${emp.isStopped ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-1.5 py-1 md:px-3 md:py-2 rounded-lg transition-colors text-[10px] md:text-sm">
+                            <i class="fas ${emp.isStopped ? 'fa-play' : 'fa-pause'} mr-0.5 md:mr-1"></i>
+                            <span>${emp.isStopped ? 'Devam Ettir' : 'İşi Durdur'}</span>
                         </button>
-                        <button data-id="${emp.id}" class="paymentBtn bg-green-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-green-600 transition-colors text-xs md:text-sm">
-                            <i class="fas fa-money-check-alt mr-1"></i>
-                            Ödeme
+                        <button data-id="${emp.id}" class="paymentBtn bg-green-500 text-white px-1.5 py-1 md:px-3 md:py-2 rounded-lg hover:bg-green-600 transition-colors text-[10px] md:text-sm">
+                            <i class="fas fa-money-check-alt mr-0.5 md:mr-1"></i>
+                            <span>Ödeme</span>
                         </button>
-                        <button data-id="${emp.id}" class="historyBtn bg-blue-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-blue-600 transition-colors text-xs md:text-sm">
-                            <i class="fas fa-history mr-1"></i>
-                            Geçmiş
+                        <button data-id="${emp.id}" class="historyBtn bg-blue-500 text-white px-1.5 py-1 md:px-3 md:py-2 rounded-lg hover:bg-blue-600 transition-colors text-[10px] md:text-sm">
+                            <i class="fas fa-history mr-0.5 md:mr-1"></i>
+                            <span>Geçmiş</span>
                         </button>
-                        <button data-id="${emp.id}" class="terminateBtn bg-orange-500 text-white px-2 py-1.5 md:px-3 md:py-2 rounded-lg hover:bg-orange-600 transition-colors text-xs md:text-sm">
-                            <i class="fas fa-door-open mr-1"></i>
-                            İşten Çıkar
+                        <button data-id="${emp.id}" class="terminateBtn bg-orange-500 text-white px-1.5 py-1 md:px-3 md:py-2 rounded-lg hover:bg-orange-600 transition-colors text-[10px] md:text-sm">
+                            <i class="fas fa-door-open mr-0.5 md:mr-1"></i>
+                            <span>İşten Çıkar</span>
                         </button>
                     </div>
                 </div>
