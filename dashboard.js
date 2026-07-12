@@ -1141,7 +1141,7 @@ class LuxWage {
                     <h3 class="text-xl font-bold text-gray-800 mb-2">Henüz çalışan yok</h3>
                     <p class="text-gray-500 mb-4">İlk çalışanınızı eklemek için butona tıklayın</p>
                     <div class="flex gap-3 justify-center flex-wrap">
-                        <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-5 py-2.5 md:px-6 md:py-3 rounded-lg hover:bg-emerald-600 transition-colors text-sm md:text-base">
+                        <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-3 py-1.5 md:px-6 md:py-3 rounded-lg hover:bg-emerald-600 transition-colors text-xs md:text-base">
                             <i class="fas fa-user-plus mr-2"></i>
                             Yeni İşçi Ekle
                         </button>
@@ -1358,7 +1358,7 @@ class LuxWage {
                     </div>
                 </div>
                 <div class="flex justify-end w-full md:w-auto">
-                    <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-5 py-2.5 md:px-6 md:py-3 rounded-lg hover:bg-emerald-600 transition-colors text-sm md:text-base">
+                    <button id="addEmployeeBtn" class="bg-emerald-500 text-white px-3 py-1.5 md:px-6 md:py-3 rounded-lg hover:bg-emerald-600 transition-colors text-xs md:text-base">
                         <i class="fas fa-user-plus mr-2"></i>
                         Yeni İşçi Ekle
                     </button>
