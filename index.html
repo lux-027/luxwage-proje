@@ -37,20 +37,19 @@
                     </div>
                     
                     <!-- Kullanıcı Profili (Giriş yapıldığında) -->
-                    <div id="userProfile" style="display: none;" class="flex flex-col items-end gap-1.5 md:flex-row md:items-center md:gap-6">
-                        <div class="flex items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-1.5 py-1 md:px-4 md:py-2">
-                            <div class="bg-emerald-500 w-6 h-6 md:w-10 md:h-10 rounded-full flex items-center justify-center mr-1.5 md:mr-3">
+                    <div id="userProfile" style="display: none;" class="flex items-center">
+                        <div class="flex items-center bg-white/10 backdrop-blur-md border border-white/20 rounded-lg px-1.5 py-1 md:px-4 md:py-2 gap-2 md:gap-3">
+                            <div class="bg-emerald-500 w-6 h-6 md:w-10 md:h-10 rounded-full flex items-center justify-center shrink-0">
                                 <i class="fas fa-user text-white text-xs md:text-base"></i>
                             </div>
                             <div class="text-white">
                                 <p id="userNameDisplay" class="font-semibold text-xs md:text-sm">Kullanıcı Adı</p>
                                 <p id="userEmailDisplay" class="hidden md:block text-xs text-blue-200">kullanici@ornek.com</p>
                             </div>
+                            <button id="logoutBtn" class="ml-1 md:ml-2 bg-red-500 hover:bg-red-600 text-white p-1.5 rounded-lg transition-all duration-200">
+                                <i class="fas fa-sign-out-alt text-sm md:text-base"></i>
+                            </button>
                         </div>
-                        <button id="logoutBtn" class="bg-red-500/80 hover:bg-red-600 text-white px-2 py-1 md:px-4 md:py-2 rounded-lg transition-all duration-300 flex items-center space-x-1 md:space-x-2 shadow-lg hover:shadow-red-500/30 text-xs md:text-base">
-                            <i class="fas fa-sign-out-alt"></i>
-                            <span>Çıkış Yap</span>
-                        </button>
                     </div>
             </div>
         </nav>
@@ -96,7 +95,7 @@
             }
         </style>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[80vh] flex flex-col justify-center">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[80vh] flex flex-col justify-center py-16 md:py-0">
             <div class="text-center">
 
                 <!-- Üst rozet -->
