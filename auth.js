@@ -438,10 +438,15 @@ document.addEventListener('DOMContentLoaded', function() {
                         .then(() => {
                             registerForm.reset();
                             closeModals();
-                            // Doğrulama maili gönderildi bilgisi
                             const verifyModal = document.getElementById('emailVerifyModal');
                             if (verifyModal) verifyModal.style.display = 'flex';
                             else showNotification('Kayıt başarılı! ' + email + ' adresine doğrulama maili gönderildi.', 'success');
+                        })
+                        .catch((verifyError) => {
+                            // Doğrulama maili gönderilemezse hesabı sil
+                            user.delete().catch(() => {});
+                            signOut(auth);
+                            throw verifyError;
                         });
                 })
                 .catch((error) => {
