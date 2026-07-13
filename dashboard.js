@@ -1662,15 +1662,7 @@ class LuxWage {
 
     getEffectiveEmployeeStartDate(selectedDate, now) {
         const effectiveDate = new Date(selectedDate);
-        const currentHour = now.getHours();
-        const today = new Date(now);
-        today.setHours(0, 0, 0, 0);
-
-        if (effectiveDate.getTime() === today.getTime() && currentHour >= 18) {
-            effectiveDate.setDate(effectiveDate.getDate() + 1);
-            effectiveDate.setHours(0, 0, 0, 0);
-        }
-
+        effectiveDate.setHours(0, 0, 0, 0);
         return effectiveDate;
     }
 
@@ -1769,7 +1761,7 @@ class LuxWage {
             selectedStartDate = new Date(today);
         }
 
-        // Eğer bugün saat 18:00'den sonra ise ve seçilen tarih bugünse, başlangıç tarihini yarına al
+        // Başlangıç tarihini seçilen tarih olarak kaydet (saat kontrolü borç hesaplamasında yapılır)
         const effectiveStartDate = this.getEffectiveEmployeeStartDate(selectedStartDate, now);
 
         const employee = {
