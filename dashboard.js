@@ -4303,6 +4303,23 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Password modal event listeners
     document.addEventListener('click', function(e) {
+        const toggleBtn = e.target.closest('.togglePasswordBtn');
+        if (toggleBtn) {
+            const targetId = toggleBtn.getAttribute('data-target');
+            const input = document.getElementById(targetId);
+            const icon = toggleBtn.querySelector('i');
+            if (input) {
+                if (input.type === 'password') {
+                    input.type = 'text';
+                    if (icon) icon.className = 'fas fa-eye-slash';
+                } else {
+                    input.type = 'password';
+                    if (icon) icon.className = 'fas fa-eye';
+                }
+            }
+            return;
+        }
+        
         if (e.target && e.target.id === 'openPasswordModalBtn') {
             const passwordModal = document.getElementById('changePasswordModal');
             if (passwordModal) {
