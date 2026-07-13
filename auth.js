@@ -552,8 +552,8 @@ document.addEventListener('DOMContentLoaded', function() {
         closeModals();
     });
     
-    // Forgot password button event listener
-    document.getElementById('forgotPasswordBtn')?.addEventListener('click', function() {
+    // Forgot password button event listeners (login modal + change password modal)
+    function openForgotPasswordModal() {
         const forgotPasswordModal = document.getElementById('forgotPasswordModal');
         if (forgotPasswordModal) {
             forgotPasswordModal.style.display = 'flex';
@@ -564,7 +564,10 @@ document.addEventListener('DOMContentLoaded', function() {
                 resetEmailInput.value = loginEmail.value;
             }
         }
-    });
+    }
+    
+    document.getElementById('forgotPasswordBtn')?.addEventListener('click', openForgotPasswordModal);
+    document.getElementById('openForgotPasswordModalBtn')?.addEventListener('click', openForgotPasswordModal);
     
     // Close forgot password modal button event listener
     document.getElementById('closeForgotPasswordModalBtn')?.addEventListener('click', function() {
