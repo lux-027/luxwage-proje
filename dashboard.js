@@ -345,6 +345,37 @@ class LuxWage {
             });
         }
         
+        // Employee photo preview
+        const employeePhoto = document.getElementById('employeePhoto');
+        if (employeePhoto) {
+            employeePhoto.addEventListener('change', async (e) => {
+                const file = e.target.files?.[0];
+                const preview = document.getElementById('employeePhotoPreview');
+                const previewImg = document.getElementById('employeePhotoPreviewImg');
+                const placeholder = document.getElementById('employeePhotoPlaceholder');
+                if (!file || !preview || !previewImg) return;
+                
+                if (file.size > 2 * 1024 * 1024) {
+                    showNotification('Fotoğraf boyutu 2 MB üzerinde olamaz', 'error');
+                    e.target.value = '';
+                    preview.classList.add('hidden');
+                    previewImg.src = '';
+                    if (placeholder) placeholder.classList.remove('hidden');
+                    return;
+                }
+                
+                try {
+                    const base64 = await this.readFileAsBase64(file);
+                    previewImg.src = base64;
+                    preview.classList.remove('hidden');
+                    if (placeholder) placeholder.classList.add('hidden');
+                } catch (err) {
+                    console.error('Fotoğraf önizleme hatası:', err);
+                    showNotification('Fotoğraf önizlemesi yüklenemedi', 'error');
+                }
+            });
+        }
+        
         // Salary amount auto-format with Turkish thousand separator (salaryAmount already declared above)
         if (salaryAmount) {
             salaryAmount.addEventListener('input', (e) => {
@@ -1226,12 +1257,12 @@ class LuxWage {
             <div class="bg-white rounded-xl shadow-lg p-4 md:p-6 hover:shadow-xl transition-shadow">
                 <div class="flex items-center justify-between mb-3 md:mb-4">
                     <div class="flex items-center min-w-0">
-                        <div class="bg-blue-100 p-2 md:p-3 rounded-full mr-2 md:mr-4 shrink-0">
-                            <i class="fas fa-user text-blue-500 text-lg md:text-xl"></i>
+                        <div class="bg-blue-100 p-0.5 md:p-1 rounded-full mr-2 md:mr-4 shrink-0">
+                            ${emp.photo ? `<img src="${emp.photo}" alt="${emp.name}" class="w-10 h-10 md:w-14 md:h-14 rounded-full object-cover">` : `<div class="w-10 h-10 md:w-14 md:h-14 rounded-full flex items-center justify-center"><i class="fas fa-user text-blue-500 text-lg md:text-xl"></i></div>`}
                         </div>
                         <div class="min-w-0">
                             <h3 class="font-bold text-gray-800 text-base md:text-lg truncate">${emp.name}</h3>
-                            <p class="text-gray-500 text-xs md:text-sm">${emp.phone}</p>
+                            ${emp.phone ? `<p class="text-gray-500 text-xs md:text-sm">${emp.phone}</p>` : ''}
                             <div class="flex items-center mt-1 text-[10px] md:text-xs text-gray-400">
                                 <i class="fas fa-calendar-alt mr-1"></i>
                                 <span class="truncate">İşe Başlama: ${startDateStr}</span>
@@ -1750,18 +1781,19 @@ class LuxWage {
     }
 
     // İşçi ekle
-    addEmployee() {
+    async addEmployee() {
         const name = document.getElementById('employeeName').value.trim();
         const phone = document.getElementById('employeePhone').value.trim();
         const salaryType = document.getElementById('salaryType').value;
         const salaryAmount = parseTurkishNumber(document.getElementById('salaryAmount').value);
+        const photoInput = document.getElementById('employeePhoto');
         
         // Get selected closed days from checkboxes
         const closedDaysCheckboxes = document.querySelectorAll('input[name="closedDays"]:checked');
         const closedDays = Array.from(closedDaysCheckboxes).map(cb => parseInt(cb.value));
         
-        if (!name || !phone || !salaryType || isNaN(salaryAmount) || salaryAmount <= 0) {
-            showNotification('Lütfen tüm alanları doldurun', 'error');
+        if (!name || !salaryType || isNaN(salaryAmount) || salaryAmount <= 0) {
+            showNotification('Lütfen zorunlu alanları doldurun', 'error');
             return;
         }
         
@@ -1778,10 +1810,28 @@ class LuxWage {
         // Başlangıç tarihini seçilen tarih olarak kaydet (saat kontrolü borç hesaplamasında yapılır)
         const effectiveStartDate = this.getEffectiveEmployeeStartDate(selectedStartDate, now);
 
+        // Opsiyonel fotoğrafı base64 olarak oku
+        let photo = null;
+        if (photoInput && photoInput.files && photoInput.files[0]) {
+            const file = photoInput.files[0];
+            if (file.size > 2 * 1024 * 1024) {
+                showNotification('Fotoğraf boyutu 2 MB üzerinde olamaz', 'error');
+                return;
+            }
+            try {
+                photo = await this.readFileAsBase64(file);
+            } catch (err) {
+                console.error('Fotoğraf okuma hatası:', err);
+                showNotification('Fotoğraf yüklenemedi', 'error');
+                return;
+            }
+        }
+
         const employee = {
             id: this.generateEmployeeId(),
             name,
-            phone,
+            phone: phone || null,
+            photo,
             salaryType,
             closedDays,
             salaryAmount,
@@ -1796,10 +1846,33 @@ class LuxWage {
         this.saveData();
         
         document.getElementById('employeeForm').reset();
+        this.clearEmployeePhotoPreview();
         closeModal('employeeModal');
         
         showNotification('İşçi başarıyla eklendi', 'success');
         this.renderEmployeesPage();
+    }
+    
+    // Dosyayı base64'e çevir
+    readFileAsBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.onload = (e) => resolve(e.target.result);
+            reader.onerror = (err) => reject(err);
+            reader.readAsDataURL(file);
+        });
+    }
+    
+    // Çalışan fotoğrafı önizlemesini temizle
+    clearEmployeePhotoPreview() {
+        const preview = document.getElementById('employeePhotoPreview');
+        const previewImg = document.getElementById('employeePhotoPreviewImg');
+        const photoInput = document.getElementById('employeePhoto');
+        const placeholder = document.getElementById('employeePhotoPlaceholder');
+        if (preview) preview.classList.add('hidden');
+        if (previewImg) previewImg.src = '';
+        if (photoInput) photoInput.value = '';
+        if (placeholder) placeholder.classList.remove('hidden');
     }
 
     // Rastgele demo çalışanları ekle
@@ -4001,7 +4074,6 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
     
-    document.getElementById('openDeleteAccountModalBtn')?.addEventListener('click', openDeleteAccountModal);
     document.getElementById('closeDeleteAccountModalBtn')?.addEventListener('click', closeDeleteAccountModal);
     document.getElementById('cancelDeleteAccountBtn')?.addEventListener('click', closeDeleteAccountModal);
     document.getElementById('confirmDeleteAccountBtn')?.addEventListener('click', deleteAccount);
@@ -4235,6 +4307,13 @@ document.addEventListener('DOMContentLoaded', function() {
             const passwordModal = document.getElementById('changePasswordModal');
             if (passwordModal) {
                 passwordModal.classList.remove('hidden');
+            }
+        }
+        
+        if (e.target && e.target.id === 'openDeleteAccountModalBtn') {
+            const deleteAccountModal = document.getElementById('deleteAccountModal');
+            if (deleteAccountModal) {
+                deleteAccountModal.classList.remove('hidden');
             }
         }
         
