@@ -1,7 +1,7 @@
 // Firebase CDN Import'ları
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
-import { getFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import { getAuth, onAuthStateChanged, signOut, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // Firebase Config
 const firebaseConfig = {
@@ -1614,6 +1614,20 @@ class LuxWage {
                         <button id="openPasswordModalBtn" class="w-full bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 transition-colors font-semibold">
                             <i class="fas fa-key mr-2"></i>
                             Şifreyi Değiştir
+                        </button>
+                    </div>
+                    
+                    <div class="border-t border-red-200 pt-6 mt-6 bg-red-50 rounded-lg p-5 border">
+                        <h3 class="font-semibold text-red-800 mb-3 flex items-center">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            Tehlikeli Bölge
+                        </h3>
+                        <p class="text-sm text-red-700 mb-4">
+                            Hesabınızı sildiğinizde tüm çalışan verileriniz, ödeme geçmişiniz ve hesap bilgileriniz kalıcı olarak silinir. Bu işlem geri alınamaz.
+                        </p>
+                        <button id="openDeleteAccountModalBtn" class="w-full bg-red-500 text-white py-3 rounded-lg hover:bg-red-600 transition-colors font-semibold">
+                            <i class="fas fa-trash-alt mr-2"></i>
+                            Hesabı Sil
                         </button>
                     </div>
                     
@@ -3896,6 +3910,101 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     document.getElementById('closePasswordModalBtn')?.addEventListener('click', closePasswordModal);
+
+    // Hesap silme modalı fonksiyonları
+    function openDeleteAccountModal() {
+        const modal = document.getElementById('deleteAccountModal');
+        if (modal) modal.classList.remove('hidden');
+    }
+    
+    function closeDeleteAccountModal() {
+        const modal = document.getElementById('deleteAccountModal');
+        if (modal) modal.classList.add('hidden');
+        const passwordInput = document.getElementById('deleteAccountPassword');
+        if (passwordInput) passwordInput.value = '';
+        const confirmCheckbox = document.getElementById('confirmDeleteAccount');
+        if (confirmCheckbox) confirmCheckbox.checked = false;
+        const errorBox = document.getElementById('deleteAccountErrorBox');
+        if (errorBox) errorBox.classList.add('hidden');
+    }
+    
+    async function deleteAccount() {
+        const passwordInput = document.getElementById('deleteAccountPassword');
+        const confirmCheckbox = document.getElementById('confirmDeleteAccount');
+        const errorBox = document.getElementById('deleteAccountErrorBox');
+        const errorText = document.getElementById('deleteAccountErrorText');
+        const confirmBtn = document.getElementById('confirmDeleteAccountBtn');
+        
+        const password = passwordInput?.value || '';
+        const confirmed = confirmCheckbox?.checked || false;
+        
+        if (!confirmed) {
+            if (errorText) errorText.textContent = 'Hesabınızı silmek için onay kutusunu işaretleyin.';
+            if (errorBox) errorBox.classList.remove('hidden');
+            return;
+        }
+        
+        if (!password) {
+            if (errorText) errorText.textContent = 'Lütfen mevcut şifrenizi girin.';
+            if (errorBox) errorBox.classList.remove('hidden');
+            return;
+        }
+        
+        const user = auth.currentUser;
+        if (!user || !user.email) {
+            showNotification('Oturum bilgisi bulunamadı', 'error');
+            return;
+        }
+        
+        if (confirmBtn) {
+            confirmBtn.disabled = true;
+            confirmBtn.textContent = 'Siliniyor...';
+        }
+        
+        try {
+            const credential = EmailAuthProvider.credential(user.email, password);
+            await reauthenticateWithCredential(user, credential);
+            
+            // Firestore kullanıcı verilerini sil
+            try {
+                const userDocRef = doc(db, 'users', user.uid);
+                await deleteDoc(userDocRef);
+            } catch (firestoreError) {
+                console.error('Firestore veri silme hatası:', firestoreError);
+            }
+            
+            // Firebase Authentication hesabını sil
+            await deleteUser(user);
+            
+            showNotification('Hesabınız ve tüm verileriniz silindi', 'success');
+            closeDeleteAccountModal();
+            
+            // Ana sayfaya yönlendir
+            setTimeout(() => {
+                window.location.href = 'index.html';
+            }, 1500);
+        } catch (error) {
+            console.error('Hesap silme hatası:', error);
+            let message = 'Hesap silinemedi. Lütfen şifrenizi kontrol edin.';
+            if (error.code === 'auth/requires-recent-login') {
+                message = 'Güvenlik için yeniden giriş yapmanız gerekiyor.';
+            } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                message = 'Şifreniz hatalı.';
+            }
+            if (errorText) errorText.textContent = message;
+            if (errorBox) errorBox.classList.remove('hidden');
+        } finally {
+            if (confirmBtn) {
+                confirmBtn.disabled = false;
+                confirmBtn.textContent = 'Hesabı Sil';
+            }
+        }
+    }
+    
+    document.getElementById('openDeleteAccountModalBtn')?.addEventListener('click', openDeleteAccountModal);
+    document.getElementById('closeDeleteAccountModalBtn')?.addEventListener('click', closeDeleteAccountModal);
+    document.getElementById('cancelDeleteAccountBtn')?.addEventListener('click', closeDeleteAccountModal);
+    document.getElementById('confirmDeleteAccountBtn')?.addEventListener('click', deleteAccount);
 
     // Şifremi unuttum butonu
     document.getElementById('forgotPasswordBtn')?.addEventListener('click', async function() {
