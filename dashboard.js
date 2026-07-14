@@ -2833,13 +2833,12 @@ class LuxWage {
     
     // Mevcut borcu hesapla (günlük bazda)
     calculateCurrentDebt(employee) {
-        try {
-            console.log('calculateCurrentDebt çağrıldı, çalışan:', employee.name);
-            
-            if (!employee.startDate) return 0;
-            
-            // İş durdurulmuşsa borç artışı durdur - workStopDate'e kadar hesapla
-            if (employee.isStopped) {
+        console.log('calculateCurrentDebt çağrıldı, çalışan:', employee.name);
+        
+        if (!employee.startDate) return 0;
+        
+        // İş durdurulmuşsa borç artışı durdur - workStopDate'e kadar hesapla
+        if (employee.isStopped) {
             const stopDate = employee.workStopDate ? new Date(employee.workStopDate) : new Date();
             stopDate.setHours(0, 0, 0, 0);
             
@@ -2989,10 +2988,6 @@ class LuxWage {
         
         console.log('Aktif borç:', totalDebt);
         return totalDebt;
-        } catch (error) {
-            console.error('Borç hesaplama hatası:', error, employee);
-            return 0;
-        }
     }
 
     // Belirli bir tarihe kadar olan borcu hesapla
