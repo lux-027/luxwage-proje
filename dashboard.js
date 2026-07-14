@@ -1,6 +1,6 @@
 // Firebase CDN Import'ları
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-import { getAuth, onAuthStateChanged, signOut, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail, deleteUser } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+import { getAuth, onAuthStateChanged, signOut, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail, deleteUser, GoogleAuthProvider, signInWithPopup, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 
 // Firebase Config
@@ -252,6 +252,76 @@ class LuxWage {
             employeeForm.addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.addEmployee();
+            });
+        }
+        
+        // Edit employee form submit
+        const editEmployeeForm = document.getElementById('editEmployeeForm');
+        if (editEmployeeForm) {
+            editEmployeeForm.addEventListener('submit', (e) => {
+                e.preventDefault();
+                saveEditEmployee(e);
+            });
+        }
+        
+        // Edit employee modal close buttons
+        const closeEditEmployeeModalBtn = document.getElementById('closeEditEmployeeModalBtn');
+        if (closeEditEmployeeModalBtn) {
+            closeEditEmployeeModalBtn.addEventListener('click', closeEditEmployeeModal);
+        }
+        
+        const cancelEditEmployeeBtn = document.getElementById('cancelEditEmployeeBtn');
+        if (cancelEditEmployeeBtn) {
+            cancelEditEmployeeBtn.addEventListener('click', closeEditEmployeeModal);
+        }
+        
+        // Edit employee photo preview
+        const editEmployeePhoto = document.getElementById('editEmployeePhoto');
+        if (editEmployeePhoto) {
+            editEmployeePhoto.addEventListener('change', async (e) => {
+                const file = e.target.files?.[0];
+                const preview = document.getElementById('editEmployeePhotoPreview');
+                const previewImg = document.getElementById('editEmployeePhotoPreviewImg');
+                const placeholder = document.getElementById('editEmployeePhotoPlaceholder');
+                if (!file || !preview || !previewImg) return;
+                
+                if (file.size > 2 * 1024 * 1024) {
+                    showNotification('Fotoğraf boyutu 2 MB üzerinde olamaz', 'error');
+                    e.target.value = '';
+                    return;
+                }
+                
+                try {
+                    const base64 = await this.readFileAsBase64(file);
+                    previewImg.src = base64;
+                    preview.classList.remove('hidden');
+                    if (placeholder) placeholder.classList.add('hidden');
+                } catch (err) {
+                    console.error('Fotoğraf önizleme hatası:', err);
+                    showNotification('Fotoğraf önizlemesi yüklenemedi', 'error');
+                }
+            });
+        }
+        
+        // Edit employee phone auto-format
+        const editEmployeePhone = document.getElementById('editEmployeePhone');
+        if (editEmployeePhone) {
+            editEmployeePhone.addEventListener('input', (e) => {
+                let val = e.target.value.replace(/\D/g, '');
+                
+                if (val.length > 0) {
+                    if (val.length <= 4) {
+                        val = val;
+                    } else if (val.length <= 7) {
+                        val = val.slice(0, 4) + ' ' + val.slice(4);
+                    } else if (val.length <= 9) {
+                        val = val.slice(0, 4) + ' ' + val.slice(4, 7) + ' ' + val.slice(7);
+                    } else {
+                        val = val.slice(0, 4) + ' ' + val.slice(4, 7) + ' ' + val.slice(7, 9) + ' ' + val.slice(9, 11);
+                    }
+                }
+                
+                e.target.value = val;
             });
         }
 
@@ -1346,6 +1416,9 @@ class LuxWage {
                     </div>
                     <!-- Mobil butonlar -->
                     <div class="flex items-center gap-1 md:hidden">
+                        <button data-id="${emp.id}" class="editBtn bg-blue-500 text-white px-2 py-1.5 rounded-lg hover:bg-blue-600 transition-colors text-[10px]">
+                            <i class="fas fa-edit mr-0.5"></i>Düzenle
+                        </button>
                         <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-2 py-1.5 rounded-lg hover:bg-purple-600 transition-colors text-[10px]">
                             <i class="fas fa-info-circle mr-0.5"></i>Detay
                         </button>
@@ -1384,6 +1457,9 @@ class LuxWage {
                     </div>
                     <!-- Masaüstü butonlar -->
                     <div class="hidden md:flex flex-wrap items-center gap-2">
+                        <button data-id="${emp.id}" class="editBtn bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
+                            <i class="fas fa-edit mr-1"></i>Düzenle
+                        </button>
                         <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm">
                             <i class="fas fa-info-circle mr-1"></i>Detay
                         </button>
@@ -2256,11 +2332,9 @@ class LuxWage {
                 return;
             }
             
-            const credential = EmailAuthProvider.credential(user.email, password);
-            
-            reauthenticateWithCredential(user, credential)
+            reauthenticateCurrentUser(password)
                 .then(() => {
-                    // Şifre doğru, çalışanı sil
+                    // Doğrulama başarılı, çalışanı sil
                     this.employees.splice(employeeIndex, 1);
                     this.saveData();
                     this.renderPastEmployeesPage();
@@ -2275,11 +2349,13 @@ class LuxWage {
                     document.getElementById('deleteAuthPassword').value = '';
                 })
                 .catch((error) => {
-                    console.error('Şifre doğrulama hatası:', error);
-                    if (error.code === 'auth/wrong-password') {
+                    console.error('Doğrulama hatası:', error);
+                    if (error.message === 'Şifre gerekli') {
+                        showNotification('Lütfen şifrenizi girin', 'error');
+                    } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                         showNotification('Hatalı şifre, silme işlemi reddedildi!', 'error');
                     } else {
-                        showNotification('Şifre doğrulama hatası', 'error');
+                        showNotification('Doğrulama başarısız, lütfen tekrar deneyin', 'error');
                     }
                 });
         }
@@ -3947,6 +4023,93 @@ function openDailyDetails(employeeId) {
     }
 };
 
+// Çalışan düzenleme modalını aç
+function openEditEmployeeModal(employeeId) {
+    const employee = luxwage.employees.find(emp => emp.id === employeeId);
+    if (!employee) return;
+    
+    document.getElementById('editEmployeeId').value = employee.id;
+    document.getElementById('editEmployeeName').value = employee.name || '';
+    document.getElementById('editEmployeePhone').value = employee.phone || '';
+    
+    const preview = document.getElementById('editEmployeePhotoPreview');
+    const previewImg = document.getElementById('editEmployeePhotoPreviewImg');
+    const placeholder = document.getElementById('editEmployeePhotoPlaceholder');
+    const photoInput = document.getElementById('editEmployeePhoto');
+    
+    if (employee.photo) {
+        previewImg.src = employee.photo;
+        preview.classList.remove('hidden');
+        if (placeholder) placeholder.classList.add('hidden');
+    } else {
+        preview.classList.add('hidden');
+        previewImg.src = '';
+        if (placeholder) placeholder.classList.remove('hidden');
+    }
+    if (photoInput) photoInput.value = '';
+    
+    const modal = document.getElementById('editEmployeeModal');
+    if (modal) modal.classList.remove('hidden');
+}
+
+// Çalışan düzenleme modalını kapat
+function closeEditEmployeeModal() {
+    const modal = document.getElementById('editEmployeeModal');
+    if (modal) modal.classList.add('hidden');
+    clearEditEmployeePhotoPreview();
+}
+
+// Düzenleme fotoğraf önizlemesini temizle
+function clearEditEmployeePhotoPreview() {
+    const preview = document.getElementById('editEmployeePhotoPreview');
+    const previewImg = document.getElementById('editEmployeePhotoPreviewImg');
+    const photoInput = document.getElementById('editEmployeePhoto');
+    if (preview) preview.classList.add('hidden');
+    if (previewImg) previewImg.src = '';
+    if (photoInput) photoInput.value = '';
+}
+
+// Çalışan düzenlemeyi kaydet
+async function saveEditEmployee(e) {
+    e.preventDefault();
+    
+    const employeeId = parseInt(document.getElementById('editEmployeeId').value);
+    const employee = luxwage.employees.find(emp => emp.id === employeeId);
+    if (!employee) return;
+    
+    const name = document.getElementById('editEmployeeName').value.trim();
+    const phone = document.getElementById('editEmployeePhone').value.trim();
+    const photoInput = document.getElementById('editEmployeePhoto');
+    
+    if (!name) {
+        showNotification('Ad soyad zorunludur', 'error');
+        return;
+    }
+    
+    employee.name = name;
+    employee.phone = phone || null;
+    
+    if (photoInput && photoInput.files && photoInput.files[0]) {
+        const file = photoInput.files[0];
+        if (file.size > 2 * 1024 * 1024) {
+            showNotification('Fotoğraf boyutu 2 MB üzerinde olamaz', 'error');
+            return;
+        }
+        try {
+            employee.photo = await luxwage.readFileAsBase64(file);
+        } catch (err) {
+            console.error('Fotoğraf okuma hatası:', err);
+            showNotification('Fotoğraf yüklenemedi', 'error');
+            return;
+        }
+    }
+    
+    luxwage.saveData();
+    luxwage.renderEmployeesPage();
+    closeEditEmployeeModal();
+    showNotification('Çalışan bilgileri güncellendi', 'success');
+}
+
 // İşçi sil (global fonksiyon - güvenlik için ID bazlı)
 function deleteEmployee(employeeId) {
     if (confirm('Bu çalışanı silmek istediğinize emin misiniz?')) {
@@ -4036,7 +4199,29 @@ function showLegalInfo(type) {
 };
 
 // LuxWage instance'ini oluştur
-const luxwage = new LuxWage();
+const luxwage = new Luxwage();
+
+// Kullanıcının oturum tipine göre yeniden doğrulama yap
+async function reauthenticateCurrentUser(password) {
+    const user = auth.currentUser;
+    if (!user) throw new Error('Oturum bulunamadı');
+    
+    const hasPasswordProvider = user.providerData.some(p => p.providerId === 'password');
+    const hasGoogleProvider = user.providerData.some(p => p.providerId === 'google.com');
+    
+    if (hasPasswordProvider) {
+        if (!password) throw new Error('Şifre gerekli');
+        const credential = EmailAuthProvider.credential(user.email, password);
+        return await reauthenticateWithCredential(user, credential);
+    }
+    
+    if (hasGoogleProvider) {
+        const provider = new GoogleAuthProvider();
+        return await reauthenticateWithPopup(user, provider);
+    }
+    
+    throw new Error('Desteklenmeyen oturum tipi');
+}
 
 // Global method'ları window objesine bağla (HTML onclick için)
 window.showPage = function(pageName) {
@@ -4053,6 +4238,14 @@ window.filterHistory = function(category, employeeId) {
 
 window.openDailyDetails = function(employeeId) {
     openDailyDetails(employeeId);
+};
+
+window.openEditEmployeeModal = function(employeeId) {
+    openEditEmployeeModal(employeeId);
+};
+
+window.closeEditEmployeeModal = function() {
+    closeEditEmployeeModal();
 };
 
 window.showHistory = function(employeeId) {
@@ -4222,15 +4415,16 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        if (!password) {
-            if (errorText) errorText.textContent = 'Lütfen mevcut şifrenizi girin.';
-            if (errorBox) errorBox.classList.remove('hidden');
-            return;
-        }
-        
         const user = auth.currentUser;
         if (!user || !user.email) {
             showNotification('Oturum bilgisi bulunamadı', 'error');
+            return;
+        }
+        
+        const hasPasswordProvider = user.providerData.some(p => p.providerId === 'password');
+        if (hasPasswordProvider && !password) {
+            if (errorText) errorText.textContent = 'Lütfen mevcut şifrenizi girin.';
+            if (errorBox) errorBox.classList.remove('hidden');
             return;
         }
         
@@ -4240,8 +4434,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         try {
-            const credential = EmailAuthProvider.credential(user.email, password);
-            await reauthenticateWithCredential(user, credential);
+            await reauthenticateCurrentUser(password);
             
             // Firestore kullanıcı verilerini sil
             try {
@@ -4263,11 +4456,15 @@ document.addEventListener('DOMContentLoaded', function() {
             }, 1500);
         } catch (error) {
             console.error('Hesap silme hatası:', error);
-            let message = 'Hesap silinemedi. Lütfen şifrenizi kontrol edin.';
-            if (error.code === 'auth/requires-recent-login') {
+            let message = 'Hesap silinemedi. Lütfen doğrulamanızı kontrol edin.';
+            if (error.message === 'Şifre gerekli') {
+                message = 'Lütfen mevcut şifrenizi girin.';
+            } else if (error.code === 'auth/requires-recent-login') {
                 message = 'Güvenlik için yeniden giriş yapmanız gerekiyor.';
             } else if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                 message = 'Şifreniz hatalı.';
+            } else if (error.code === 'auth/popup-closed-by-user' || error.code === 'auth/cancelled-popup-request') {
+                message = 'Google doğrulama penceresi kapatıldı.';
             }
             if (errorText) errorText.textContent = message;
             if (errorBox) errorBox.classList.remove('hidden');
@@ -4374,14 +4571,15 @@ document.addEventListener('DOMContentLoaded', function() {
         const err = document.getElementById('terminatePasswordError');
         const password = inp ? inp.value.trim() : '';
 
-        if (!password) {
-            if (err) { err.textContent = 'Şifre boş bırakılamaz.'; err.classList.remove('hidden'); }
-            return;
-        }
-
         const user = auth.currentUser;
         if (!user || !user.email) {
             showNotification('Kullanıcı bilgisi alınamadı', 'error');
+            return;
+        }
+        
+        const hasPasswordProvider = user.providerData.some(p => p.providerId === 'password');
+        if (hasPasswordProvider && !password) {
+            if (err) { err.textContent = 'Şifre boş bırakılamaz.'; err.classList.remove('hidden'); }
             return;
         }
 
@@ -4389,13 +4587,17 @@ document.addEventListener('DOMContentLoaded', function() {
         this.textContent = 'Kontrol ediliyor...';
 
         try {
-            const credential = EmailAuthProvider.credential(user.email, password);
-            await reauthenticateWithCredential(user, credential);
-            // Şifre doğru
+            await reauthenticateCurrentUser(password);
+            // Doğrulama başarılı
             luxwage.terminateEmployee(employeeIdToTerminate);
             closeTerminateModal();
         } catch (e) {
-            if (err) { err.textContent = 'Hatalı şifre, lütfen tekrar deneyin.'; err.classList.remove('hidden'); }
+            console.error('İşten çıkarma doğrulama hatası:', e);
+            if (e.message === 'Şifre gerekli') {
+                if (err) { err.textContent = 'Şifre boş bırakılamaz.'; err.classList.remove('hidden'); }
+            } else {
+                if (err) { err.textContent = 'Doğrulama başarısız, lütfen tekrar deneyin.'; err.classList.remove('hidden'); }
+            }
             if (inp) inp.value = '';
         } finally {
             this.disabled = false;
@@ -4561,6 +4763,17 @@ document.addEventListener('DOMContentLoaded', function() {
             const oldPassword = document.getElementById('modalOldPassword').value;
             const newPassword = document.getElementById('modalNewPassword').value;
             
+            const user = auth.currentUser;
+            if (!user) return;
+            
+            const hasPasswordProvider = user.providerData.some(p => p.providerId === 'password');
+            const hasGoogleProvider = user.providerData.some(p => p.providerId === 'google.com');
+            
+            if (!hasPasswordProvider && hasGoogleProvider) {
+                showNotification('Google ile giriş yaptınız. Şifre değiştirmek için Google hesabınızı kullanın.', 'error');
+                return;
+            }
+            
             if (!oldPassword || !newPassword) {
                 showNotification('Lütfen tüm alanları doldurun', 'error');
                 return;
@@ -4571,12 +4784,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 return;
             }
             
-            const user = auth.currentUser;
-            if (!user) return;
-            
-            const credential = EmailAuthProvider.credential(user.email, oldPassword);
-            
-            reauthenticateWithCredential(user, credential)
+            reauthenticateCurrentUser(oldPassword)
                 .then(() => {
                     return updatePassword(user, newPassword);
                 })
@@ -4591,7 +4799,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 })
                 .catch((error) => {
                     console.error('Şifre güncelleme hatası:', error);
-                    if (error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+                    if (error.message === 'Şifre gerekli' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
                         const errBox = document.getElementById('passwordErrorBox');
                         if (errBox) errBox.classList.remove('hidden');
                         const sent = document.getElementById('resetEmailSent');
@@ -4684,6 +4892,11 @@ document.addEventListener('DOMContentLoaded', function() {
             luxwage.showPastEmployeeHistory(employeeId);
         }
         
+        if (e.target && e.target.classList.contains('editBtn')) {
+            const employeeId = parseInt(e.target.getAttribute('data-id'));
+            openEditEmployeeModal(employeeId);
+        }
+
         if (e.target && e.target.classList.contains('detailsBtn')) {
             const employeeId = parseInt(e.target.getAttribute('data-id'));
             openDailyDetails(employeeId);
