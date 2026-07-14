@@ -219,13 +219,26 @@ class LuxWage {
 
     // Uygulamayı başlat (auth hazır olduktan sonra çağrılır)
     async init() {
-        await this.loadData();
-        this.setupEventListeners();
-        this.updateCurrentDate();
-        this.cleanupOldData();
-        this.recalculateAllDebts();
-        this.showPage('home');
-        this.checkDebtNotifications();
+        try {
+            await this.loadData();
+            this.setupEventListeners();
+            this.updateCurrentDate();
+            this.cleanupOldData();
+            this.recalculateAllDebts();
+            this.showPage('home');
+            this.checkDebtNotifications();
+        } catch (error) {
+            console.error('Uygulama başlatma hatası:', error);
+            const homeSection = document.getElementById('homeSection');
+            if (homeSection) {
+                homeSection.innerHTML = `
+                    <div class="bg-red-50 border border-red-200 rounded-xl p-6 m-4">
+                        <p class="text-red-700 font-bold"><i class="fas fa-exclamation-circle mr-2"></i>Sayfa yüklenirken hata oluştu.</p>
+                        <p class="text-red-600 text-sm mt-2">Lütfen F12 → Console sekmesindeki kırmızı hatayı bize gönderin.</p>
+                    </div>
+                `;
+            }
+        }
     }
 
     // Constructor'da sadece event listener'ları kur, veri yükleme auth'tan sonra
