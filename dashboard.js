@@ -518,18 +518,22 @@ class LuxWage {
             periodEnd = new Date(today);
             periodEnd.setHours(23, 59, 59, 999);
         } else if (employee.salaryType === 'monthly') {
-            // Aylık için: İşe başlama tarihine göre bu ayın başlangıcı
-            const startDate = new Date(employee.startDate);
-            const startDay = startDate.getDate();
+            // Aylık için: İşe başlama tarihine göre bu ayın ödeme günü
+            const paymentDate = this.getMonthlyPaymentDate(today.getFullYear(), today.getMonth(), employee);
+            const currentHour = now.getHours();
             
-            periodStart = new Date(today.getFullYear(), today.getMonth(), startDay);
-            if (periodStart > today) {
-                periodStart = new Date(today.getFullYear(), today.getMonth() - 1, startDay);
+            // Dönem borcu: bu ayın ödeme günü geçtiyse veya bugün ödeme günüyse 18:00'den sonraysa tam maaş
+            if (paymentDate < today || (paymentDate.getTime() === today.getTime() && currentHour >= 18)) {
+                periodDebt = Number(employee.salaryAmount) || 0;
             }
-            periodStart.setHours(0, 0, 0, 0);
             
-            periodEnd = new Date(today);
-            periodEnd.setHours(23, 59, 59, 999);
+            const totalDebt = this.calculateCurrentDebt(employee);
+            
+            return {
+                periodDebt,
+                totalDebt,
+                periodLabel
+            };
         }
         
         // Dönem içindeki borç hesapla
@@ -1200,13 +1204,26 @@ class LuxWage {
             
             // Status check for today's earnings display
             const today = new Date();
-            const todayStatus = this.getStatusForDate(today, emp);
-            const isPending = todayStatus === "Bekleniyor";
-            const isClosedDay = todayStatus === "Kapalı Gün";
+            const currentHour = today.getHours();
+            let todayStatus, isPending, isClosedDay, isTodayAbsent;
             
-            // Check if today is an absence day
-            const todayStr = today.toISOString().split('T')[0];
-            const isTodayAbsent = emp.absenceHistory && emp.absenceHistory.some(absence => absence.date === todayStr);
+            if (emp.salaryType === 'monthly') {
+                // Aylık çalışanlarda kapalı gün ve devamsızlık durum kartı etkilemez
+                const paymentDate = this.getMonthlyPaymentDate(today.getFullYear(), today.getMonth(), emp);
+                const isPaymentDay = today.getTime() === paymentDate.getTime();
+                isPending = !isPaymentDay || (isPaymentDay && currentHour < 18);
+                todayStatus = isPending ? "Bekleniyor" : "Eklendi";
+                isClosedDay = false;
+                isTodayAbsent = false;
+            } else {
+                todayStatus = this.getStatusForDate(today, emp);
+                isPending = todayStatus === "Bekleniyor";
+                isClosedDay = todayStatus === "Kapalı Gün";
+                
+                // Check if today is an absence day
+                const todayStr = today.toISOString().split('T')[0];
+                isTodayAbsent = emp.absenceHistory && emp.absenceHistory.some(absence => absence.date === todayStr);
+            }
             
             // Dynamic styling based on status
             let borderColor, textColor, titleText, amountText, iconBgColor, iconClass;
@@ -1239,16 +1256,28 @@ class LuxWage {
                 // Bekleniyor - turuncu kart
                 borderColor = "border-orange-200";
                 textColor = "text-orange-500";
-                titleText = "Bekleniyor";
-                amountText = `${formattedDailyRate} TL Eklenecek`;
+                if (emp.salaryType === 'monthly') {
+                    const paymentDate = this.getMonthlyPaymentDate(today.getFullYear(), today.getMonth(), emp);
+                    const nextPaymentStr = paymentDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+                    titleText = "Aylık Ödeme Bekleniyor";
+                    amountText = `${emp.salaryAmount.toLocaleString('tr-TR')} TL — ${nextPaymentStr}`;
+                } else {
+                    titleText = "Bekleniyor";
+                    amountText = `${formattedDailyRate} TL Eklenecek`;
+                }
                 iconBgColor = "bg-orange-500";
                 iconClass = "fa-clock";
             } else {
                 // Eklenecek Tutar - yeşil kart
                 borderColor = "border-emerald-200";
                 textColor = "text-emerald-600";
-                titleText = "Eklendi";
-                amountText = `+${formattedDailyRate} TL`;
+                if (emp.salaryType === 'monthly') {
+                    titleText = "Aylık Ödeme Eklendi";
+                    amountText = `+${emp.salaryAmount.toLocaleString('tr-TR')} TL`;
+                } else {
+                    titleText = "Eklendi";
+                    amountText = `+${formattedDailyRate} TL`;
+                }
                 iconBgColor = "bg-emerald-500";
                 iconClass = "fa-coins";
             }
@@ -2071,7 +2100,7 @@ class LuxWage {
         this.pendingWorkResumeId = null;
     }
 
-    // Günün durumunu belirle (06:00-18:00 kuralı)
+    // Günün durumunu belirle
     getStatusForDate(date, employee = null) {
         const now = new Date();
         const currentHour = now.getHours();
@@ -2084,17 +2113,31 @@ class LuxWage {
             return "Kapalı Gün";
         }
 
-        // 2. Gelecek günler: Kesinlikle "Bekleniyor"
+        // 2. Aylık maaşlı çalışanlar için ödeme günü kontrolü
+        if (employee && employee.salaryType === 'monthly' && employee.startDate) {
+            const paymentDate = this.getMonthlyPaymentDate(target.getFullYear(), target.getMonth(), employee);
+            const isPaymentDay = target.getTime() === paymentDate.getTime();
+            
+            if (target > today) return "Bekleniyor";
+            if (target.getTime() === today.getTime()) {
+                if (!isPaymentDay) return "Bekleniyor";
+                return currentHour >= 18 ? "Eklendi" : "Bekleniyor";
+            }
+            // Geçmiş ödeme günleri: eklendi, diğer günler: bekleniyor
+            return isPaymentDay ? "Eklendi" : "Bekleniyor";
+        }
+
+        // 3. Gelecek günler: Kesinlikle "Bekleniyor"
         if (target > today) return "Bekleniyor";
 
-        // 3. Bugün:
+        // 4. Bugün:
         if (target.getTime() === today.getTime()) {
             if (currentHour >= 0 && currentHour < 6) return "Gece Kapalı"; // 00:00 - 06:00 iş yeri kapalı
             if (currentHour >= 6 && currentHour < 18) return "Bekleniyor"; // 06:00 - 18:00 arası
             return "Eklendi"; // 18:00 sonrası
         }
 
-        // 4. Geçmiş günler: Kesinlikle "Eklendi"
+        // 5. Geçmiş günler: Kesinlikle "Eklendi"
         return "Eklendi";
     }
 
@@ -2149,7 +2192,7 @@ class LuxWage {
                     }
                 }
                 
-                // Calculate daily amount based on salary type (same as calculateDailyWage)
+                // Calculate daily amount based on salary type
                 let dailyAmount = 0;
                 if (employee.salaryType === 'daily') {
                     dailyAmount = employee.salaryAmount;
@@ -2158,7 +2201,16 @@ class LuxWage {
                     const workingDaysPerWeek = 7 - closedDays.length;
                     dailyAmount = employee.salaryAmount / workingDaysPerWeek;
                 } else if (employee.salaryType === 'monthly') {
-                    dailyAmount = employee.salaryAmount / 26;
+                    // Aylık maaşlı çalışanlarda sadece ödeme gününde tam maaş göster
+                    const paymentDate = this.getMonthlyPaymentDate(currentDate.getFullYear(), currentDate.getMonth(), employee);
+                    const isPaymentDay = currentDate.getTime() === paymentDate.getTime();
+                    const todayMidnight = new Date(today);
+                    todayMidnight.setHours(0, 0, 0, 0);
+                    if (isPaymentDay && (currentDate < todayMidnight || (currentDate.getTime() === todayMidnight.getTime() && currentHour >= 18))) {
+                        dailyAmount = employee.salaryAmount;
+                    } else {
+                        dailyAmount = 0;
+                    }
                 }
                 
                 // If it's a closed day, no payment
@@ -2442,10 +2494,97 @@ class LuxWage {
             // Haftalık maaş / çalışma gün sayısı (kapalı günler hariç)
             return workingDaysPerWeek > 0 ? employee.salaryAmount / workingDaysPerWeek : employee.salaryAmount / 6;
         } else {
-            // Aylık maaş / 26 gün (kapalı günler haftalık olarak hesaplanır ve aya yansıtılır)
+            // Aylık maaş / 26 gün (günlük loglarda ve devamsızlık hesabında geçici kullanılır)
             const workingDaysPerMonth = Math.round(workingDaysPerWeek * 4);
             return workingDaysPerMonth > 0 ? employee.salaryAmount / workingDaysPerMonth : employee.salaryAmount / 26;
         }
+    }
+    
+    // Aylık maaşlı çalışan için ödeme gününü hesapla (ayın son günü sınırı)
+    getMonthlyPaymentDay(employee) {
+        const startDate = new Date(employee.startDate);
+        return startDate.getDate();
+    }
+    
+    // Belirli ay/yıl için ödeme tarihini hesapla (gün yoksa ayın son günü)
+    getMonthlyPaymentDate(year, month, employee) {
+        const paymentDay = this.getMonthlyPaymentDay(employee);
+        const daysInMonth = new Date(year, month + 1, 0).getDate();
+        const day = Math.min(paymentDay, daysInMonth);
+        const date = new Date(year, month, day);
+        date.setHours(0, 0, 0, 0);
+        return date;
+    }
+    
+    // İki tarih arasındaki aylık ödeme tarihlerini listele
+    calculateMonthlyPaymentDates(startDate, endDate, employee) {
+        const dates = [];
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(0, 0, 0, 0);
+        
+        // İlk ödeme tarihi: başlangıç ayının ödeme gününden SONRAKI ilk ödeme günü
+        let current = this.getMonthlyPaymentDate(start.getFullYear(), start.getMonth(), employee);
+        
+        // Başlangıç günü ödeme gününden önce veya aynı günse, ilk ödeme bir sonraki ayın ödeme günüdür
+        // Çünkü çalışan tam ay çalışmadan o gün ödeme alamaz
+        if (start <= current) {
+            current = this.getMonthlyPaymentDate(start.getFullYear(), start.getMonth() + 1, employee);
+        }
+        
+        while (current <= end) {
+            dates.push(new Date(current));
+            current = this.getMonthlyPaymentDate(current.getFullYear(), current.getMonth() + 1, employee);
+        }
+        
+        return dates;
+    }
+    
+    // Bugün aylık ödeme günü mü?
+    isMonthlyPaymentDayToday(employee) {
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const paymentDate = this.getMonthlyPaymentDate(today.getFullYear(), today.getMonth(), employee);
+        return today.getTime() === paymentDate.getTime();
+    }
+    
+    // Aylık maaşlı çalışan için borç hesapla (ödeme günlerinde tam maaş)
+    calculateMonthlyDebt(employee, endDate) {
+        const startDate = new Date(employee.startDate);
+        startDate.setHours(0, 0, 0, 0);
+        const end = new Date(endDate);
+        end.setHours(0, 0, 0, 0);
+        if (startDate > end) return 0;
+        
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const currentHour = new Date().getHours();
+        const isEndDateToday = end.getTime() === today.getTime();
+        
+        const paymentDates = this.calculateMonthlyPaymentDates(startDate, end, employee);
+        
+        let totalDebt = 0;
+        paymentDates.forEach(date => {
+            // Eğer son tarih bugünse ve bu ödeme günü bugünse, saat 18'den önce ekleme
+            if (isEndDateToday && date.getTime() === today.getTime() && currentHour < 18) {
+                return;
+            }
+            totalDebt += Number(employee.salaryAmount) || 0;
+        });
+        
+        // Ödemeleri çıkar
+        if (employee.paymentHistory && employee.paymentHistory.length > 0) {
+            employee.paymentHistory.forEach(payment => {
+                const paymentDate = new Date(payment.date);
+                paymentDate.setHours(0, 0, 0, 0);
+                if (paymentDate <= end) {
+                    totalDebt -= Math.abs(Number(payment.amount) || 0);
+                }
+            });
+        }
+        
+        return totalDebt;
     }
     
     // Günün kapalı olup olmadığını kontrol et
@@ -2470,6 +2609,29 @@ class LuxWage {
         
         // Bugün işe başlama tarihinden önceyse
         if (startDate > todayDate) return '';
+        
+        // Aylık maaşlı çalışanlar için ödeme günü bazlı gösterim
+        if (employee.salaryType === 'monthly') {
+            const paymentDate = this.getMonthlyPaymentDate(today.getFullYear(), today.getMonth(), employee);
+            const isPaymentDay = todayDate.getTime() === paymentDate.getTime();
+            const paymentDateStr = paymentDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' });
+            const formattedSalary = Number(employee.salaryAmount || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            if (isPaymentDay && currentHour >= 18) {
+                return `
+                    <div class="bg-emerald-500/10 border border-emerald-500/10 px-3 py-1.5 rounded-lg text-xs">
+                        <span class="text-emerald-400">Aylık Ödeme: </span>
+                        <span class="text-emerald-300 font-bold">+${formattedSalary} TL</span>
+                    </div>
+                `;
+            }
+            return `
+                <div class="bg-orange-500/10 border border-orange-500/10 px-3 py-1.5 rounded-lg text-xs">
+                    <span class="text-orange-400">Aylık Ödeme: </span>
+                    <span class="text-orange-300 font-bold">${formattedSalary} TL — ${paymentDateStr}</span>
+                </div>
+            `;
+        }
         
         const dailyWage = this.calculateDailyWage(employee);
         
@@ -2526,6 +2688,29 @@ class LuxWage {
             `;
         }
         
+        // Aylık maaşlı çalışanlar için ödeme günü bazlı gösterim
+        if (employee.salaryType === 'monthly') {
+            const paymentDate = this.getMonthlyPaymentDate(today.getFullYear(), today.getMonth(), employee);
+            const isPaymentDay = todayDate.getTime() === paymentDate.getTime();
+            const paymentDateStr = paymentDate.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long' });
+            const formattedSalary = Number(employee.salaryAmount || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            
+            if (isPaymentDay && currentHour >= 18) {
+                return `
+                    <div class="bg-emerald-500/10 backdrop-blur-md border border-emerald-500/20 p-4 rounded-xl flex justify-between items-center hover:bg-emerald-500/20 transition-all">
+                        <span class="text-emerald-400 text-sm font-medium">Aylık Ödeme Eklendi</span>
+                        <span class="text-emerald-300 font-bold text-lg">+${formattedSalary} TL</span>
+                    </div>
+                `;
+            }
+            return `
+                <div class="bg-orange-500/10 backdrop-blur-md border border-orange-500/20 p-4 rounded-xl flex justify-between items-center">
+                    <span class="text-orange-400 text-sm font-medium">Aylık Ödeme Bekleniyor</span>
+                    <span class="text-orange-300 font-bold text-lg">${formattedSalary} TL — ${paymentDateStr}</span>
+                </div>
+            `;
+        }
+        
         const dailyWage = this.calculateDailyWage(employee);
         
         // Saat 08:00'den önceyse kazanç henüz beklenmiyor
@@ -2565,16 +2750,20 @@ class LuxWage {
         
         // İş durdurulmuşsa borç artışı durdur - workStopDate'e kadar hesapla
         if (employee.isStopped) {
+            const stopDate = employee.workStopDate ? new Date(employee.workStopDate) : new Date();
+            stopDate.setHours(0, 0, 0, 0);
+            
+            // Aylık maaşlı çalışanlar için özel hesaplama
+            if (employee.salaryType === 'monthly') {
+                return this.calculateMonthlyDebt(employee, stopDate);
+            }
+            
             const dailyWage = this.calculateDailyWage(employee);
             let totalDebt = 0;
             const toLocalStr = (d) => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
             
             const startDate = new Date(employee.startDate);
             startDate.setHours(0, 0, 0, 0);
-            
-            // İş durdurulma tarihine kadar hesapla (workStopDate varsa o güne, yoksa bugüne kadar)
-            const stopDate = employee.workStopDate ? new Date(employee.workStopDate) : new Date();
-            stopDate.setHours(0, 0, 0, 0);
             
             const currentDate = new Date(startDate);
             while (currentDate < stopDate) {
@@ -2602,6 +2791,12 @@ class LuxWage {
         if (employee.status === 'inactive') {
             // Sabit borcu hesapla (ayrılma tarihine kadar)
             const departureDate = employee.departureDate ? new Date(employee.departureDate) : new Date();
+            
+            // Aylık maaşlı çalışanlar için özel hesaplama
+            if (employee.salaryType === 'monthly') {
+                return this.calculateMonthlyDebt(employee, departureDate);
+            }
+            
             const startDate = new Date(employee.startDate);
             const dailyWage = this.calculateDailyWage(employee);
             let totalDebt = 0;
@@ -2646,13 +2841,18 @@ class LuxWage {
 
         const startDate = new Date(employee.startDate);
         const today = new Date();
-        const currentHour = today.getHours();
         today.setHours(0, 0, 0, 0);
         startDate.setHours(0, 0, 0, 0);
         
         // Başlangıç tarihi bugünden sonra ise borç yok
         if (startDate > today) return 0;
         
+        // Aylık maaşlı çalışanlar için özel hesaplama
+        if (employee.salaryType === 'monthly') {
+            return this.calculateMonthlyDebt(employee, today);
+        }
+        
+        const currentHour = new Date().getHours();
         const dailyWage = this.calculateDailyWage(employee);
         let totalDebt = 0;
         
@@ -2731,6 +2931,11 @@ class LuxWage {
         }
         
         if (startDate > endDate) return 0;
+        
+        // Aylık maaşlı çalışanlar için özel hesaplama
+        if (employee.salaryType === 'monthly') {
+            return this.calculateMonthlyDebt(employee, endDate);
+        }
         
         const dailyWage = this.calculateDailyWage(employee);
         let totalDebt = 0;
