@@ -18,6 +18,31 @@ const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getFirestore(app);
 
+// Yerel tarih string'i uret (UTC timezone kaymasini onle)
+function toLocalDateStr(d) {
+    const date = new Date(d);
+    if (isNaN(date.getTime())) return '';
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+}
+
+// Tarih string'ini yerel saat 00:00 olarak Date'e cevir (UTC kaymasini onle)
+// 'YYYY-MM-DD', 'YYYY-MM-DDTHH:mm:ss' veya ISO timestamp formatlarini kabul eder
+function parseLocalDate(dateStr) {
+    const str = String(dateStr || '');
+    const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if (match) {
+        const [, year, month, day] = match;
+        return new Date(Number(year), Number(month) - 1, Number(day), 0, 0, 0, 0);
+    }
+    const d = new Date(str);
+    if (isNaN(d.getTime())) return new Date(NaN);
+    d.setHours(0, 0, 0, 0);
+    return d;
+}
+
 // Global variable for employee deletion
 let employeeIdToDelete = null;
 let employeeIdToTerminate = null;
@@ -153,37 +178,6 @@ function logout() {
             });
     }
 };
-
-// Firebase Auth State Listener - Dashboard
-let luxwageInitialized = false;
-onAuthStateChanged(auth, async (user) => {
-    const serbestSayfalar = [
-        'gizlilik-politikasi.html', 
-        'kullanim-sartlari.html', 
-        'hakkimizda.html', 
-        'iletisim.html', 
-        'cerez-politikasi.html'
-    ];
-    const suAnkiSayfa = window.location.pathname;
-    const yasalSayfadaMiyim = serbestSayfalar.some(page => suAnkiSayfa.includes(page));
-    if (yasalSayfadaMiyim) return;
-
-    if (user) {
-        // Kullanıcı giriş yaptı - dashboard'u başlat veya veriyi yenile
-        if (!luxwageInitialized) {
-            luxwageInitialized = true;
-            await luxwage.init();
-        } else {
-            // Farklı bir kullanıcı oturumu açtıysa veriyi yeniden çek
-            await luxwage.loadData();
-            luxwage.renderHomePage();
-        }
-    } else {
-        if (suAnkiSayfa.includes('dashboard.html')) {
-            window.location.href = 'index.html';
-        }
-    }
-});
 
 // LuxWage - Maaş ve Devamsızlık Takip Sistemi
 // Dashboard JavaScript Dosyası
@@ -626,7 +620,7 @@ class LuxWage {
         const currentDate = new Date(periodStart);
         while (currentDate <= periodEnd) {
             if (!this.isClosedDay(currentDate, employee)) {
-                const currentDateStr = currentDate.toISOString().split('T')[0];
+                const currentDateStr = toLocalDateStr(currentDate);
                 const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
                 
                 // Devamsızlık günü ise borç çıkar
@@ -1095,7 +1089,7 @@ class LuxWage {
         
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        const todayStr = today.toISOString().split('T')[0];
+        const todayStr = toLocalDateStr(today);
         
         if (!employee.activityHistory) employee.activityHistory = [];
         
@@ -1304,7 +1298,7 @@ class LuxWage {
                 isClosedDay = todayStatus === "Kapalı Gün";
                 
                 // Check if today is an absence day
-                const todayStr = today.toISOString().split('T')[0];
+                const todayStr = toLocalDateStr(today);
                 isTodayAbsent = emp.absenceHistory && emp.absenceHistory.some(absence => absence.date === todayStr);
             }
             
@@ -2424,8 +2418,7 @@ class LuxWage {
         // Tarih kontrolü
         const startDate = new Date(employee.startDate);
         startDate.setHours(0, 0, 0, 0);
-        const selectedDate = new Date(date);
-        selectedDate.setHours(0, 0, 0, 0);
+        const selectedDate = parseLocalDate(date);
         
         const today = new Date();
         today.setHours(0, 0, 0, 0);
@@ -2456,14 +2449,14 @@ class LuxWage {
         }
         
         // Aynı güne tekrar devamsızlık verilmemesini engelle
-        if (employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === date)) {
+        const selectedDateStr = toLocalDateStr(selectedDate);
+        if (employee.absenceHistory && employee.absenceHistory.some(absence => toLocalDateStr(parseLocalDate(absence.date)) === selectedDateStr)) {
             showNotification('Bu güne zaten devamsızlık kaydedilmiş', 'error');
             return;
         }
         
         // İş durdurulan günlere devamsızlık verilmemesini engelle
         const dailyLogs = this.calculateDailyLogs(employee);
-        const selectedDateStr = selectedDate.toISOString().split('T')[0];
         const isWorkStoppedOnDay = dailyLogs.some(log => log.date === selectedDateStr && log.isStopped);
         
         if (isWorkStoppedOnDay) {
@@ -2485,7 +2478,7 @@ class LuxWage {
         // Not: calculateCurrentDebt zaten devamsızlık günlerinde borç artışını engelliyor
         // absenceEntry.deduction sadece görünüm/geçmiş için tutulur
         const absenceEntry = {
-            date,
+            date: selectedDateStr,
             timestamp: Date.now()
         };
         
@@ -2531,7 +2524,7 @@ class LuxWage {
         }
         employee.paymentHistory.push({
             amount: -amount,
-            date: new Date().toISOString().split('T')[0],
+            date: toLocalDateStr(new Date()),
             timestamp: Date.now()
         });
         
@@ -2638,30 +2631,96 @@ class LuxWage {
         return today.getTime() === paymentDate.getTime();
     }
     
-    // Aylık maaşlı çalışan için borç hesapla (ödeme günlerinde tam maaş)
+    // Aylık maaşlı çalışan için borç hesapla
+    // Her dönem için gerçek gün sayısına göre günlük ücret hesaplanır
+    // Kapalı günler ve devamsızlıklar düşülür
     calculateMonthlyDebt(employee, endDate) {
         const startDate = new Date(employee.startDate);
         startDate.setHours(0, 0, 0, 0);
         const end = new Date(endDate);
         end.setHours(0, 0, 0, 0);
         if (startDate > end) return 0;
-        
+
         const today = new Date();
         today.setHours(0, 0, 0, 0);
         const currentHour = new Date().getHours();
         const isEndDateToday = end.getTime() === today.getTime();
-        
+
+        const toLocalStr = (d) => d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+
         const paymentDates = this.calculateMonthlyPaymentDates(startDate, end, employee);
-        
+
         let totalDebt = 0;
-        paymentDates.forEach(date => {
+        let periodStart = new Date(startDate);
+
+        // Her tam ödeme dönemi için: günlük ücret × çalışılan gün sayısı
+        paymentDates.forEach(paymentDate => {
             // Eğer son tarih bugünse ve bu ödeme günü bugünse, saat 18'den önce ekleme
-            if (isEndDateToday && date.getTime() === today.getTime() && currentHour < 18) {
+            if (isEndDateToday && paymentDate.getTime() === today.getTime() && currentHour < 18) {
                 return;
             }
-            totalDebt += Number(employee.salaryAmount) || 0;
+
+            // Dönem gün sayısı (periodStart'dan paymentDate'e kadar, paymentDate hariç)
+            const totalDaysInPeriod = Math.round((paymentDate - periodStart) / (1000 * 60 * 60 * 24));
+
+            if (totalDaysInPeriod > 0) {
+                // Kapalı gün ve devamsızlık sayısını hesapla
+                let workingDays = 0;
+                const currentDate = new Date(periodStart);
+                while (currentDate < paymentDate) {
+                    const dateStr = toLocalStr(currentDate);
+                    const isClosed = this.isClosedDay(currentDate, employee);
+                    const isAbsent = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === dateStr);
+
+                    if (!isClosed && !isAbsent) {
+                        workingDays++;
+                    }
+                    currentDate.setDate(currentDate.getDate() + 1);
+                }
+
+                // Günlük ücret = Aylık maaş / dönem gün sayısı
+                const dailyRate = Number(employee.salaryAmount) / totalDaysInPeriod;
+                totalDebt += dailyRate * workingDays;
+            }
+
+            // Sonraki dönem için başlangıç
+            periodStart = new Date(paymentDate);
         });
-        
+
+        // Son ödeme tarihinden endDate'e kadar olan kısmi dönem
+        if (periodStart <= end) {
+            let partialEnd = new Date(end);
+            // Eğer bugünse ve 18'den önceyse, bugünü sayma
+            if (isEndDateToday && currentHour < 18) {
+                partialEnd = new Date(today);
+                partialEnd.setDate(partialEnd.getDate() - 1);
+            }
+
+            if (periodStart <= partialEnd) {
+                // Bu dönemin tam gün sayısını hesapla (bir sonraki ödeme tarihine kadar)
+                const nextPaymentDate = this.getMonthlyPaymentDate(periodStart.getFullYear(), periodStart.getMonth() + 1, employee);
+                const fullPeriodDays = Math.round((nextPaymentDate - periodStart) / (1000 * 60 * 60 * 24));
+
+                if (fullPeriodDays > 0) {
+                    let workingDays = 0;
+                    const currentDate = new Date(periodStart);
+                    while (currentDate <= partialEnd) {
+                        const dateStr = toLocalStr(currentDate);
+                        const isClosed = this.isClosedDay(currentDate, employee);
+                        const isAbsent = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === dateStr);
+
+                        if (!isClosed && !isAbsent) {
+                            workingDays++;
+                        }
+                        currentDate.setDate(currentDate.getDate() + 1);
+                    }
+
+                    const dailyRate = Number(employee.salaryAmount) / fullPeriodDays;
+                    totalDebt += dailyRate * workingDays;
+                }
+            }
+        }
+
         // Ödemeleri çıkar
         if (employee.paymentHistory && employee.paymentHistory.length > 0) {
             employee.paymentHistory.forEach(payment => {
@@ -2672,7 +2731,7 @@ class LuxWage {
                 }
             });
         }
-        
+
         return totalDebt;
     }
     
@@ -3035,7 +3094,7 @@ class LuxWage {
         const currentHour = new Date().getHours();
         
         while (currentDate <= endDate) {
-            const currentDateStr = currentDate.toISOString().split('T')[0];
+            const currentDateStr = toLocalDateStr(currentDate);
             const isToday = currentDate.getTime() === today.getTime();
             
             if (!this.isClosedDay(currentDate, employee)) {
@@ -3139,13 +3198,13 @@ function openAbsenceModal(employeeId) {
     startDate.setHours(0, 0, 0, 0);
     const today = new Date();
     today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split('T')[0];
+    const todayStr = toLocalDateStr(today);
     
     const tenDaysAgo = new Date(today);
     tenDaysAgo.setDate(today.getDate() - 10);
     
     const minDate = startDate > tenDaysAgo ? startDate : tenDaysAgo;
-    const minDateStr = minDate.toISOString().split('T')[0];
+    const minDateStr = toLocalDateStr(minDate);
     
     const absenceDateInput = document.getElementById('absenceDate');
     absenceDateInput.min = minDateStr;
@@ -3156,9 +3215,8 @@ function openAbsenceModal(employeeId) {
     const warningEl = document.getElementById('absenceDateWarning');
     
     function validateAbsenceDate() {
-        const selectedDate = new Date(absenceDateInput.value);
-        selectedDate.setHours(0, 0, 0, 0);
-        const selectedDateStr = selectedDate.toISOString().split('T')[0];
+        const selectedDate = parseLocalDate(absenceDateInput.value);
+        const selectedDateStr = toLocalDateStr(selectedDate);
         
         // Varsayılan durumları sıfırla
         absenceDateInput.classList.remove('border-red-500', 'bg-red-50');
@@ -3197,7 +3255,7 @@ function openAbsenceModal(employeeId) {
         }
         
         // Aynı güne tekrar devamsızlık kontrolü - kırmızı pasif yap
-        if (employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === selectedDateStr)) {
+        if (employee.absenceHistory && employee.absenceHistory.some(absence => toLocalDateStr(parseLocalDate(absence.date)) === selectedDateStr)) {
             absenceDateInput.classList.remove('border-gray-300');
             absenceDateInput.classList.add('border-red-500', 'bg-red-50');
             if (warningEl) warningEl.classList.remove('hidden');
@@ -3382,7 +3440,7 @@ function calculateDebtInfo(employee) {
     const currentDate = new Date(periodStart);
     while (currentDate <= periodEnd) {
         if (!luxwage.isClosedDay(currentDate, employee)) {
-            const currentDateStr = currentDate.toISOString().split('T')[0];
+            const currentDateStr = toLocalDateStr(currentDate);
             const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
             
             if (!isAbsentDay) {
@@ -3470,7 +3528,7 @@ function calculateDebtNotifications(employee) {
             const currentDate = new Date(weekStart);
             while (currentDate <= weekEnd) {
                 if (!luxwage.isClosedDay(currentDate, employee)) {
-                    const currentDateStr = currentDate.toISOString().split('T')[0];
+                    const currentDateStr = toLocalDateStr(currentDate);
                     const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
                     
                     // Devamsızlık günü ise borç çıkar
@@ -3499,7 +3557,7 @@ function calculateDebtNotifications(employee) {
                 notifications.push({
                     employeeName: employee.name,
                     date: weekEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
-                    isoDate: weekEnd.toISOString().split('T')[0],
+                    isoDate: toLocalDateStr(weekEnd),
                     periodDebt: periodDebt,
                     totalDebt: totalDebtAtPeriod,
                     periodLabel: 'Haftalık'
@@ -3529,7 +3587,7 @@ function calculateDebtNotifications(employee) {
             const currentDate = new Date(monthStart);
             while (currentDate <= monthEnd) {
                 if (!luxwage.isClosedDay(currentDate, employee)) {
-                    const currentDateStr = currentDate.toISOString().split('T')[0];
+                    const currentDateStr = toLocalDateStr(currentDate);
                     const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
                     
                     // Devamsızlık günü ise borç çıkar
@@ -3558,7 +3616,7 @@ function calculateDebtNotifications(employee) {
                 notifications.push({
                     employeeName: employee.name,
                     date: monthEnd.toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }),
-                    isoDate: monthEnd.toISOString().split('T')[0],
+                    isoDate: toLocalDateStr(monthEnd),
                     periodDebt: periodDebt,
                     totalDebt: totalDebtAtPeriod,
                     periodLabel: 'Aylık'
@@ -3586,7 +3644,7 @@ function calculateDebtAtDate(employee, targetDate) {
     const currentDate = new Date(startDate);
     while (currentDate <= target) {
         if (!luxwage.isClosedDay(currentDate, employee)) {
-            const currentDateStr = currentDate.toISOString().split('T')[0];
+            const currentDateStr = toLocalDateStr(currentDate);
             const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
             
             // Devamsızlık günü ise borç çıkar
@@ -4212,7 +4270,38 @@ function showLegalInfo(type) {
 };
 
 // LuxWage instance'ini oluştur
-const luxwage = new Luxwage();
+const luxwage = new LuxWage();
+
+// Firebase Auth State Listener - Dashboard
+let luxwageInitialized = false;
+onAuthStateChanged(auth, async (user) => {
+    const serbestSayfalar = [
+        'gizlilik-politikasi.html', 
+        'kullanim-sartlari.html', 
+        'hakkimizda.html', 
+        'iletisim.html', 
+        'cerez-politikasi.html'
+    ];
+    const suAnkiSayfa = window.location.pathname;
+    const yasalSayfadaMiyim = serbestSayfalar.some(page => suAnkiSayfa.includes(page));
+    if (yasalSayfadaMiyim) return;
+
+    if (user) {
+        // Kullanıcı giriş yaptı - dashboard'u başlat veya veriyi yenile
+        if (!luxwageInitialized) {
+            luxwageInitialized = true;
+            await luxwage.init();
+        } else {
+            // Farklı bir kullanıcı oturumu açtıysa veriyi yeniden çek
+            await luxwage.loadData();
+            luxwage.renderHomePage();
+        }
+    } else {
+        if (suAnkiSayfa.includes('dashboard.html')) {
+            window.location.href = 'index.html';
+        }
+    }
+});
 
 // Kullanıcının oturum tipine göre yeniden doğrulama yap
 async function reauthenticateCurrentUser(password) {
@@ -4222,12 +4311,26 @@ async function reauthenticateCurrentUser(password) {
     const hasPasswordProvider = user.providerData.some(p => p.providerId === 'password');
     const hasGoogleProvider = user.providerData.some(p => p.providerId === 'google.com');
     
+    // Sadece Google provider varsa popup ile dogrula
+    if (hasGoogleProvider && !hasPasswordProvider) {
+        const provider = new GoogleAuthProvider();
+        return await reauthenticateWithPopup(user, provider);
+    }
+    
+    // Sifre provider varsa sifre ile dogrula
     if (hasPasswordProvider) {
         if (!password) throw new Error('Şifre gerekli');
         const credential = EmailAuthProvider.credential(user.email, password);
         return await reauthenticateWithCredential(user, credential);
     }
     
+    // Hem Google hem sifre varsa, sifre ile dogrula (kullanici sifre girmisse)
+    if (hasGoogleProvider && hasPasswordProvider && password) {
+        const credential = EmailAuthProvider.credential(user.email, password);
+        return await reauthenticateWithCredential(user, credential);
+    }
+    
+    // Sadece Google varsa ve sifre girilmemisse popup ile
     if (hasGoogleProvider) {
         const provider = new GoogleAuthProvider();
         return await reauthenticateWithPopup(user, provider);
@@ -4591,7 +4694,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
         
         const hasPasswordProvider = user.providerData.some(p => p.providerId === 'password');
-        if (hasPasswordProvider && !password) {
+        const hasGoogleProvider = user.providerData.some(p => p.providerId === 'google.com');
+        
+        // Sadece sifre provider'i varsa sifre zorunlu, Google kullanıcısı sifre girmez
+        if (hasPasswordProvider && !hasGoogleProvider && !password) {
             if (err) { err.textContent = 'Şifre boş bırakılamaz.'; err.classList.remove('hidden'); }
             return;
         }
@@ -4740,21 +4846,21 @@ document.addEventListener('DOMContentLoaded', function() {
             return;
         }
         
-        if (e.target && e.target.id === 'openPasswordModalBtn') {
+        if (e.target.closest('#openPasswordModalBtn')) {
             const passwordModal = document.getElementById('changePasswordModal');
             if (passwordModal) {
                 passwordModal.classList.remove('hidden');
             }
         }
         
-        if (e.target && e.target.id === 'openDeleteAccountModalBtn') {
+        if (e.target.closest('#openDeleteAccountModalBtn')) {
             const deleteAccountModal = document.getElementById('deleteAccountModal');
             if (deleteAccountModal) {
                 deleteAccountModal.classList.remove('hidden');
             }
         }
         
-        if (e.target && e.target.id === 'closePasswordModalBtn') {
+        if (e.target.closest('#closePasswordModalBtn')) {
             const passwordModal = document.getElementById('changePasswordModal');
             if (passwordModal) {
                 passwordModal.classList.add('hidden');
@@ -4763,7 +4869,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        if (e.target && e.target.id === 'cancelPasswordBtn') {
+        if (e.target.closest('#cancelPasswordBtn')) {
             const passwordModal = document.getElementById('changePasswordModal');
             if (passwordModal) {
                 passwordModal.classList.add('hidden');
@@ -4772,7 +4878,7 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        if (e.target && e.target.id === 'confirmPasswordBtn') {
+        if (e.target.closest('#confirmPasswordBtn')) {
             const oldPassword = document.getElementById('modalOldPassword').value;
             const newPassword = document.getElementById('modalNewPassword').value;
             
@@ -4826,7 +4932,7 @@ document.addEventListener('DOMContentLoaded', function() {
     
     // Add employee button event listener
     document.addEventListener('click', function(e) {
-        if (e.target && e.target.id === 'addEmployeeBtn') {
+        if (e.target.closest('#addEmployeeBtn')) {
             openModal('employeeModal');
         }
 
@@ -4854,23 +4960,27 @@ document.addEventListener('DOMContentLoaded', function() {
         }
 
         // Employee action buttons with data-id (employee ID)
-        if (e.target && e.target.classList.contains('absenceBtn')) {
-            const employeeId = parseInt(e.target.getAttribute('data-id'));
+        const absenceBtn = e.target.closest('.absenceBtn');
+        if (absenceBtn) {
+            const employeeId = parseInt(absenceBtn.getAttribute('data-id'));
             openAbsenceModal(employeeId);
         }
         
-        if (e.target && e.target.classList.contains('paymentBtn')) {
-            const employeeId = parseInt(e.target.getAttribute('data-id'));
+        const paymentBtn = e.target.closest('.paymentBtn');
+        if (paymentBtn) {
+            const employeeId = parseInt(paymentBtn.getAttribute('data-id'));
             openPaymentModal(employeeId);
         }
         
-        if (e.target && e.target.classList.contains('historyBtn')) {
-            const employeeId = parseInt(e.target.getAttribute('data-id'));
+        const historyBtn = e.target.closest('.historyBtn');
+        if (historyBtn) {
+            const employeeId = parseInt(historyBtn.getAttribute('data-id'));
             showHistory(employeeId);
         }
         
-        if (e.target && e.target.classList.contains('terminateBtn')) {
-            const employeeId = parseInt(e.target.getAttribute('data-id'));
+        const terminateBtnEl = e.target.closest('.terminateBtn');
+        if (terminateBtnEl) {
+            const employeeId = parseInt(terminateBtnEl.getAttribute('data-id'));
             const employee = luxwage.findEmployeeById(employeeId);
             if (employee) {
                 employeeIdToTerminate = employeeId;
@@ -4878,6 +4988,19 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (terminateConfirmMessage) {
                     terminateConfirmMessage.textContent = `${employee.name} adlı çalışanı işten çıkarmak istediğinize emin misiniz?`;
                 }
+                
+                // Google kullanicisi ise sifre alani gizle, popup ile dogrulama yap
+                const user = auth.currentUser;
+                const isGoogleUser = user && user.providerData.some(p => p.providerId === 'google.com') && !user.providerData.some(p => p.providerId === 'password');
+                const passwordField = document.getElementById('terminatePasswordInput')?.parentElement?.parentElement;
+                if (passwordField) {
+                    if (isGoogleUser) {
+                        passwordField.classList.add('hidden');
+                    } else {
+                        passwordField.classList.remove('hidden');
+                    }
+                }
+                
                 const terminateConfirmModal = document.getElementById('terminateConfirmModal');
                 if (terminateConfirmModal) {
                     terminateConfirmModal.classList.remove('hidden');
@@ -4891,8 +5014,9 @@ document.addEventListener('DOMContentLoaded', function() {
             luxwage.toggleWorkStatus(employeeId);
         }
         
-        if (e.target && e.target.classList.contains('permanentlyDeleteBtn')) {
-            const employeeId = parseInt(e.target.getAttribute('data-id'));
+        const permDeleteBtn = e.target.closest('.permanentlyDeleteBtn');
+        if (permDeleteBtn) {
+            const employeeId = parseInt(permDeleteBtn.getAttribute('data-id'));
             employeeIdToDelete = employeeId;
             const deleteConfirmModal = document.getElementById('deleteConfirmModal');
             if (deleteConfirmModal) {
@@ -4900,18 +5024,21 @@ document.addEventListener('DOMContentLoaded', function() {
             }
         }
         
-        if (e.target && e.target.classList.contains('showPastHistoryBtn')) {
-            const employeeId = parseInt(e.target.getAttribute('data-id'));
+        const pastHistoryBtn = e.target.closest('.showPastHistoryBtn');
+        if (pastHistoryBtn) {
+            const employeeId = parseInt(pastHistoryBtn.getAttribute('data-id'));
             luxwage.showPastEmployeeHistory(employeeId);
         }
         
-        if (e.target && e.target.classList.contains('editBtn')) {
-            const employeeId = parseInt(e.target.getAttribute('data-id'));
+        const editBtnEl = e.target.closest('.editBtn');
+        if (editBtnEl) {
+            const employeeId = parseInt(editBtnEl.getAttribute('data-id'));
             openEditEmployeeModal(employeeId);
         }
 
-        if (e.target && e.target.classList.contains('detailsBtn')) {
-            const employeeId = parseInt(e.target.getAttribute('data-id'));
+        const detailsBtnEl = e.target.closest('.detailsBtn');
+        if (detailsBtnEl) {
+            const employeeId = parseInt(detailsBtnEl.getAttribute('data-id'));
             openDailyDetails(employeeId);
         }
 
