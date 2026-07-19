@@ -779,11 +779,12 @@ class LuxWage {
                 .lux-studio-page { position:relative; isolation:isolate; overflow:hidden; min-height:100vh; background:radial-gradient(circle at 50% 37%, #302967 0%, #201c4c 42%, #101633 100%); }
                 .lux-studio-page::before { content:''; position:absolute; inset:0; z-index:0; background:radial-gradient(circle at 15% 80%, rgba(59,130,246,.13), transparent 28%), radial-gradient(circle at 88% 20%, rgba(147,197,253,.08), transparent 25%); }
                 .lux-studio-star { position:absolute; z-index:1; display:block; border-radius:999px; background:#fff; box-shadow:0 0 5px rgba(219,234,254,.65); animation:luxStudioTwinkle ease-in-out infinite; pointer-events:none; }
-                .lux-studio-page > :not(.lux-studio-star) { position:relative; z-index:2; }
+                .lux-studio-page > :not(.lux-studio-star):not(.lux-studio-back-button) { position:relative; z-index:2; }
+                .lux-studio-back-button { position:fixed; left:0.5rem; top:0.5rem; z-index:60; }
             </style>
             <section class="lux-studio-page flex items-center justify-center px-4 py-12 text-white md:px-10 md:py-16">
                 ${stars}
-                <button type="button" onclick="showPage('home')" class="absolute left-2 top-2 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.10] px-3 py-1.5 text-xs font-medium text-blue-50 transition-colors hover:bg-white/[0.18] md:left-4 md:top-4"><i class="fas fa-arrow-left"></i> Geri</button>
+                <button type="button" onclick="showPage('home')" class="lux-studio-back-button inline-flex items-center gap-1.5 rounded-lg border border-white/15 bg-white/15 px-3 py-1.5 text-xs font-semibold text-white shadow-sm backdrop-blur-sm transition-colors hover:bg-white/25"><i class="fas fa-arrow-left text-[10px]"></i> Geri</button>
                 <div class="w-full max-w-3xl text-center">
                     <h2 class="text-4xl font-black tracking-tight md:text-5xl">Lux<span class="text-black">Studio</span></h2>
                     <p class="mt-2 text-sm text-blue-100/75">İki marka, bir vizyon</p>
