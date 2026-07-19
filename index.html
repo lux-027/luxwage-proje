@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LuxWage - Maaş ve Devamsızlık Takip Sistemi</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="görsel/luxwagelogo.png">
 
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
@@ -70,8 +70,8 @@
             <div class="flex justify-between items-center">
                 <!-- Logo -->
                 <div class="flex items-center">
-                    <i class="fas fa-coins text-emerald-400 text-xl md:text-2xl mr-2"></i>
-                    <span class="text-white text-lg md:text-xl font-bold">LuxWage</span>
+                    <img src="görsel/luxwagelogo.png" alt="LuxWage" class="mr-2 h-9 w-9 rounded-lg object-contain md:h-10 md:w-10">
+                    <span class="inline-block bg-gradient-to-r from-white via-blue-100 to-emerald-200 bg-clip-text text-xl font-black tracking-tight text-transparent md:text-2xl" style="font-family: 'Trebuchet MS', sans-serif; transform: rotate(-4.3deg);">LuxWage</span>
                 </div>
                 
                     <!-- Auth Buttons (Giriş yapmamış kullanıcılar için) -->
@@ -111,16 +111,10 @@
             .hero-cards { animation: fadeSlideUp .8s .35s ease both; }
             .hero-welcome { animation: fadeSlideUp .8s .5s ease both; }
             .card-3d {
-                transform-style: preserve-3d;
-                transition: transform .4s ease, box-shadow .4s ease;
                 background: linear-gradient(135deg,rgba(255,255,255,.10) 0%,rgba(255,255,255,.04) 100%);
                 backdrop-filter: blur(16px);
                 border: 1px solid rgba(255,255,255,.18);
                 box-shadow: 0 8px 32px rgba(0,0,0,.3), inset 0 1px 0 rgba(255,255,255,.15);
-            }
-            .card-3d:hover {
-                transform: translateY(-10px) rotateX(4deg) rotateY(-3deg) scale(1.03);
-                box-shadow: 0 24px 48px rgba(0,0,0,.4), 0 0 32px rgba(52,211,153,.2), inset 0 1px 0 rgba(255,255,255,.2);
             }
             .card-icon-wrap {
                 width:56px; height:56px;
@@ -129,9 +123,7 @@
                 margin:0 auto 14px;
                 background: linear-gradient(135deg,rgba(52,211,153,.25),rgba(59,130,246,.2));
                 box-shadow: 0 4px 16px rgba(52,211,153,.2), inset 0 1px 0 rgba(255,255,255,.15);
-                animation: floatY 3s ease-in-out infinite;
             }
-            .card-icon-wrap:nth-child(1) { animation-delay:0s; }
             .glow-btn { animation: glowPulse 2.5s ease-in-out infinite; }
             .badge-pill {
                 display:inline-flex; align-items:center; gap:6px;
@@ -511,7 +503,7 @@
             <div class="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
                 <div class="col-span-2 md:col-span-1">
                     <div class="flex items-center mb-3">
-                        <i class="fas fa-coins text-emerald-400 text-xl mr-2"></i>
+                        <img src="görsel/luxwagelogo.png" alt="LuxWage" class="mr-2 h-8 w-8 rounded-lg object-contain">
                         <span class="text-white text-lg font-bold">LuxWage</span>
                     </div>
                     <p class="text-blue-300 text-sm leading-relaxed">Çalışan maaş ve devamsızlık takibini kolaylaştıran modern, ücretsiz platform.</p>

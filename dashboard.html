@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>LuxWage - Yönetim Paneli</title>
-    <link rel="icon" type="image/svg+xml" href="favicon.svg">
+    <link rel="icon" type="image/png" href="görsel/luxwagelogo.png">
 
     <!-- Open Graph / Social Media -->
     <meta property="og:type" content="website">
@@ -37,11 +37,9 @@
     <!-- Dashboard -->
     <div id="dashboard" class="min-h-screen">
         <!-- Mobile Top Bar -->
-        <header class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white shadow-md z-50 flex items-center justify-between px-4">
+        <header id="mobileTopBar" class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white shadow-md z-50 flex items-center justify-between px-4">
             <a href="index.html" class="flex items-center gap-2 font-bold text-xl">
-                <div class="bg-gradient-to-br from-emerald-400 to-blue-500 w-9 h-9 rounded-xl flex items-center justify-center shadow-md">
-                    <i class="fas fa-coins text-white text-sm"></i>
-                </div>
+                <img src="görsel/luxwagelogo.png" alt="LuxWage" class="h-9 w-9 rounded-xl object-contain shadow-md">
                 <span class="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">LuxWage</span>
             </a>
             <div class="flex items-center gap-2">
@@ -76,7 +74,7 @@
         
         <div class="flex">
             <!-- Sidebar -->
-            <aside class="w-64 bg-blue-900 text-white shadow-xl flex flex-col fixed left-0 top-16 md:top-0 h-[calc(100vh-4rem)] md:h-screen overflow-y-auto transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-40">
+            <aside id="dashboardSidebar" class="w-64 bg-blue-900 text-white shadow-xl flex flex-col fixed left-0 top-16 md:top-0 h-[calc(100vh-4rem)] md:h-screen overflow-y-auto transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-40">
                 <div class="p-6 flex-1 flex flex-col">
                     <div class="flex items-center mb-8">
                         <a href="index.html" class="md:hidden flex items-center w-full text-white hover:text-blue-200 transition-colors font-medium">
@@ -85,9 +83,7 @@
                         </a>
                         <div class="hidden md:flex flex-col items-center w-full gap-2">
                             <a href="index.html" class="flex items-center gap-3 text-white hover:text-gray-200 transition-colors font-bold group">
-                                <div class="bg-gradient-to-br from-emerald-400 to-blue-500 w-9 h-9 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-500/20">
-                                    <i class="fas fa-coins text-white text-sm"></i>
-                                </div>
+                                <img src="görsel/luxwagelogo.png" alt="LuxWage" class="h-9 w-9 rounded-lg object-contain shadow-lg">
                                 <span class="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent tracking-tight text-2xl">LuxWage</span>
                             </a>
                             <a href="index.html" class="flex items-center w-full px-4 py-3 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors font-medium mb-2 mt-4">
@@ -113,6 +109,10 @@
                         <a href="#" id="accountPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
                             <i class="fas fa-user-cog w-5 mr-3"></i>
                             Hesabım
+                        </a>
+                        <a href="#" id="studioPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                            <i class="fas fa-star w-5 mr-3"></i>
+                            Lux Studio
                         </a>
                     </nav>
                     
@@ -155,9 +155,9 @@
             <div id="sidebarOverlay" class="fixed inset-0 bg-black/40 z-30 opacity-0 invisible md:hidden transition-opacity duration-300"></div>
             
             <!-- Main Content -->
-            <main class="flex-1 md:ml-64 pt-16 md:pt-0">
+            <main id="dashboardMain" class="flex-1 md:ml-64 pt-16 md:pt-0">
                 <!-- Top Header -->
-                <header class="bg-white shadow-sm border-b border-gray-200">
+                <header id="dashboardTopBar" class="bg-white shadow-sm border-b border-gray-200">
                     <div class="px-3 md:px-6 py-3 md:py-4 flex justify-between items-center gap-2 md:gap-4">
                         <h1 id="pageTitle" class="text-lg md:text-2xl font-bold text-gray-800 truncate"><i class="fas fa-home hidden md:inline mr-2 text-blue-600"></i>Ana Sayfa</h1>
                         <div class="flex flex-col items-end md:flex-row md:items-center md:space-x-4 text-gray-600 ml-auto shrink-0 gap-0.5 md:gap-0">
@@ -174,19 +174,27 @@
                             </button>
                             <!-- Desktop Bildirim Butonu -->
                             <div class="relative hidden md:block ml-1">
-                                <button type="button" id="desktopNotifBtn" class="w-9 h-9 flex items-center justify-center rounded-lg bg-yellow-50 text-yellow-600 hover:bg-yellow-100 transition-colors relative border border-yellow-200" aria-label="Bildirimler">
+                                <button type="button" id="desktopNotifBtn" class="relative flex h-9 w-9 items-center justify-center rounded-lg border border-blue-300 bg-gradient-to-br from-sky-400 to-blue-500 text-white shadow-sm transition-colors hover:from-sky-500 hover:to-blue-600" aria-label="Bildirimler">
                                     <i class="fas fa-bell text-sm"></i>
                                     <span id="desktopNotifBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center"></span>
                                 </button>
-                                <div id="desktopNotifPanel" class="hidden absolute right-0 top-11 w-80 bg-white border border-gray-200 rounded-2xl shadow-2xl z-[999] overflow-hidden">
-                                    <div class="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50">
-                                        <span class="font-bold text-gray-800 text-sm">Bildirimler</span>
-                                        <button id="desktopNotifClose" class="text-gray-400 hover:text-gray-600 text-xs"><i class="fas fa-times"></i></button>
-                                    </div>
-                                    <div id="desktopNotifList" class="max-h-80 overflow-y-auto">
-                                        <div class="px-4 py-5 text-center text-gray-400 text-sm">
-                                            <i class="fas fa-bell-slash text-2xl mb-2 block"></i>
-                                            Henüz bildirim yok
+                                <div id="desktopNotifPanel" class="hidden fixed inset-0 z-[9999] items-center justify-center bg-slate-950/45 p-4 backdrop-blur-sm">
+                                    <div class="w-full max-w-lg overflow-hidden rounded-3xl bg-white shadow-2xl">
+                                        <div class="flex items-center justify-between bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-5 text-white">
+                                            <div class="flex items-center gap-3">
+                                                <div class="flex h-10 w-10 items-center justify-center rounded-2xl bg-white/15"><i class="fas fa-bell"></i></div>
+                                                <div>
+                                                    <h2 class="text-lg font-bold">Bildirimler</h2>
+                                                    <p class="text-xs text-blue-100">Son işlemleriniz ve güncellemeler</p>
+                                                </div>
+                                            </div>
+                                            <button id="desktopNotifClose" class="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20" aria-label="Bildirimleri kapat"><i class="fas fa-times"></i></button>
+                                        </div>
+                                        <div id="desktopNotifList" class="max-h-[60vh] overflow-y-auto bg-slate-50 p-2">
+                                            <div class="px-4 py-12 text-center text-gray-400 text-sm">
+                                                <i class="fas fa-bell-slash text-3xl mb-3 block text-gray-300"></i>
+                                                Henüz bildirim yok
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
@@ -216,6 +224,8 @@
                     <div id="pastEmployeesSection" style="display: none;">
                         <!-- Past employees list will be loaded here -->
                     </div>
+
+                    <div id="studioSection" style="display: none;"></div>
                 </div>
             </main>
         </div>
@@ -387,9 +397,9 @@
     </div>
     
     <!-- Absence Modal -->
-    <div id="absenceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-4 transform transition-all">
-            <div class="p-6">
+    <div id="absenceModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-2 md:p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md transform transition-all max-h-[92vh] overflow-y-auto">
+            <div class="p-4 md:p-6">
                 <div class="flex justify-between items-center mb-6">
                     <h3 class="text-xl font-bold text-gray-800">
                         <i class="fas fa-calendar-times text-red-500 mr-2"></i>
@@ -410,7 +420,7 @@
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Devamsızlık Tarihi</label>
-                        <input type="date" id="absenceDate" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        <input type="date" id="absenceDate" required class="box-border min-w-0 w-full px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 md:px-4 md:text-base">
                         <p id="absenceDateWarning" class="hidden text-xs text-red-600 mt-1 font-medium">
                             <i class="fas fa-exclamation-circle mr-1"></i>
                             Bu güne zaten devamsızlık kaydedilmiş
@@ -428,12 +438,12 @@
                         </p>
                     </div>
                     
-                    <div class="flex space-x-3 pt-4">
-                        <button type="submit" id="absenceSubmitBtn" class="flex-1 bg-red-500 text-white py-2 rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                            <i class="fas fa-check mr-2"></i>
+                    <div class="flex gap-2 pt-4 md:gap-3">
+                        <button type="submit" id="absenceSubmitBtn" class="min-w-0 flex-1 px-1 py-2 text-[10px] leading-tight text-white rounded-lg bg-red-500 hover:bg-red-600 transition-colors whitespace-normal disabled:opacity-50 disabled:cursor-not-allowed md:px-3 md:text-base">
+                            <i class="fas fa-check mr-1 md:mr-2"></i>
                             Devamsızlık Kaydet
                         </button>
-                        <button type="button" id="cancelAbsenceBtn" class="flex-1 bg-gray-300 text-gray-700 py-2 rounded-lg hover:bg-gray-400 transition-colors">
+                        <button type="button" id="cancelAbsenceBtn" class="min-w-0 flex-1 px-1 py-2 text-xs text-gray-700 bg-gray-300 rounded-lg hover:bg-gray-400 transition-colors md:px-3 md:text-base">
                             İptal
                         </button>
                     </div>
@@ -713,11 +723,11 @@
     </div>
     
     <!-- Daily Details Modal -->
-    <div id="dailyDetailsModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl mx-4 transform transition-all">
-            <div class="p-6">
-                <div class="flex justify-between items-center mb-6">
-                    <h3 class="text-xl font-bold text-gray-800">
+    <div id="dailyDetailsModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-2 md:p-4">
+        <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl transform transition-all max-h-[92vh] overflow-y-auto">
+            <div class="p-3 md:p-6">
+                <div class="flex justify-between items-center mb-3 md:mb-6">
+                    <h3 class="text-base font-bold text-gray-800 md:text-xl">
                         <i class="fas fa-calendar-day text-purple-500 mr-2"></i>
                         Son 1 Aylık Hareket Dökümü
                     </h3>
@@ -726,7 +736,7 @@
                     </button>
                 </div>
                 
-                <div id="dailyDetailsList" class="bg-gray-50 rounded-lg overflow-hidden max-h-[60vh] overflow-y-auto">
+                <div id="dailyDetailsList" class="bg-gray-50 rounded-lg overflow-auto max-h-[68vh]">
                     <!-- Daily logs will be loaded here -->
                 </div>
             </div>
@@ -900,9 +910,7 @@
                     <i class="fas fa-times text-base"></i>
                 </button>
                 <!-- Logo -->
-                <div class="bg-white/20 backdrop-blur-sm w-12 h-12 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-lg">
-                    <i class="fas fa-coins text-white text-lg"></i>
-                </div>
+                <img src="görsel/luxwagelogo.png" alt="LuxWage" class="mx-auto mb-2 h-12 w-12 rounded-xl object-contain shadow-lg">
                 <h2 class="text-white font-bold text-xl tracking-tight">LuxWage</h2>
                 <p class="text-blue-100 text-xs mt-0.5">Maaş & Devamsızlık Takip Sistemi</p>
             </div>

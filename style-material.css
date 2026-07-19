@@ -1366,3 +1366,26 @@ html {
 .info-value.danger {
     color: var(--danger-color);
 }
+
+@media (prefers-reduced-motion: reduce), (max-width: 767px) {
+    *:not(.lux-studio-star),
+    *:not(.lux-studio-star)::before,
+    *:not(.lux-studio-star)::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+    }
+
+    [class*="backdrop-blur"] {
+        backdrop-filter: none !important;
+        -webkit-backdrop-filter: none !important;
+    }
+}
+
+@media (hover: none) {
+    .hover\:scale-105:hover,
+    .hover\:-translate-y-1:hover {
+        transform: none;
+    }
+}

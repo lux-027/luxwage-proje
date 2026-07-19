@@ -2,6 +2,8 @@
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut, updateProfile, updatePassword, EmailAuthProvider, reauthenticateWithCredential, sendPasswordResetEmail, deleteUser, GoogleAuthProvider, signInWithPopup, reauthenticateWithPopup } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+import luxStudioLogo from "./görsel/luxstudio_logo.png";
+import luxWageLogo from "./görsel/luxwagelogo.png";
 
 // Firebase Config
 const firebaseConfig = {
@@ -20,7 +22,7 @@ const db = getFirestore(app);
 
 // Yerel tarih string'i uret (UTC timezone kaymasini onle)
 function toLocalDateStr(d) {
-    const date = new Date(d);
+    const date = parseLocalDate(d);
     if (isNaN(date.getTime())) return '';
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -30,17 +32,27 @@ function toLocalDateStr(d) {
 
 // Tarih string'ini yerel saat 00:00 olarak Date'e cevir (UTC kaymasini onle)
 // 'YYYY-MM-DD', 'YYYY-MM-DDTHH:mm:ss' veya ISO timestamp formatlarini kabul eder
-function parseLocalDate(dateStr) {
-    const str = String(dateStr || '');
-    const match = str.match(/^(\d{4})-(\d{2})-(\d{2})/);
+function parseLocalDate(d) {
+    if (d instanceof Date) {
+        const date = new Date(d);
+        date.setHours(0, 0, 0, 0);
+        return date;
+    }
+    if (typeof d === 'number' && !isNaN(d)) {
+        const date = new Date(d);
+        date.setHours(0, 0, 0, 0);
+        return date;
+    }
+    const str = String(d || '');
+    const match = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
     if (match) {
         const [, year, month, day] = match;
         return new Date(Number(year), Number(month) - 1, Number(day), 0, 0, 0, 0);
     }
-    const d = new Date(str);
-    if (isNaN(d.getTime())) return new Date(NaN);
-    d.setHours(0, 0, 0, 0);
-    return d;
+    const date = new Date(str);
+    if (isNaN(date.getTime())) return new Date(NaN);
+    date.setHours(0, 0, 0, 0);
+    return date;
 }
 
 // Global variable for employee deletion
@@ -477,6 +489,7 @@ class LuxWage {
             if (snap.exists()) {
                 const data = snap.data();
                 this.employees = Array.isArray(data.employees) ? data.employees : [];
+                this.normalizeAllEmployeeDates();
             } else {
                 this.employees = [];
             }
@@ -501,6 +514,25 @@ class LuxWage {
     // saveToFirebase alias
     saveToFirebase() {
         return this.saveData();
+    }
+
+    // Kayıtlı tarihleri local YYYY-MM-DD formatına normalize et (saat/timezone kaymalarını engelle)
+    normalizeAllEmployeeDates() {
+        this.employees.forEach(emp => {
+            if (emp.departureDate) emp.departureDate = toLocalDateStr(parseLocalDate(emp.departureDate));
+            if (emp.workStopDate) emp.workStopDate = toLocalDateStr(parseLocalDate(emp.workStopDate));
+            if (emp.workResumeDate) emp.workResumeDate = toLocalDateStr(parseLocalDate(emp.workResumeDate));
+            if (Array.isArray(emp.absenceHistory)) {
+                emp.absenceHistory.forEach(absence => {
+                    if (absence && absence.date) absence.date = toLocalDateStr(parseLocalDate(absence.date));
+                });
+            }
+            if (Array.isArray(emp.paymentHistory)) {
+                emp.paymentHistory.forEach(payment => {
+                    if (payment && payment.date) payment.date = toLocalDateStr(parseLocalDate(payment.date));
+                });
+            }
+        });
     }
 
     // Tarihi güncelle
@@ -655,10 +687,28 @@ class LuxWage {
     // Sayfa göster
     showPage(pageName) {
         this.currentPage = pageName;
+        const isStudioPage = pageName === 'studio';
+        const dashboardSidebar = document.getElementById('dashboardSidebar');
+        const dashboardTopBar = document.getElementById('dashboardTopBar');
+        const mobileTopBar = document.getElementById('mobileTopBar');
+        const dashboardMain = document.getElementById('dashboardMain');
+        const pageContent = document.getElementById('pageContent');
+        const sidebarOverlay = document.getElementById('sidebarOverlay');
+        [dashboardSidebar, dashboardTopBar, mobileTopBar].forEach(element => {
+            if (element) element.style.display = isStudioPage ? 'none' : '';
+        });
+        if (sidebarOverlay) sidebarOverlay.style.display = isStudioPage ? 'none' : '';
+        if (dashboardMain) {
+            dashboardMain.style.marginLeft = isStudioPage ? '0' : '';
+            dashboardMain.style.paddingTop = isStudioPage ? '0' : '';
+        }
+        if (pageContent) pageContent.style.padding = isStudioPage ? '0' : '';
+
         const homeSection = document.getElementById('homeSection');
         const employeesSection = document.getElementById('employeesSection');
         const accountSection = document.getElementById('accountSection');
         const pastEmployeesSection = document.getElementById('pastEmployeesSection');
+        const studioSection = document.getElementById('studioSection');
         const pageTitle = document.getElementById('pageTitle');
         
         // Hide all sections
@@ -666,6 +716,7 @@ class LuxWage {
         if (employeesSection) employeesSection.style.display = 'none';
         if (accountSection) accountSection.style.display = 'none';
         if (pastEmployeesSection) pastEmployeesSection.style.display = 'none';
+        if (studioSection) studioSection.style.display = 'none';
         
         // Nav item'larını güncelle
         document.querySelectorAll('.nav-item').forEach(item => {
@@ -701,7 +752,67 @@ class LuxWage {
                 if (pastEmployeesSection) pastEmployeesSection.style.display = 'block';
                 this.renderPastEmployeesPage();
                 break;
+            case 'studio':
+                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-star hidden md:inline mr-2 text-blue-600"></i>Lux Studio';
+                if (studioSection) studioSection.style.display = 'block';
+                this.renderStudioPage();
+                break;
         }
+    }
+
+    renderStudioPage() {
+        const studioSection = document.getElementById('studioSection');
+        if (!studioSection) return;
+
+        const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+        const starCount = prefersReducedMotion ? 0 : 64;
+        const stars = Array.from({ length: starCount }, (_, index) => {
+            const x = (index * 37 + 11) % 100;
+            const y = (index * 61 + 7) % 100;
+            const size = index % 10 === 0 ? 3 : index % 4 === 0 ? 2 : 1;
+            const delay = -(index % 12) * 0.45;
+            const duration = 3.4 + (index % 6) * 0.6;
+            return `<span class="lux-studio-star" style="left:${x}%;top:${y}%;width:${size}px;height:${size}px;animation-delay:${delay}s;animation-duration:${duration}s"></span>`;
+        }).join('');
+
+        studioSection.innerHTML = `
+            <style>
+                @keyframes luxStudioTwinkle { 0%,100% { opacity:.18; transform:scale(.7); } 50% { opacity:.85; transform:scale(1.25); } }
+                .lux-studio-page { position:relative; isolation:isolate; overflow:hidden; min-height:100vh; background:radial-gradient(circle at 50% 37%, #302967 0%, #201c4c 42%, #101633 100%); }
+                .lux-studio-page::before { content:''; position:absolute; inset:0; z-index:-2; background:radial-gradient(circle at 15% 80%, rgba(59,130,246,.13), transparent 28%), radial-gradient(circle at 88% 20%, rgba(147,197,253,.08), transparent 25%); }
+                .lux-studio-star { position:absolute; z-index:-1; display:block; border-radius:999px; background:#fff; box-shadow:0 0 5px rgba(219,234,254,.65); animation:luxStudioTwinkle ease-in-out infinite; }
+            </style>
+            <section class="lux-studio-page flex items-center justify-center px-4 py-12 text-white md:px-10 md:py-16">
+                ${stars}
+                <button type="button" onclick="showPage('home')" class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.10] px-3 py-1.5 text-xs font-medium text-blue-50 transition-colors hover:bg-white/[0.18] md:left-6 md:top-6"><i class="fas fa-arrow-left"></i> Geri</button>
+                <div class="w-full max-w-3xl text-center">
+                    <h2 class="text-4xl font-black tracking-tight md:text-5xl">Lux<span class="text-purple-300">Studio</span></h2>
+                    <p class="mt-2 text-sm text-blue-100/75">İki marka, bir vizyon</p>
+
+                    <div class="mt-9 grid gap-5 text-center sm:grid-cols-2 sm:gap-7">
+                        <article class="rounded-2xl border border-white/15 bg-white/[0.08] p-7 shadow-xl backdrop-blur-sm md:p-8">
+                            <div class="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-md">
+                                <img src="${luxWageLogo}" alt="LuxWage" class="h-full w-full object-contain">
+                            </div>
+                            <h3 class="mt-5 text-3xl font-black">Lux<span class="text-blue-200">Wage</span></h3>
+                            <p class="mt-3 min-h-12 text-sm leading-6 text-blue-100/75">Maaş, ödeme ve çalışan takibini tek yerde yönetin.</p>
+                            <span class="mt-5 inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2 text-xs font-semibold text-slate-700"><i class="fas fa-check-circle"></i> Takip sistemi</span>
+                        </article>
+
+                        <article class="rounded-2xl border border-white/15 bg-white/[0.08] p-7 shadow-xl backdrop-blur-sm md:p-8">
+                            <div class="mx-auto flex h-24 w-24 items-center justify-center overflow-hidden rounded-2xl bg-white shadow-md">
+                                <img src="${luxStudioLogo}" alt="LUX INC Teknoloji Şirketi" class="h-full w-full object-contain">
+                            </div>
+                            <h3 class="mt-5 text-3xl font-black">LUX <span class="text-black">INC</span></h3>
+                            <p class="mt-3 min-h-12 text-sm leading-6 text-blue-100/75">Ana markamız. Dijital stüdyo çözümleri için LUX INC.</p>
+                            <a href="https://www.instagram.com/lux.studio.inc/" target="_blank" rel="noopener noreferrer" class="mt-5 inline-flex items-center gap-1.5 rounded-full bg-white px-5 py-2 text-xs font-semibold text-slate-700 transition-colors hover:bg-blue-50"><i class="fab fa-instagram"></i> Instagram'dan takip edin</a>
+                        </article>
+                    </div>
+
+                    <div class="mt-8 inline-flex items-center gap-1.5 rounded-full border border-white/15 bg-white/[0.08] px-5 py-2 text-xs text-blue-100/80 backdrop-blur-sm"><i class="fas fa-handshake text-blue-200"></i> LuxWage × LUX INC — Ortak çalışma</div>
+                </div>
+            </section>
+        `;
     }
 
     // Ana sayfayı render et
@@ -800,12 +911,12 @@ class LuxWage {
                 </div>
             </div>
             
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">
-                    <i class="fas fa-bell text-blue-500 mr-2"></i>
+            <div class="bg-white rounded-xl shadow-lg p-3 md:p-6">
+                <h2 class="mb-2 text-base font-bold text-gray-800 md:mb-4 md:text-xl">
+                    <i class="fas fa-bell text-blue-500 mr-1 md:mr-2"></i>
                     Son İşlemler ve Bildirimler
                 </h2>
-                <div id="recentActivityList" class="max-h-80 overflow-y-auto pr-1">
+                <div id="recentActivityList" class="max-h-56 overflow-y-auto pr-1 md:max-h-80">
                     <!-- Activities will be loaded here -->
                 </div>
             </div>
@@ -947,7 +1058,8 @@ class LuxWage {
         }
         
         // Aktiviteleri render et
-        const activitiesHTML = recentActivities.slice(0, 50).map(activity => {
+        const activityRenderLimit = (navigator.hardwareConcurrency || 8) <= 4 ? 15 : 50;
+        const activitiesHTML = recentActivities.slice(0, activityRenderLimit).map(activity => {
             const timeAgo = this.getTimeAgo(activity.timestamp);
             const dateStr = new Date(activity.timestamp).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' });
             
@@ -1429,9 +1541,6 @@ class LuxWage {
                         <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-2 py-1.5 rounded-lg hover:bg-purple-600 transition-colors text-[10px]">
                             <i class="fas fa-info-circle mr-0.5"></i>Detay
                         </button>
-                        <button data-id="${emp.id}" class="historyBtn bg-blue-500 text-white px-2 py-1.5 rounded-lg hover:bg-blue-600 transition-colors text-[10px]">
-                            <i class="fas fa-history mr-0.5"></i>Geçmiş
-                        </button>
                         <!-- İşlemler Dropdown -->
                         <div class="relative">
                             <button data-id="${emp.id}" class="actionsMenuBtn bg-gray-700 text-white px-2 py-1.5 rounded-lg hover:bg-gray-800 transition-colors text-[10px] flex items-center gap-0.5">
@@ -1455,6 +1564,9 @@ class LuxWage {
                                 <button data-id="${emp.id}" class="paymentBtn w-full flex items-center gap-2 px-3 py-2 text-xs text-green-600 hover:bg-green-50 transition-colors">
                                     <i class="fas fa-money-check-alt w-4"></i>Ödeme
                                 </button>
+                                <button data-id="${emp.id}" class="historyBtn w-full flex items-center gap-2 px-3 py-2 text-xs text-blue-600 hover:bg-blue-50 transition-colors">
+                                    <i class="fas fa-history w-4"></i>Geçmiş
+                                </button>
                                 <div class="border-t border-gray-100"></div>
                                 <button data-id="${emp.id}" class="terminateBtn w-full flex items-center gap-2 px-3 py-2 text-xs text-orange-600 hover:bg-orange-50 transition-colors">
                                     <i class="fas fa-door-open w-4"></i>İşten Çıkar
@@ -1470,21 +1582,31 @@ class LuxWage {
                         <button data-id="${emp.id}" class="detailsBtn bg-purple-500 text-white px-3 py-2 rounded-lg hover:bg-purple-600 transition-colors text-sm">
                             <i class="fas fa-info-circle mr-1"></i>Detay
                         </button>
-                        <button data-id="${emp.id}" class="absenceBtn bg-red-500 text-white px-3 py-2 rounded-lg hover:bg-red-600 transition-colors text-sm">
-                            <i class="fas fa-calendar-times mr-1"></i>Devamsızlık
-                        </button>
-                        <button data-id="${emp.id}" class="toggleWorkBtn ${emp.isStopped ? 'bg-green-500 hover:bg-green-600' : 'bg-yellow-500 hover:bg-yellow-600'} text-white px-3 py-2 rounded-lg transition-colors text-sm">
-                            <i class="fas ${emp.isStopped ? 'fa-play' : 'fa-pause'} mr-1"></i>${emp.isStopped ? 'Devam Ettir' : 'İşi Durdur'}
-                        </button>
-                        <button data-id="${emp.id}" class="paymentBtn bg-green-500 text-white px-3 py-2 rounded-lg hover:bg-green-600 transition-colors text-sm">
-                            <i class="fas fa-money-check-alt mr-1"></i>Ödeme
-                        </button>
-                        <button data-id="${emp.id}" class="historyBtn bg-blue-500 text-white px-3 py-2 rounded-lg hover:bg-blue-600 transition-colors text-sm">
-                            <i class="fas fa-history mr-1"></i>Geçmiş
-                        </button>
-                        <button data-id="${emp.id}" class="terminateBtn bg-orange-500 text-white px-3 py-2 rounded-lg hover:bg-orange-600 transition-colors text-sm">
-                            <i class="fas fa-door-open mr-1"></i>İşten Çıkar
-                        </button>
+                        <div class="relative">
+                            <button data-id="${emp.id}" class="actionsMenuBtn bg-gray-700 text-white px-3 py-2 rounded-lg hover:bg-gray-800 transition-colors text-sm flex items-center gap-1">
+                                <i class="fas fa-ellipsis-v"></i>
+                                <span>Diğer İşlemler</span>
+                            </button>
+                            <div class="actionsDropdown hidden absolute right-0 bottom-full mb-1 bg-white border border-gray-200 rounded-xl shadow-2xl z-50 min-w-[170px] overflow-visible">
+                                <button data-id="${emp.id}" class="absenceBtn w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 transition-colors">
+                                    <i class="fas fa-calendar-times w-4"></i>Devamsızlık
+                                </button>
+                                <button data-id="${emp.id}" class="toggleWorkBtn w-full flex items-center gap-2 px-3 py-2 text-sm ${emp.isStopped ? 'text-green-600 hover:bg-green-50' : 'text-yellow-600 hover:bg-yellow-50'} transition-colors">
+                                    <i class="fas ${emp.isStopped ? 'fa-play' : 'fa-pause'} w-4"></i>
+                                    <span>${emp.isStopped ? 'Devam Ettir' : 'İşi Durdur'}</span>
+                                </button>
+                                <button data-id="${emp.id}" class="paymentBtn w-full flex items-center gap-2 px-3 py-2 text-sm text-green-600 hover:bg-green-50 transition-colors">
+                                    <i class="fas fa-money-check-alt w-4"></i>Ödeme
+                                </button>
+                                <button data-id="${emp.id}" class="historyBtn w-full flex items-center gap-2 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 transition-colors">
+                                    <i class="fas fa-history w-4"></i>Geçmiş
+                                </button>
+                                <div class="border-t border-gray-100"></div>
+                                <button data-id="${emp.id}" class="terminateBtn w-full flex items-center gap-2 px-3 py-2 text-sm text-orange-600 hover:bg-orange-50 transition-colors">
+                                    <i class="fas fa-door-open w-4"></i>İşten Çıkar
+                                </button>
+                            </div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -2652,11 +2774,15 @@ class LuxWage {
 
         let totalDebt = 0;
         let periodStart = new Date(startDate);
+        let skipPartial = false;
 
         // Her tam ödeme dönemi için: günlük ücret × çalışılan gün sayısı
         paymentDates.forEach(paymentDate => {
             // Eğer son tarih bugünse ve bu ödeme günü bugünse, saat 18'den önce ekleme
             if (isEndDateToday && paymentDate.getTime() === today.getTime() && currentHour < 18) {
+                // Bugünün ödemesi 18:00'den önce henüz yapılmadı; kısmi dönem de eklenmesin
+                periodStart = new Date(paymentDate);
+                skipPartial = true;
                 return;
             }
 
@@ -2670,7 +2796,7 @@ class LuxWage {
                 while (currentDate < paymentDate) {
                     const dateStr = toLocalStr(currentDate);
                     const isClosed = this.isClosedDay(currentDate, employee);
-                    const isAbsent = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === dateStr);
+                    const isAbsent = employee.absenceHistory && employee.absenceHistory.some(absence => toLocalDateStr(parseLocalDate(absence.date)) === dateStr);
 
                     if (!isClosed && !isAbsent) {
                         workingDays++;
@@ -2688,7 +2814,7 @@ class LuxWage {
         });
 
         // Son ödeme tarihinden endDate'e kadar olan kısmi dönem
-        if (periodStart <= end) {
+        if (!skipPartial && periodStart < end) {
             let partialEnd = new Date(end);
             // Eğer bugünse ve 18'den önceyse, bugünü sayma
             if (isEndDateToday && currentHour < 18) {
@@ -2707,7 +2833,7 @@ class LuxWage {
                     while (currentDate <= partialEnd) {
                         const dateStr = toLocalStr(currentDate);
                         const isClosed = this.isClosedDay(currentDate, employee);
-                        const isAbsent = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === dateStr);
+                        const isAbsent = employee.absenceHistory && employee.absenceHistory.some(absence => toLocalDateStr(parseLocalDate(absence.date)) === dateStr);
 
                         if (!isClosed && !isAbsent) {
                             workingDays++;
@@ -2724,9 +2850,8 @@ class LuxWage {
         // Ödemeleri çıkar
         if (employee.paymentHistory && employee.paymentHistory.length > 0) {
             employee.paymentHistory.forEach(payment => {
-                const paymentDate = new Date(payment.date);
-                paymentDate.setHours(0, 0, 0, 0);
-                if (paymentDate <= end) {
+                const paymentDate = parseLocalDate(payment.date);
+                if (!isNaN(paymentDate.getTime()) && paymentDate <= end) {
                     totalDebt -= Math.abs(Number(payment.amount) || 0);
                 }
             });
@@ -2960,11 +3085,8 @@ class LuxWage {
                     const currentDateStr = toLocalStr2(currentDate);
                     const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
                     
-                    // Devamsızlık günü ise borç çıkar
-                    if (isAbsentDay) {
-                        totalDebt -= dailyWage;
-                    } else {
-                        // Normal gün için borç ekle
+                    // Devamsızlık gününde borç eklenmez; normal gün için borç ekle
+                    if (!isAbsentDay) {
                         totalDebt += dailyWage;
                     }
                 }
@@ -2997,7 +3119,17 @@ class LuxWage {
         
         // Aylık maaşlı çalışanlar için özel hesaplama
         if (employee.salaryType === 'monthly') {
-            return this.calculateMonthlyDebt(employee, today);
+            const currentHour = new Date().getHours();
+            const todayPaymentDate = this.getMonthlyPaymentDate(today.getFullYear(), today.getMonth(), employee);
+            let effectiveEnd = todayPaymentDate;
+            // Ödeme günü henüz 18:00'e gelmediyse (veya bugün ödeme gününden önceyse)
+            // sadece önceki ödeme gününe kadar olan tam dönemleri hesapla
+            if (today < todayPaymentDate || (today.getTime() === todayPaymentDate.getTime() && currentHour < 18)) {
+                const prevYear = today.getMonth() === 0 ? today.getFullYear() - 1 : today.getFullYear();
+                const prevMonth = today.getMonth() === 0 ? 11 : today.getMonth() - 1;
+                effectiveEnd = this.getMonthlyPaymentDate(prevYear, prevMonth, employee);
+            }
+            return this.calculateMonthlyDebt(employee, effectiveEnd);
         }
         
         const currentHour = new Date().getHours();
@@ -3015,11 +3147,8 @@ class LuxWage {
                 // Devamsızlık günü kontrolü
                 const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
                 
-                // Devamsızlık günü ise borç çıkar (geçmişe dönük devamsızlık için)
-                if (isAbsentDay) {
-                    totalDebt -= dailyWage;
-                } else {
-                    // Normal gün için borç ekle
+                // Devamsızlık gününde borç eklenmez; normal günler için ekle
+                if (!isAbsentDay) {
                     // Bugün için saat kontrolü: 18:00'den önce ise dahil etme
                     if (isToday) {
                         if (currentHour >= 18) {
@@ -3100,9 +3229,7 @@ class LuxWage {
             if (!this.isClosedDay(currentDate, employee)) {
                 const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
                 
-                if (isAbsentDay) {
-                    totalDebt -= dailyWage;
-                } else {
+                if (!isAbsentDay) {
                     if (isToday) {
                         if (currentHour >= 18) {
                             totalDebt += dailyWage;
@@ -3364,17 +3491,17 @@ function showHistory(employeeId) {
                 </select>
             </div>
         </div>
-        <div class="flex gap-2 mb-4 flex-wrap">
-            <button onclick="filterHistory('all', ${employee.id})" class="history-filter-btn px-4 py-2 rounded-lg bg-blue-500 text-white font-medium hover:bg-blue-600 transition-colors" data-category="all">
+        <div class="mb-4 flex flex-nowrap gap-1 overflow-x-auto pb-1 md:gap-2">
+            <button onclick="filterHistory('all', ${employee.id})" class="history-filter-btn shrink-0 whitespace-nowrap rounded-lg bg-blue-500 px-2 py-2 text-xs font-medium text-white transition-colors hover:bg-blue-600 md:px-4 md:text-base" data-category="all">
                 Tümü
             </button>
-            <button onclick="filterHistory('payments', ${employee.id})" class="history-filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors" data-category="payments">
+            <button onclick="filterHistory('payments', ${employee.id})" class="history-filter-btn shrink-0 whitespace-nowrap rounded-lg bg-gray-200 px-2 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-300 md:px-4 md:text-base" data-category="payments">
                 Ödemeler
             </button>
-            <button onclick="filterHistory('absences', ${employee.id})" class="history-filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors" data-category="absences">
+            <button onclick="filterHistory('absences', ${employee.id})" class="history-filter-btn shrink-0 whitespace-nowrap rounded-lg bg-gray-200 px-2 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-300 md:px-4 md:text-base" data-category="absences">
                 Devamsızlıklar
             </button>
-            <button onclick="filterHistory('debt', ${employee.id})" class="history-filter-btn px-4 py-2 rounded-lg bg-gray-200 text-gray-700 font-medium hover:bg-gray-300 transition-colors" data-category="debt">
+            <button onclick="filterHistory('debt', ${employee.id})" class="history-filter-btn shrink-0 whitespace-nowrap rounded-lg bg-gray-200 px-2 py-2 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-300 md:px-4 md:text-base" data-category="debt">
                 Borç
             </button>
         </div>
@@ -3647,11 +3774,8 @@ function calculateDebtAtDate(employee, targetDate) {
             const currentDateStr = toLocalDateStr(currentDate);
             const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
             
-            // Devamsızlık günü ise borç çıkar
-            if (isAbsentDay) {
-                totalDebt -= dailyWage;
-            } else {
-                // Normal gün için borç ekle
+            // Devamsızlık gününde borç eklenmez; normal gün için borç ekle
+            if (!isAbsentDay) {
                 totalDebt += dailyWage;
             }
         }
@@ -4001,21 +4125,21 @@ function openDailyDetails(employeeId) {
         }
         
         workDurationInfo = statusInfo + `
-            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
-                <div class="flex items-center justify-between flex-wrap gap-2">
+            <div class="mb-3 rounded-lg border border-blue-200 bg-blue-50 p-2 md:mb-4 md:p-4">
+                <div class="flex flex-wrap items-center justify-between gap-1.5 md:gap-2">
                     <div>
-                        <p class="text-sm text-blue-700">
-                            <i class="fas fa-calendar-check mr-2"></i>
+                        <p class="text-xs text-blue-700 md:text-sm">
+                            <i class="fas fa-calendar-check mr-1 md:mr-2"></i>
                             <strong>İşe Başlama:</strong> ${formattedStartDate}
                         </p>
-                        <p class="text-sm text-blue-700 mt-1">
-                            <i class="fas fa-clock mr-2"></i>
+                        <p class="mt-1 text-xs text-blue-700 md:text-sm">
+                            <i class="fas fa-clock mr-1 md:mr-2"></i>
                             <strong>Çalışılan Gün:</strong> ${daysWorked} gün
                         </p>
                     </div>
                     <div class="text-right">
-                        <p class="text-sm text-blue-700">
-                            <i class="fas fa-list mr-2"></i>
+                        <p class="text-xs text-blue-700 md:text-sm">
+                            <i class="fas fa-list mr-1 md:mr-2"></i>
                             <strong>Gösterilen:</strong> Son 30 gün
                         </p>
                     </div>
@@ -4027,11 +4151,11 @@ function openDailyDetails(employeeId) {
     if (dailyLogs.length === 0) {
         dailyDetailsList.innerHTML = workDurationInfo + '<p class="text-gray-500 text-center py-4">Henüz günlük kayıt yok</p>';
     } else {
-        let dailyLogsHTML = workDurationInfo + '<table class="w-full"><thead><tr class="bg-gray-200">';
-        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Tarih</th>';
-        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Günlük Tutar</th>';
-        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Durum</th>';
-        dailyLogsHTML += '<th class="px-4 py-2 text-left text-sm font-semibold text-gray-700">Toplam Borç</th>';
+        let dailyLogsHTML = workDurationInfo + '<table class="w-full min-w-[530px] md:min-w-0"><thead><tr class="bg-gray-200">';
+        dailyLogsHTML += '<th class="px-2 py-2 text-left text-xs font-semibold text-gray-700 md:px-4 md:text-sm">Tarih</th>';
+        dailyLogsHTML += '<th class="px-2 py-2 text-left text-xs font-semibold text-gray-700 md:px-4 md:text-sm">Günlük Tutar</th>';
+        dailyLogsHTML += '<th class="px-2 py-2 text-left text-xs font-semibold text-gray-700 md:px-4 md:text-sm">Durum</th>';
+        dailyLogsHTML += '<th class="px-2 py-2 text-left text-xs font-semibold text-gray-700 md:px-4 md:text-sm">Toplam Borç</th>';
         dailyLogsHTML += '</tr></thead><tbody>';
         
         dailyLogs.forEach(log => {
@@ -4074,12 +4198,12 @@ function openDailyDetails(employeeId) {
             
             dailyLogsHTML += `
                 <tr class="${rowClass} border-b border-gray-200">
-                    <td class="px-4 py-3 text-sm text-gray-800">${formattedDate}</td>
-                    <td class="px-4 py-3 text-sm font-medium ${log.amount > 0 ? 'text-gray-800' : 'text-gray-400'}">
+                    <td class="px-2 py-2 text-xs text-gray-800 md:px-4 md:py-3 md:text-sm">${formattedDate}</td>
+                    <td class="px-2 py-2 text-xs font-medium md:px-4 md:py-3 md:text-sm ${log.amount > 0 ? 'text-gray-800' : 'text-gray-400'}">
                         ${log.amount > 0 ? log.amount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + ' TL' : '-'}
                     </td>
-                    <td class="px-4 py-3 text-sm ${statusClass}">${statusText}${deductionText}</td>
-                    <td class="px-4 py-3 text-sm font-bold ${debtUpToDate >= 0 ? 'text-purple-700' : 'text-green-600'}">${formattedDebt} TL</td>
+                    <td class="px-2 py-2 text-xs md:px-4 md:py-3 md:text-sm ${statusClass}">${statusText}${deductionText}</td>
+                    <td class="px-2 py-2 text-xs font-bold md:px-4 md:py-3 md:text-sm ${debtUpToDate >= 0 ? 'text-purple-700' : 'text-green-600'}">${formattedDebt} TL</td>
                 </tr>
             `;
         });
@@ -4402,6 +4526,11 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('accountPageBtn')?.addEventListener('click', function(e) {
         e.preventDefault();
         luxwage.showPage('account');
+    });
+
+    document.getElementById('studioPageBtn')?.addEventListener('click', function(e) {
+        e.preventDefault();
+        luxwage.showPage('studio');
     });
     
     // Past employees page button event listener
@@ -5104,11 +5233,23 @@ document.addEventListener('DOMContentLoaded', function() {
     // Desktop bildirim paneli toggle
     document.getElementById('desktopNotifBtn')?.addEventListener('click', function(e) {
         e.stopPropagation();
-        document.getElementById('desktopNotifPanel')?.classList.toggle('hidden');
+        const panel = document.getElementById('desktopNotifPanel');
+        if (panel) {
+            const isHidden = panel.classList.contains('hidden');
+            panel.classList.toggle('hidden', !isHidden);
+            panel.classList.toggle('flex', isHidden);
+        }
         document.getElementById('mobileNotifPanel')?.classList.add('hidden');
     });
     document.getElementById('desktopNotifClose')?.addEventListener('click', function() {
-        document.getElementById('desktopNotifPanel')?.classList.add('hidden');
+        const panel = document.getElementById('desktopNotifPanel');
+        panel?.classList.add('hidden');
+        panel?.classList.remove('flex');
+    });
+    document.getElementById('desktopNotifPanel')?.addEventListener('click', function(e) {
+        if (e.target !== this) return;
+        this.classList.add('hidden');
+        this.classList.remove('flex');
     });
 
     document.addEventListener('click', function(e) {
@@ -5116,7 +5257,9 @@ document.addEventListener('DOMContentLoaded', function() {
             document.getElementById('mobileNotifPanel')?.classList.add('hidden');
         }
         if (!e.target.closest('#desktopNotifBtn') && !e.target.closest('#desktopNotifPanel')) {
-            document.getElementById('desktopNotifPanel')?.classList.add('hidden');
+            const panel = document.getElementById('desktopNotifPanel');
+            panel?.classList.add('hidden');
+            panel?.classList.remove('flex');
         }
     });
 
