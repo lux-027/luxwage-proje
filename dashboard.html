@@ -902,44 +902,45 @@
     <div id="notificationContainer" class="fixed bottom-4 right-4 z-50 space-y-2"></div>
     
     <!-- Share Modal -->
-    <div id="shareModal" class="fixed inset-0 bg-black/60 backdrop-blur-sm hidden z-[9999] flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden">
-            <!-- Üst gradient başlık -->
-            <div class="bg-gradient-to-br from-blue-600 via-blue-500 to-emerald-500 px-6 pt-5 pb-8 text-center relative">
-                <button id="shareModalClose" class="absolute top-3 right-3 text-white/70 hover:text-white transition-colors">
-                    <i class="fas fa-times text-base"></i>
+    <div id="shareModal" class="fixed inset-0 z-[9999] hidden items-center justify-center bg-slate-950/55 p-4 backdrop-blur-sm">
+        <div class="w-full max-w-md overflow-hidden rounded-[28px] border border-white/70 bg-white shadow-2xl">
+            <div class="relative overflow-hidden bg-gradient-to-br from-sky-500 via-blue-600 to-indigo-700 px-6 pb-16 pt-6 text-center">
+                <div class="absolute -left-12 -top-16 h-40 w-40 rounded-full bg-white/10"></div>
+                <div class="absolute -bottom-20 -right-10 h-44 w-44 rounded-full bg-cyan-300/15"></div>
+                <button id="shareModalClose" class="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-white transition-colors hover:bg-white/20" aria-label="Paylaşım penceresini kapat">
+                    <i class="fas fa-times"></i>
                 </button>
-                <!-- Logo -->
-                <img src="görsel/luxwagelogo.png" alt="LuxWage" class="mx-auto mb-2 h-12 w-12 rounded-xl object-contain shadow-lg">
-                <h2 class="text-white font-bold text-xl tracking-tight">LuxWage</h2>
-                <p class="text-blue-100 text-xs mt-0.5">Maaş & Devamsızlık Takip Sistemi</p>
+                <div class="relative">
+                    <div class="mx-auto flex h-16 w-16 items-center justify-center rounded-2xl bg-white p-1 shadow-xl shadow-blue-950/20">
+                        <img src="görsel/luxwagelogo.png" alt="LuxWage" class="h-full w-full rounded-xl object-contain">
+                    </div>
+                    <p class="mt-4 text-xs font-semibold uppercase tracking-[0.18em] text-blue-100">LuxWage</p>
+                    <h2 class="mt-1 text-2xl font-black tracking-tight text-white">Tanıdıklarınla paylaş</h2>
+                    <p class="mx-auto mt-2 max-w-xs text-sm leading-5 text-blue-100">Maaş ve çalışan süreçlerini kolaylaştıran LuxWage'i paylaş.</p>
+                </div>
             </div>
-            <!-- İçerik -->
-            <div class="-mt-4 mx-4 bg-white rounded-2xl shadow-lg px-5 py-4 mb-4">
-                <p class="text-gray-600 text-sm text-center leading-relaxed mb-4">
-                    Çalışanlarınızın maaş, devamsızlık ve ödeme süreçlerini kolayca yönetin. <strong class="text-gray-800">Ücretsiz deneyin!</strong>
-                </p>
-                <!-- Link kutusu -->
-                <div class="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 mb-4">
-                    <i class="fas fa-link text-gray-400 text-xs shrink-0"></i>
-                    <span id="shareLinkText" class="text-xs text-gray-600 truncate flex-1">luxwage.vercel.app</span>
-                    <button id="copyLinkBtn" class="text-blue-600 hover:text-blue-700 text-xs font-semibold shrink-0 transition-colors">
+            <div class="relative -mt-10 mx-4 mb-4 rounded-2xl bg-white p-5 shadow-xl shadow-slate-900/10">
+                <p class="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-400">Paylaşım bağlantısı</p>
+                <div class="flex items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 p-1.5">
+                    <div class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-600"><i class="fas fa-link text-sm"></i></div>
+                    <span id="shareLinkText" class="min-w-0 flex-1 truncate text-xs font-medium text-slate-600">luxwage.pro</span>
+                    <button id="copyLinkBtn" class="shrink-0 rounded-lg bg-blue-600 px-3 py-2 text-xs font-semibold text-white transition-colors hover:bg-blue-700">
                         <i class="fas fa-copy mr-1"></i>Kopyala
                     </button>
                 </div>
-                <!-- Paylaşım butonları -->
-                <div class="grid grid-cols-3 gap-2">
-                    <button id="shareWhatsapp" class="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-green-50 hover:bg-green-100 transition-colors">
-                        <i class="fab fa-whatsapp text-green-500 text-xl"></i>
-                        <span class="text-[10px] text-gray-600 font-medium">WhatsApp</span>
+                <div class="my-5 flex items-center gap-3"><span class="h-px flex-1 bg-slate-100"></span><span class="text-[11px] font-medium text-slate-400">veya buradan gönder</span><span class="h-px flex-1 bg-slate-100"></span></div>
+                <div class="grid grid-cols-3 gap-3">
+                    <button id="shareWhatsapp" class="group flex flex-col items-center gap-2 rounded-xl border border-emerald-100 bg-emerald-50 px-2 py-3 transition-colors hover:bg-emerald-100">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-emerald-500 text-white shadow-sm"><i class="fab fa-whatsapp text-lg"></i></span>
+                        <span class="text-[11px] font-semibold text-emerald-800">WhatsApp</span>
                     </button>
-                    <button id="shareTelegram" class="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-blue-50 hover:bg-blue-100 transition-colors">
-                        <i class="fab fa-telegram text-blue-500 text-xl"></i>
-                        <span class="text-[10px] text-gray-600 font-medium">Telegram</span>
+                    <button id="shareTelegram" class="group flex flex-col items-center gap-2 rounded-xl border border-sky-100 bg-sky-50 px-2 py-3 transition-colors hover:bg-sky-100">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-sky-500 text-white shadow-sm"><i class="fab fa-telegram text-lg"></i></span>
+                        <span class="text-[11px] font-semibold text-sky-800">Telegram</span>
                     </button>
-                    <button id="shareNative" class="flex flex-col items-center gap-1.5 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">
-                        <i class="fas fa-share-alt text-gray-500 text-xl"></i>
-                        <span class="text-[10px] text-gray-600 font-medium">Diğer</span>
+                    <button id="shareNative" class="group flex flex-col items-center gap-2 rounded-xl border border-slate-200 bg-slate-50 px-2 py-3 transition-colors hover:bg-slate-100">
+                        <span class="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-700 text-white shadow-sm"><i class="fas fa-share-alt text-sm"></i></span>
+                        <span class="text-[11px] font-semibold text-slate-700">Diğer</span>
                     </button>
                 </div>
             </div>

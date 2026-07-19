@@ -764,9 +764,7 @@ class LuxWage {
         const studioSection = document.getElementById('studioSection');
         if (!studioSection) return;
 
-        const prefersReducedMotion = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-        const starCount = prefersReducedMotion ? 0 : 64;
-        const stars = Array.from({ length: starCount }, (_, index) => {
+        const stars = Array.from({ length: 64 }, (_, index) => {
             const x = (index * 37 + 11) % 100;
             const y = (index * 61 + 7) % 100;
             const size = index % 10 === 0 ? 3 : index % 4 === 0 ? 2 : 1;
@@ -779,14 +777,15 @@ class LuxWage {
             <style>
                 @keyframes luxStudioTwinkle { 0%,100% { opacity:.18; transform:scale(.7); } 50% { opacity:.85; transform:scale(1.25); } }
                 .lux-studio-page { position:relative; isolation:isolate; overflow:hidden; min-height:100vh; background:radial-gradient(circle at 50% 37%, #302967 0%, #201c4c 42%, #101633 100%); }
-                .lux-studio-page::before { content:''; position:absolute; inset:0; z-index:-2; background:radial-gradient(circle at 15% 80%, rgba(59,130,246,.13), transparent 28%), radial-gradient(circle at 88% 20%, rgba(147,197,253,.08), transparent 25%); }
-                .lux-studio-star { position:absolute; z-index:-1; display:block; border-radius:999px; background:#fff; box-shadow:0 0 5px rgba(219,234,254,.65); animation:luxStudioTwinkle ease-in-out infinite; }
+                .lux-studio-page::before { content:''; position:absolute; inset:0; z-index:0; background:radial-gradient(circle at 15% 80%, rgba(59,130,246,.13), transparent 28%), radial-gradient(circle at 88% 20%, rgba(147,197,253,.08), transparent 25%); }
+                .lux-studio-star { position:absolute; z-index:1; display:block; border-radius:999px; background:#fff; box-shadow:0 0 5px rgba(219,234,254,.65); animation:luxStudioTwinkle ease-in-out infinite; pointer-events:none; }
+                .lux-studio-page > :not(.lux-studio-star) { position:relative; z-index:2; }
             </style>
             <section class="lux-studio-page flex items-center justify-center px-4 py-12 text-white md:px-10 md:py-16">
                 ${stars}
-                <button type="button" onclick="showPage('home')" class="absolute left-4 top-4 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.10] px-3 py-1.5 text-xs font-medium text-blue-50 transition-colors hover:bg-white/[0.18] md:left-6 md:top-6"><i class="fas fa-arrow-left"></i> Geri</button>
+                <button type="button" onclick="showPage('home')" class="absolute left-2 top-2 inline-flex items-center gap-2 rounded-full border border-white/15 bg-white/[0.10] px-3 py-1.5 text-xs font-medium text-blue-50 transition-colors hover:bg-white/[0.18] md:left-4 md:top-4"><i class="fas fa-arrow-left"></i> Geri</button>
                 <div class="w-full max-w-3xl text-center">
-                    <h2 class="text-4xl font-black tracking-tight md:text-5xl">Lux<span class="text-purple-300">Studio</span></h2>
+                    <h2 class="text-4xl font-black tracking-tight md:text-5xl">Lux<span class="text-black">Studio</span></h2>
                     <p class="mt-2 text-sm text-blue-100/75">İki marka, bir vizyon</p>
 
                     <div class="mt-9 grid gap-5 text-center sm:grid-cols-2 sm:gap-7">

@@ -107,10 +107,13 @@ function openShareModal() {
     const linkEl = document.getElementById('shareLinkText');
     if (linkEl) linkEl.textContent = SHARE_URL;
     modal.classList.remove('hidden');
+    modal.classList.add('flex');
 }
 
 function closeShareModal() {
-    document.getElementById('shareModal')?.classList.add('hidden');
+    const modal = document.getElementById('shareModal');
+    modal?.classList.add('hidden');
+    modal?.classList.remove('flex');
 }
 
 document.querySelectorAll('.share-page-btn').forEach(btn => {
@@ -130,10 +133,10 @@ document.getElementById('copyLinkBtn')?.addEventListener('click', async function
     try {
         await navigator.clipboard.writeText(SHARE_URL);
         this.innerHTML = '<i class="fas fa-check mr-1"></i>Kopyalandı!';
-        this.classList.replace('text-blue-600', 'text-green-600');
+        this.classList.replace('bg-blue-600', 'bg-emerald-500');
         setTimeout(() => {
             this.innerHTML = '<i class="fas fa-copy mr-1"></i>Kopyala';
-            this.classList.replace('text-green-600', 'text-blue-600');
+            this.classList.replace('bg-emerald-500', 'bg-blue-600');
         }, 2000);
     } catch {
         prompt('Linki kopyala:', SHARE_URL);
