@@ -1882,6 +1882,13 @@ class LuxWage {
                         </button>
                     </div>
                     
+                    <div class="border-t border-gray-200 pt-6 mt-6">
+                        <button id="accountLogoutBtn" type="button" class="w-full bg-gray-700 text-white py-3 rounded-lg hover:bg-gray-800 transition-colors font-semibold">
+                            <i class="fas fa-sign-out-alt mr-2"></i>
+                            Hesaptan Çıkış Yap
+                        </button>
+                    </div>
+                    
                     <div class="border-t border-red-200 pt-6 mt-6 bg-red-50 rounded-lg p-5 border">
                         <h3 class="font-semibold text-red-800 mb-3 flex items-center">
                             <i class="fas fa-exclamation-triangle mr-2"></i>
@@ -3316,7 +3323,6 @@ function openAbsenceModal(employeeId) {
     
     document.getElementById('absenceEmployeeId').value = employee.id;
     document.getElementById('absenceEmployeeName').value = employee.name;
-    document.getElementById('absenceDate').value = '';
     document.getElementById('absenceDeduction').textContent = '0 TL';
     document.getElementById('wageCalculation').textContent = 'Yevmiye hesaplanıyor...';
     
@@ -3336,6 +3342,16 @@ function openAbsenceModal(employeeId) {
     const absenceDateInput = document.getElementById('absenceDate');
     absenceDateInput.min = minDateStr;
     absenceDateInput.max = todayStr;
+    const dailyLogs = luxwage.calculateDailyLogs(employee);
+    const defaultDate = new Date(today);
+    while (defaultDate >= minDate) {
+        const defaultDateStr = toLocalDateStr(defaultDate);
+        const alreadyAbsent = employee.absenceHistory && employee.absenceHistory.some(absence => toLocalDateStr(parseLocalDate(absence.date)) === defaultDateStr);
+        const isStopped = dailyLogs.some(log => log.date === defaultDateStr && log.isStopped);
+        if (!luxwage.isClosedDay(defaultDate, employee) && !alreadyAbsent && !isStopped) break;
+        defaultDate.setDate(defaultDate.getDate() - 1);
+    }
+    absenceDateInput.value = defaultDate >= minDate ? toLocalDateStr(defaultDate) : '';
     
     // Tarih değiştiğinde kontrol et
     const submitBtn = document.getElementById('absenceSubmitBtn');
@@ -3404,6 +3420,7 @@ function openAbsenceModal(employeeId) {
     }
     
     absenceDateInput.onchange = validateAbsenceDate;
+    validateAbsenceDate();
     
     openModal('absenceModal');
 };
@@ -3421,6 +3438,8 @@ function openPaymentModal(employeeId) {
     document.getElementById('currentDebt').value = debtDisplay;
     document.getElementById('paymentAmount').value = '';
     document.getElementById('remainingDebt').textContent = debtDisplay + ' TL';
+    const payFullDebtButton = document.getElementById('payFullDebtBtn');
+    if (payFullDebtButton) payFullDebtButton.disabled = currentDebt <= 0;
     
     openModal('paymentModal');
 };
@@ -3472,7 +3491,8 @@ function showHistory(employeeId) {
     let monthOptions = '';
     monthNames.forEach((name, index) => {
         const monthValue = index + 1;
-        monthOptions += `<option value="${monthValue}" ${monthValue === currentMonth ? 'selected' : ''}>${name}</option>`;
+        const isFutureMonth = monthValue > currentMonth;
+        monthOptions += `<option value="${monthValue}" ${monthValue === currentMonth ? 'selected' : ''} ${isFutureMonth ? 'disabled' : ''}>${name}</option>`;
     });
     
     // Kategori butonları ve içerik oluştur
@@ -3633,8 +3653,7 @@ function calculateDebtNotifications(employee) {
         // Son 12 haftayı hesapla
         let currentWeekEnd = new Date(today);
         const dayOfWeek = today.getDay();
-        const daysUntilSunday = (7 - dayOfWeek) % 7;
-        currentWeekEnd.setDate(currentWeekEnd.getDate() + daysUntilSunday);
+        currentWeekEnd.setDate(currentWeekEnd.getDate() - dayOfWeek);
         
         for (let i = 0; i < 12; i++) {
             const weekStart = new Date(currentWeekEnd);
@@ -3821,8 +3840,8 @@ function generateHistoryContent(employee, recentPayments, recentAbsences, catego
             
             debtNotifications.forEach(notification => {
                 html += `
-                    <div class="bg-purple-50 rounded-lg p-4 mb-4 border-l-4 border-purple-500 hover:bg-purple-100 transition-colors">
-                        <div class="flex justify-between items-center mb-2">
+                    <div class="bg-purple-50 rounded-lg p-2 mb-2 border-l-4 border-purple-500 hover:bg-purple-100 transition-colors md:p-3 md:mb-3">
+                        <div class="flex justify-between items-center mb-1">
                             <div>
                                 <p class="font-bold text-gray-800">${notification.employeeName}</p>
                                 <p class="text-xs text-gray-500">${notification.date}</p>
@@ -3832,8 +3851,8 @@ function generateHistoryContent(employee, recentPayments, recentAbsences, catego
                                 <p class="text-xs text-gray-500">${notification.periodLabel}</p>
                             </div>
                         </div>
-                        <div class="bg-white rounded-lg p-3 mt-2">
-                            <p class="text-sm text-gray-700">
+                        <div class="bg-white rounded-lg p-1.5 mt-1 md:p-2 md:mt-1.5">
+                            <p class="text-xs text-gray-700 md:text-sm">
                                 <span class="font-medium">Toplam Borç:</span> 
                                 <span class="font-bold text-purple-700">${notification.totalDebt.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL</span>
                             </p>
@@ -3902,16 +3921,16 @@ function generateHistoryContent(employee, recentPayments, recentAbsences, catego
                         : 'Aylık';
                 
                 html += `
-                    <div class="bg-blue-50 rounded-lg p-4 mb-4 border-l-4 border-blue-500">
-                        <div class="flex justify-between items-center mb-2">
+                    <div class="bg-blue-50 rounded-lg p-2 mb-2 border-l-4 border-blue-500 md:p-3 md:mb-3">
+                        <div class="flex justify-between items-center mb-1">
                             <p class="font-bold text-gray-800">${periodLabel} - ${data.periodEnd}</p>
                             <p class="font-bold text-blue-700">
                                 ${data.totalAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL
                             </p>
                         </div>
-                        <div class="space-y-2 mt-3">
+                        <div class="space-y-1 mt-1.5 md:space-y-1.5 md:mt-2">
                             ${data.payments.map(payment => `
-                                <div class="bg-white rounded-lg p-3 border-l-4 border-green-500 flex justify-between items-center">
+                                <div class="bg-white rounded-lg p-1.5 border-l-4 border-green-500 flex justify-between items-center md:p-2">
                                     <div>
                                         <p class="font-semibold text-gray-800 text-sm">Ödeme Alındı</p>
                                         <p class="text-xs text-gray-500">${payment.date}</p>
@@ -3943,7 +3962,7 @@ function generateHistoryContent(employee, recentPayments, recentAbsences, catego
                     : 'Para eklenmeyecek (bugün)';
                 
                 html += `
-                    <div class="bg-red-50 rounded-lg p-4 mb-4 border-l-4 border-red-500 flex justify-between items-center">
+                    <div class="bg-red-50 rounded-lg p-2 mb-2 border-l-4 border-red-500 flex justify-between items-center md:p-3 md:mb-3">
                         <div>
                             <p class="font-semibold text-gray-800 text-sm">Devamsızlık</p>
                             <p class="text-xs text-gray-500">${absence.date}</p>
@@ -4081,6 +4100,9 @@ function deleteAbsence(employeeId, absenceIndex) {
 
 // Günlük detayları göster
 function openDailyDetails(employeeId) {
+    if (window.currentDailyDetailsEmployeeId !== employeeId) {
+        window.currentDailyDetailsWeekOffset = null;
+    }
     window.currentDailyDetailsEmployeeId = employeeId;
     const employee = luxwage.employees.find(emp => emp.id === employeeId);
     if (!employee) return;
@@ -4089,7 +4111,33 @@ function openDailyDetails(employeeId) {
     
     // Günlük hareket dökümünü hesapla ve son 30 günü göster
     const allDailyLogs = luxwage.calculateDailyLogs(employee);
-    const dailyLogs = allDailyLogs.slice(0, 30);
+    const selectedWeekOffset = Number.isInteger(window.currentDailyDetailsWeekOffset) && window.currentDailyDetailsWeekOffset >= 0 && window.currentDailyDetailsWeekOffset <= 8
+        ? window.currentDailyDetailsWeekOffset
+        : null;
+    const toDateString = (date) => {
+        const d = new Date(date);
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0') + '-' + String(d.getDate()).padStart(2, '0');
+    };
+    let dailyLogs = allDailyLogs.slice(0, 30);
+    let displayedPeriod = 'Son 30 gün';
+    
+    if (selectedWeekOffset !== null) {
+        const today = new Date();
+        const monday = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+        const daysSinceMonday = (monday.getDay() + 6) % 7;
+        monday.setDate(monday.getDate() - daysSinceMonday - (selectedWeekOffset * 7));
+        const sunday = new Date(monday);
+        sunday.setDate(sunday.getDate() + 6);
+        const weekStart = toDateString(monday);
+        const weekEnd = toDateString(sunday);
+        dailyLogs = allDailyLogs.filter(log => log.date >= weekStart && log.date <= weekEnd);
+        displayedPeriod = `${selectedWeekOffset === 0 ? 'Bu hafta' : selectedWeekOffset + ' hafta önce'} (${monday.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })} - ${sunday.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short' })})`;
+    }
+    
+    const periodButton = document.getElementById('dailyDetailsPeriodBtn');
+    if (periodButton) {
+        periodButton.innerHTML = `${selectedWeekOffset === null ? 'Tüm Günler' : selectedWeekOffset === 0 ? 'Bu Hafta' : selectedWeekOffset + ' Hafta Önce'} <i class="fas fa-chevron-down ml-1 text-[10px]"></i>`;
+    }
     
     // Çalışma süresi bilgisi
     let workDurationInfo = '';
@@ -4140,7 +4188,7 @@ function openDailyDetails(employeeId) {
                     <div class="text-right">
                         <p class="text-xs text-blue-700 md:text-sm">
                             <i class="fas fa-list mr-1 md:mr-2"></i>
-                            <strong>Gösterilen:</strong> Son 30 gün
+                            <strong>Gösterilen:</strong> ${displayedPeriod}
                         </p>
                     </div>
                 </div>
@@ -4151,11 +4199,11 @@ function openDailyDetails(employeeId) {
     if (dailyLogs.length === 0) {
         dailyDetailsList.innerHTML = workDurationInfo + '<p class="text-gray-500 text-center py-4">Henüz günlük kayıt yok</p>';
     } else {
-        let dailyLogsHTML = workDurationInfo + '<table class="w-full min-w-[530px] md:min-w-0"><thead><tr class="bg-gray-200">';
-        dailyLogsHTML += '<th class="px-2 py-2 text-left text-xs font-semibold text-gray-700 md:px-4 md:text-sm">Tarih</th>';
-        dailyLogsHTML += '<th class="px-2 py-2 text-left text-xs font-semibold text-gray-700 md:px-4 md:text-sm">Günlük Tutar</th>';
-        dailyLogsHTML += '<th class="px-2 py-2 text-left text-xs font-semibold text-gray-700 md:px-4 md:text-sm">Durum</th>';
-        dailyLogsHTML += '<th class="px-2 py-2 text-left text-xs font-semibold text-gray-700 md:px-4 md:text-sm">Toplam Borç</th>';
+        let dailyLogsHTML = workDurationInfo + '<table class="w-full table-fixed"><thead><tr class="bg-gray-200">';
+        dailyLogsHTML += '<th class="break-words px-2 py-2 text-left text-xs font-semibold text-gray-700 md:px-4 md:text-sm">Tarih</th>';
+        dailyLogsHTML += '<th class="break-words px-2 py-2 text-left text-xs font-semibold text-gray-700 md:px-4 md:text-sm">Günlük Tutar</th>';
+        dailyLogsHTML += '<th class="break-words px-2 py-2 text-left text-xs font-semibold text-gray-700 md:px-4 md:text-sm">Durum</th>';
+        dailyLogsHTML += '<th class="break-words px-2 py-2 text-left text-xs font-semibold text-gray-700 md:px-4 md:text-sm">Toplam Borç</th>';
         dailyLogsHTML += '</tr></thead><tbody>';
         
         dailyLogs.forEach(log => {
@@ -4598,6 +4646,15 @@ document.addEventListener('DOMContentLoaded', function() {
         closeModal('absenceModal');
     });
     
+    document.getElementById('payFullDebtBtn')?.addEventListener('click', function() {
+        const currentDebt = document.getElementById('currentDebt')?.value;
+        const paymentAmount = document.getElementById('paymentAmount');
+        if (!currentDebt || !paymentAmount) return;
+        paymentAmount.value = currentDebt;
+        paymentAmount.dispatchEvent(new Event('input', { bubbles: true }));
+        paymentAmount.focus();
+    });
+    
     document.getElementById('closePaymentModalBtn')?.addEventListener('click', function() {
         closeModal('paymentModal');
     });
@@ -4743,11 +4800,34 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
     
+    document.getElementById('dailyDetailsPeriodBtn')?.addEventListener('click', function() {
+        const periodMenu = document.getElementById('dailyDetailsPeriodMenu');
+        if (!periodMenu) return;
+        const isOpen = !periodMenu.classList.contains('hidden');
+        periodMenu.classList.toggle('hidden', isOpen);
+        this.setAttribute('aria-expanded', String(!isOpen));
+    });
+    
+    document.getElementById('dailyDetailsPeriodMenu')?.addEventListener('click', function(event) {
+        const option = event.target.closest('.dailyDetailsPeriodOption');
+        if (!option) return;
+        const offset = option.dataset.weekOffset;
+        window.currentDailyDetailsWeekOffset = offset === 'all' ? null : Number(offset);
+        this.classList.add('hidden');
+        document.getElementById('dailyDetailsPeriodBtn')?.setAttribute('aria-expanded', 'false');
+        if (window.currentDailyDetailsEmployeeId !== null && window.currentDailyDetailsEmployeeId !== undefined) {
+            openDailyDetails(window.currentDailyDetailsEmployeeId);
+        }
+    });
+    
     document.getElementById('closeDailyDetailsModalBtn')?.addEventListener('click', function() {
         const dailyDetailsModal = document.getElementById('dailyDetailsModal');
         if (dailyDetailsModal) {
             dailyDetailsModal.classList.add('hidden');
             window.currentDailyDetailsEmployeeId = null;
+            window.currentDailyDetailsWeekOffset = null;
+            document.getElementById('dailyDetailsPeriodMenu')?.classList.add('hidden');
+            document.getElementById('dailyDetailsPeriodBtn')?.setAttribute('aria-expanded', 'false');
         }
     });
     
@@ -4972,6 +5052,11 @@ document.addEventListener('DOMContentLoaded', function() {
                     if (icon) icon.className = 'fas fa-eye';
                 }
             }
+            return;
+        }
+        
+        if (e.target.closest('#accountLogoutBtn')) {
+            logout();
             return;
         }
         

@@ -28,6 +28,7 @@
     
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap">
     
     <!-- Custom CSS - Google Material Design -->
     <link rel="stylesheet" href="style-material.css">
@@ -40,7 +41,7 @@
         <header id="mobileTopBar" class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white shadow-md z-50 flex items-center justify-between px-4">
             <a href="index.html" class="flex items-center gap-2 font-bold text-xl">
                 <img src="görsel/luxwagelogo.png" alt="LuxWage" class="h-9 w-9 rounded-xl object-contain shadow-md">
-                <span class="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">LuxWage</span>
+                <span class="inline-block bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text px-1 py-1 text-xl leading-[1.2] tracking-[-0.02em] text-transparent" style="font-family: 'Archivo Black', Arial Black, sans-serif; transform:scaleX(.92) scaleY(.84); transform-origin:left center;">LUX WAGE</span>
             </a>
             <div class="flex items-center gap-2">
                 <!-- Bildirim Butonu -->
@@ -77,17 +78,17 @@
             <aside id="dashboardSidebar" class="w-64 bg-blue-900 text-white shadow-xl flex flex-col fixed left-0 top-16 md:top-0 h-[calc(100vh-4rem)] md:h-screen overflow-y-auto transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-40">
                 <div class="p-6 flex-1 flex flex-col">
                     <div class="flex items-center mb-8">
-                        <a href="index.html" class="md:hidden flex items-center w-full text-white hover:text-blue-200 transition-colors font-medium">
-                            <i class="fas fa-globe mr-2"></i>
+                        <a href="index.html" class="md:hidden flex items-center w-full rounded-xl border border-emerald-300/40 bg-emerald-500/20 px-4 py-3 text-emerald-100 shadow-lg shadow-emerald-950/20 transition-colors hover:bg-emerald-500/35 hover:text-white font-semibold">
+                            <i class="fas fa-globe w-5 mr-3 text-emerald-300"></i>
                             Başlangıç Sayfası
                         </a>
                         <div class="hidden md:flex flex-col items-center w-full gap-2">
                             <a href="index.html" class="flex items-center gap-3 text-white hover:text-gray-200 transition-colors font-bold group">
                                 <img src="görsel/luxwagelogo.png" alt="LuxWage" class="h-9 w-9 rounded-lg object-contain shadow-lg">
-                                <span class="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent tracking-tight text-2xl">LuxWage</span>
+                                <span class="inline-block bg-gradient-to-r from-white via-blue-100 to-emerald-200 bg-clip-text px-1 py-1 text-2xl leading-[1.2] tracking-[-0.02em] text-transparent" style="font-family: 'Archivo Black', Arial Black, sans-serif; transform:scaleX(.92) scaleY(.84); transform-origin:left center;">LUX WAGE</span>
                             </a>
-                            <a href="index.html" class="flex items-center w-full px-4 py-3 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors font-medium mb-2 mt-4">
-                                <i class="fas fa-globe w-5 mr-3"></i>
+                            <a href="index.html" class="flex items-center w-full rounded-xl border border-emerald-300/40 bg-emerald-500/20 px-4 py-3 text-emerald-100 shadow-lg shadow-emerald-950/20 transition-colors hover:bg-emerald-500/35 hover:text-white font-semibold mb-2 mt-4">
+                                <i class="fas fa-globe w-5 mr-3 text-emerald-300"></i>
                                 Başlangıç Sayfası
                             </a>
                         </div>
@@ -157,17 +158,17 @@
             <!-- Main Content -->
             <main id="dashboardMain" class="flex-1 md:ml-64 pt-16 md:pt-0">
                 <!-- Top Header -->
-                <header id="dashboardTopBar" class="bg-white shadow-sm border-b border-gray-200">
-                    <div class="px-3 md:px-6 py-3 md:py-4 flex justify-between items-center gap-2 md:gap-4">
-                        <h1 id="pageTitle" class="text-lg md:text-2xl font-bold text-gray-800 truncate"><i class="fas fa-home hidden md:inline mr-2 text-blue-600"></i>Ana Sayfa</h1>
-                        <div class="flex flex-col items-end md:flex-row md:items-center md:space-x-4 text-gray-600 ml-auto shrink-0 gap-0.5 md:gap-0">
-                            <span class="inline-flex items-center" id="userEmailHeader">
-                                <i class="fas fa-user text-blue-500 mr-1 hidden md:inline"></i>
-                                <span class="font-medium text-gray-700 text-[10px] md:text-sm truncate max-w-[120px] md:max-w-none"></span>
+                <header id="dashboardTopBar" class="border-b border-slate-200 bg-gradient-to-r from-white via-slate-50 to-blue-50/70 shadow-sm">
+                    <div class="flex flex-wrap items-center gap-2 px-3 py-3 md:flex-nowrap md:gap-4 md:px-6 md:py-4">
+                        <h1 id="pageTitle" class="flex w-full min-w-0 items-center truncate text-lg font-bold tracking-tight text-slate-800 md:w-auto md:flex-1 md:text-2xl"><i class="fas fa-home mr-2 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-xs text-blue-600 md:h-8 md:w-8 md:text-sm"></i>Ana Sayfa</h1>
+                        <div class="flex w-full min-w-0 items-center gap-1.5 text-slate-600 md:ml-auto md:w-auto md:flex-none md:gap-2">
+                            <span class="flex min-w-0 flex-1 items-center rounded-lg border border-blue-100 bg-white/85 px-2 py-1.5 text-[10px] shadow-sm md:max-w-[220px] md:flex-none md:px-3 md:py-2 md:text-sm" id="userEmailHeader">
+                                <i class="fas fa-user mr-1.5 shrink-0 text-blue-500"></i>
+                                <span class="truncate font-medium text-slate-700"></span>
                             </span>
-                            <span class="inline-flex items-center">
-                                <i class="fas fa-calendar-alt mr-1 text-gray-400 hidden md:inline"></i>
-                                <span id="currentDate" class="text-[10px] md:text-sm truncate max-w-[120px] md:max-w-none"></span>
+                            <span class="flex min-w-0 flex-1 items-center rounded-lg border border-slate-200 bg-white/85 px-2 py-1.5 text-[10px] shadow-sm md:max-w-[200px] md:flex-none md:px-3 md:py-2 md:text-sm">
+                                <i class="fas fa-calendar-alt mr-1.5 shrink-0 text-slate-400"></i>
+                                <span id="currentDate" class="truncate"></span>
                             </span>
                             <button type="button" class="share-page-btn hidden md:inline-flex w-9 h-9 items-center justify-center rounded-lg bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" aria-label="Sayfayı paylaş">
                                 <i class="fas fa-share-alt text-sm"></i>
@@ -232,9 +233,9 @@
     </div>
 
     <!-- Employee Modal -->
-    <div id="employeeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-2 md:p-0">
-        <div class="bg-white rounded-xl shadow-2xl w-full max-w-md mx-2 md:mx-4 transform transition-all max-h-[92vh] overflow-y-auto">
-            <div class="p-4 md:p-6">
+    <div id="employeeModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-1 md:p-0">
+        <div class="employee-modal-panel bg-white rounded-xl shadow-2xl w-full max-w-md mx-1 md:mx-4 transform transition-all max-h-[calc(100dvh-0.5rem)] overflow-hidden">
+            <div class="employee-modal-body p-4 md:p-6">
                 <div class="flex justify-between items-center mb-4 md:mb-6">
                     <h3 class="text-base md:text-xl font-bold text-gray-800">
                         <i class="fas fa-user-plus text-emerald-500 mr-2"></i>
@@ -420,7 +421,7 @@
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Devamsızlık Tarihi</label>
-                        <input type="date" id="absenceDate" required class="box-border min-w-0 w-full px-2 py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500 md:px-4 md:text-base">
+                        <input type="date" id="absenceDate" required class="box-border block min-h-11 min-w-0 w-full appearance-auto rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm leading-normal text-gray-900 focus:border-red-500 focus:ring-2 focus:ring-red-500 md:px-4 md:text-base">
                         <p id="absenceDateWarning" class="hidden text-xs text-red-600 mt-1 font-medium">
                             <i class="fas fa-exclamation-circle mr-1"></i>
                             Bu güne zaten devamsızlık kaydedilmiş
@@ -480,7 +481,10 @@
                     </div>
                     
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-1">Ödeme Tutarı</label>
+                        <div class="mb-1 flex items-center justify-between gap-2">
+                            <label class="block text-sm font-medium text-gray-700">Ödeme Tutarı</label>
+                            <button type="button" id="payFullDebtBtn" class="text-xs font-semibold text-green-600 hover:text-green-700 disabled:cursor-not-allowed disabled:text-gray-400">Tamamını Öde</button>
+                        </div>
                         <input type="text" id="paymentAmount" required class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-green-500" 
                                placeholder="0,00" inputmode="decimal" autocomplete="off">
                     </div>
@@ -726,14 +730,34 @@
     <div id="dailyDetailsModal" class="fixed inset-0 bg-black/50 hidden z-50 flex items-center justify-center p-2 md:p-4">
         <div class="bg-white rounded-xl shadow-2xl w-full max-w-2xl transform transition-all max-h-[92vh] overflow-y-auto">
             <div class="p-3 md:p-6">
-                <div class="flex justify-between items-center mb-3 md:mb-6">
+                <div class="mb-3 flex items-center justify-between gap-2 md:mb-6">
                     <h3 class="text-base font-bold text-gray-800 md:text-xl">
                         <i class="fas fa-calendar-day text-purple-500 mr-2"></i>
                         Son 1 Aylık Hareket Dökümü
                     </h3>
-                    <button id="closeDailyDetailsModalBtn" class="text-gray-400 hover:text-gray-600">
-                        <i class="fas fa-times text-xl"></i>
-                    </button>
+                    <div class="flex items-center gap-2 shrink-0">
+                        <div class="relative">
+                            <button id="dailyDetailsPeriodBtn" type="button" class="rounded-lg border border-purple-200 bg-purple-50 px-2 py-1 text-xs font-medium text-purple-700 hover:bg-purple-100 md:px-3 md:py-2 md:text-sm" aria-expanded="false">
+                                Tüm Günler
+                                <i class="fas fa-chevron-down ml-1 text-[10px]"></i>
+                            </button>
+                            <div id="dailyDetailsPeriodMenu" class="absolute right-0 z-10 mt-1 hidden max-h-60 w-40 overflow-y-auto rounded-lg border border-gray-200 bg-white py-1 shadow-lg">
+                                <button type="button" data-week-offset="all" class="dailyDetailsPeriodOption block w-full px-3 py-2 text-left text-sm text-purple-700 hover:bg-purple-50">Tüm Günler</button>
+                                <button type="button" data-week-offset="0" class="dailyDetailsPeriodOption block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-purple-50">Bu Hafta</button>
+                                <button type="button" data-week-offset="1" class="dailyDetailsPeriodOption block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-purple-50">1 Hafta Önce</button>
+                                <button type="button" data-week-offset="2" class="dailyDetailsPeriodOption block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-purple-50">2 Hafta Önce</button>
+                                <button type="button" data-week-offset="3" class="dailyDetailsPeriodOption block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-purple-50">3 Hafta Önce</button>
+                                <button type="button" data-week-offset="4" class="dailyDetailsPeriodOption block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-purple-50">4 Hafta Önce</button>
+                                <button type="button" data-week-offset="5" class="dailyDetailsPeriodOption block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-purple-50">5 Hafta Önce</button>
+                                <button type="button" data-week-offset="6" class="dailyDetailsPeriodOption block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-purple-50">6 Hafta Önce</button>
+                                <button type="button" data-week-offset="7" class="dailyDetailsPeriodOption block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-purple-50">7 Hafta Önce</button>
+                                <button type="button" data-week-offset="8" class="dailyDetailsPeriodOption block w-full px-3 py-2 text-left text-sm text-gray-700 hover:bg-purple-50">8 Hafta Önce</button>
+                            </div>
+                        </div>
+                        <button id="closeDailyDetailsModalBtn" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
                 </div>
                 
                 <div id="dailyDetailsList" class="bg-gray-50 rounded-lg overflow-auto max-h-[68vh]">

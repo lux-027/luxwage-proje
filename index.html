@@ -57,6 +57,7 @@
     
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap">
     
     <!-- Custom CSS - Google Material Design -->
     <link rel="stylesheet" href="style-material.css">
@@ -71,7 +72,7 @@
                 <!-- Logo -->
                 <div class="flex items-center">
                     <img src="görsel/luxwagelogo.png" alt="LuxWage" class="mr-2 h-9 w-9 rounded-lg object-contain md:h-10 md:w-10">
-                    <span class="inline-block bg-gradient-to-r from-white via-blue-100 to-emerald-200 bg-clip-text text-xl font-black tracking-tight text-transparent md:text-2xl" style="font-family: 'Trebuchet MS', sans-serif; transform: rotate(-4.3deg);">LuxWage</span>
+                    <span class="inline-block bg-gradient-to-r from-white via-blue-100 to-emerald-200 bg-clip-text px-1 py-1 text-3xl leading-[1.2] tracking-[0.02em] text-transparent md:text-4xl" style="font-family: 'Archivo Black', Arial Black, sans-serif; transform:scaleX(1.1) scaleY(.84); transform-origin:left center;">LUX WAGE</span>
                 </div>
                 
                     <!-- Auth Buttons (Giriş yapmamış kullanıcılar için) -->
@@ -92,10 +93,6 @@
                                 <p id="userNameDisplay" class="font-semibold text-xs md:text-sm truncate max-w-[120px] md:max-w-[160px]">Kullanıcı Adı</p>
                                 <p id="userEmailDisplay" class="hidden md:block text-xs text-blue-200 truncate max-w-[160px]">kullanici@ornek.com</p>
                             </div>
-                            <button id="logoutBtn" class="ml-1 flex items-center gap-1.5 bg-red-500 hover:bg-red-600 active:bg-red-700 text-white px-2.5 py-1.5 md:px-3 md:py-2 rounded-lg text-xs md:text-sm font-medium transition-all duration-200 shrink-0 shadow-sm">
-                                <i class="fas fa-sign-out-alt"></i>
-                                <span class="hidden md:inline">Çıkış</span>
-                            </button>
                         </div>
                     </div>
             </div>
@@ -133,17 +130,28 @@
                 margin-bottom:18px;
                 animation: fadeSlideUp .6s ease both;
             }
+            .dashboard-welcome-card {
+                width:min(100%, 32rem);
+                padding:1rem;
+                background:linear-gradient(135deg,rgba(255,255,255,.14),rgba(255,255,255,.04));
+                backdrop-filter:blur(24px);
+                border:1px solid rgba(255,255,255,.18);
+                border-radius:24px;
+                box-shadow:0 16px 48px rgba(0,0,0,.25),inset 0 1px 0 rgba(255,255,255,.16);
+            }
+            .dashboard-welcome-card:hover { box-shadow:0 20px 56px rgba(52,211,153,.18),inset 0 1px 0 rgba(255,255,255,.2); }
+            @media (max-width: 767px) and (max-height: 700px) {
+                .hero-viewport .hero-content { zoom: .82; }
+            }
+            @media (max-width: 767px) and (max-height: 500px) {
+                .hero-viewport .hero-content { zoom: .68; }
+            }
         </style>
 
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 min-h-[80vh] flex flex-col justify-center py-16 md:py-0">
-            <div class="text-center">
+        <div class="hero-viewport max-w-7xl mx-auto px-6 sm:px-8 lg:px-8 min-h-[calc(100dvh-1rem)] flex flex-col justify-center py-10 md:py-0">
+            <div class="hero-content px-2 text-center sm:px-0">
 
                 <!-- Üst rozet -->
-                <div class="badge-pill">
-                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-400 animate-pulse inline-block"></span>
-                    Akıllı Maaş Yönetimi
-                </div>
-
                 <!-- Başlık -->
                 <h1 class="hero-title text-3xl sm:text-5xl md:text-7xl font-extrabold leading-tight mb-5 md:mb-7">
                     <span class="text-transparent bg-clip-text bg-gradient-to-r from-emerald-300 via-teal-200 to-blue-300 drop-shadow-[0_2px_24px_rgba(52,211,153,.5)]">
@@ -194,22 +202,9 @@
                 </div>
 
                 <!-- STATE B -->
-                <div id="dashboardWelcome" style="display:none;" class="hero-welcome flex flex-col items-center gap-4">
+                <div id="dashboardWelcome" style="display:none;" class="hero-welcome dashboard-welcome-card mx-auto flex flex-col items-center gap-4">
                     <!-- 3D Hoşgeldin Kartı -->
-                    <div style="
-                        background: linear-gradient(135deg, rgba(255,255,255,0.10) 0%, rgba(255,255,255,0.03) 100%);
-                        backdrop-filter: blur(24px);
-                        border: 1px solid rgba(255,255,255,0.15);
-                        border-radius: 24px;
-                        padding: 16px 48px;
-                        min-width: 320px;
-                        box-shadow: 0 8px 32px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.15) inset;
-                        transform: perspective(600px) rotateX(2deg);
-                        transition: transform 0.3s ease, box-shadow 0.3s ease;
-                    "
-                    onmouseover="this.style.transform='perspective(600px) rotateX(0deg) scale(1.02)';this.style.boxShadow='0 20px 56px rgba(52,211,153,0.18), 0 1px 0 rgba(255,255,255,0.2) inset'"
-                    onmouseout="this.style.transform='perspective(600px) rotateX(2deg)';this.style.boxShadow='0 8px 32px rgba(0,0,0,0.3), 0 1px 0 rgba(255,255,255,0.15) inset'"
-                    >
+                    <div class="flex w-full items-center gap-3 border-b border-white/10 pb-4">
                         <div class="flex items-center gap-3">
                             <!-- Animasyonlu ikon -->
                             <div style="
@@ -230,7 +225,7 @@
                             </div>
                         </div>
                     </div>
-                    <button id="dashboardButton" style="display: none;" class="glow-btn bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-base md:text-lg px-7 py-3.5 md:px-10 md:py-5 rounded-2xl hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-2xl transform hover:scale-105 font-bold tracking-wide">
+                    <button id="dashboardButton" style="display: none;" class="glow-btn w-full bg-gradient-to-r from-emerald-500 to-teal-500 text-white text-base md:text-lg px-7 py-3.5 rounded-xl hover:from-emerald-400 hover:to-teal-400 transition-all duration-300 shadow-lg transform hover:scale-[1.02] font-bold tracking-wide">
                         <i class="fas fa-rocket mr-2.5"></i>
                         LuxWage'e Başlayın
                     </button>
