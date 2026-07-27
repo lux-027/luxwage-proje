@@ -208,15 +208,29 @@
     }
 }
 
-@media (max-width: 767px) and (max-height: 760px) {
+@media (max-width: 767px) {
     #employeeModal .employee-modal-panel {
-        zoom: 0.8;
+        width: 139%;
+        max-width: 39rem;
+        max-height: none;
+        overflow: visible;
+        zoom: 0.72;
+    }
+}
+
+@media (max-width: 767px) and (max-height: 640px) {
+    #employeeModal .employee-modal-panel {
+        width: 163%;
+        max-width: 46rem;
+        zoom: 0.61;
     }
 }
 
 @media (max-width: 767px) and (max-height: 500px) {
     #employeeModal .employee-modal-panel {
-        zoom: 0.65;
+        width: 193%;
+        max-width: 55rem;
+        zoom: 0.52;
     }
 }
 
