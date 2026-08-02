@@ -174,6 +174,18 @@ function parseTurkishNumber(value) {
     return parseFloat(normalized) || 0;
 }
 
+// Belirli bir tarihte kayıtlı devamsızlık kaydını bul
+function getAbsenceForDate(employee, dateStr) {
+    if (!employee || !employee.absenceHistory) return null;
+    return employee.absenceHistory.find(absence => toLocalDateStr(parseLocalDate(absence.date)) === dateStr) || null;
+}
+
+// Devamsızlık tipine göre çalışılan gün oranını ver (1 = tam çalışıldı, 0.5 = yarım gün devamsızlık, 0 = tam gün devamsızlık)
+function getAbsenceRatio(absence) {
+    if (!absence) return 1;
+    return absence.type === 'half' ? 0.5 : 0;
+}
+
 // Logout fonksiyonu
 function logout() {
     if (confirm('Çıkış yapmak istediğinize emin misiniz?')) {
@@ -231,7 +243,9 @@ class LuxWage {
             this.updateCurrentDate();
             this.cleanupOldData();
             this.recalculateAllDebts();
-            this.showPage('home');
+            const requestedPage = new URLSearchParams(window.location.search).get('view');
+            const availablePages = ['home', 'employees', 'pastEmployees', 'account', 'studio'];
+            this.showPage(availablePages.includes(requestedPage) ? requestedPage : 'home');
             this.checkDebtNotifications();
         } catch (error) {
             console.error('Uygulama başlatma hatası:', error);
@@ -362,13 +376,19 @@ class LuxWage {
             });
         }
 
-        // Absence date change - calculate deduction
+        // Absence date/type change - calculate deduction
         const absenceDate = document.getElementById('absenceDate');
         if (absenceDate) {
             absenceDate.addEventListener('change', () => {
                 this.calculateAbsenceDeduction();
             });
         }
+        const absenceTypeInputs = document.querySelectorAll('input[name="absenceType"]');
+        absenceTypeInputs.forEach(input => {
+            input.addEventListener('change', () => {
+                this.calculateAbsenceDeduction();
+            });
+        });
 
         // Employee start date change - update debt estimate
         const employeeStartDate = document.getElementById('employeeStartDate');
@@ -653,21 +673,19 @@ class LuxWage {
         while (currentDate <= periodEnd) {
             if (!this.isClosedDay(currentDate, employee)) {
                 const currentDateStr = toLocalDateStr(currentDate);
-                const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+                const absence = getAbsenceForDate(employee, currentDateStr);
+                const workRatio = getAbsenceRatio(absence);
+                const isToday = currentDate.getTime() === today.getTime();
+                const currentHour = now.getHours();
                 
-                // Devamsızlık günü ise borç çıkar
-                if (isAbsentDay) {
-                    periodDebt -= dailyWage;
-                } else {
-                    const isToday = currentDate.getTime() === today.getTime();
-                    const currentHour = now.getHours();
-                    
+                // Çalışılan gün oranına göre borç ekle (1 = tam, 0.5 = yarım gün devamsızlık, 0 = tam gün devamsızlık)
+                if (workRatio > 0) {
                     if (isToday) {
                         if (currentHour >= 18) {
-                            periodDebt += dailyWage;
+                            periodDebt += dailyWage * workRatio;
                         }
                     } else {
-                        periodDebt += dailyWage;
+                        periodDebt += dailyWage * workRatio;
                     }
                 }
             }
@@ -1014,12 +1032,17 @@ class LuxWage {
             
             // Devamsızlık geçmişi
             if (emp.absenceHistory && emp.absenceHistory.length > 0) {
+                const empDailyWage = this.calculateDailyWage(emp);
                 emp.absenceHistory.forEach(absence => {
+                    const isHalfDay = absence.type === 'half';
+                    const displayAmount = isHalfDay ? empDailyWage / 2 : (absence.deduction || 0);
                     activities.push({
                         type: 'absence',
                         employeeName: emp.name,
                         date: absence.date,
                         deduction: absence.deduction,
+                        displayAmount: displayAmount,
+                        absenceType: absence.type,
                         timestamp: absence.timestamp || Date.now()
                     });
                 });
@@ -1094,13 +1117,23 @@ class LuxWage {
                     </div>
                 `;
             } else if (activity.type === 'absence') {
+                const absenceTypeLabel = activity.absenceType === 'half' ? 'Yarım gün devamsızlık' : 'Devamsızlık';
+                const displayAmount = (activity.displayAmount || activity.deduction || 0).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                let amountText;
+                if (activity.absenceType === 'half' && activity.deduction > 0) {
+                    amountText = `+${displayAmount} TL eklendi`;
+                } else if (activity.absenceType === 'half') {
+                    amountText = `${displayAmount} TL eklenecek`;
+                } else {
+                    amountText = `${displayAmount} TL kesinti`;
+                }
                 return `
                     <div class="flex items-center p-2 md:p-4 border-b border-gray-100 last:border-0 hover:bg-gray-50 transition-colors">
                         <div class="bg-red-100 p-2 md:p-3 rounded-full mr-2 md:mr-4">
                             <i class="fas fa-calendar-times text-red-500"></i>
                         </div>
                         <div class="flex-1">
-                            <p class="font-medium text-gray-800 text-sm md:text-base">${activity.employeeName} isimli çalışana devamsızlık kaydı (${activity.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL kesinti)</p>
+                            <p class="font-medium text-gray-800 text-sm md:text-base">${activity.employeeName} isimli çalışana ${absenceTypeLabel} kaydı (${amountText})</p>
                             <p class="text-xs md:text-sm text-gray-500">${timeAgo} - ${dateStr}</p>
                         </div>
                         <button class="delete-activity-btn text-gray-400 hover:text-red-500 transition-colors p-1 md:p-2" data-timestamp="${activity.timestamp}">
@@ -1389,12 +1422,15 @@ class LuxWage {
             const rateValue = dailyRate || 0;
             const formattedDebt = debtValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
             const formattedDailyRate = rateValue.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            const totalWorkDays = dailyLogs.filter(log => !log.isClosedDay).length;
+            const totalWorkDays = dailyLogs.reduce((sum, log) => {
+                if (log.isClosedDay) return sum;
+                return sum + (log.isAbsent ? (log.absenceType === 'half' ? 0.5 : 0) : 1);
+            }, 0);
             
             // Status check for today's earnings display
             const today = new Date();
             const currentHour = today.getHours();
-            let todayStatus, isPending, isClosedDay, isTodayAbsent;
+            let todayStatus, isPending, isClosedDay, isTodayAbsent, todayAbsenceType;
             
             if (emp.salaryType === 'monthly') {
                 // Aylık çalışanlarda kapalı gün ve devamsızlık durum kartı etkilemez
@@ -1411,7 +1447,9 @@ class LuxWage {
                 
                 // Check if today is an absence day
                 const todayStr = toLocalDateStr(today);
-                isTodayAbsent = emp.absenceHistory && emp.absenceHistory.some(absence => absence.date === todayStr);
+                const todayAbsence = getAbsenceForDate(emp, todayStr);
+                isTodayAbsent = !!todayAbsence;
+                todayAbsenceType = todayAbsence ? todayAbsence.type : null;
             }
             
             // Dynamic styling based on status
@@ -1437,8 +1475,14 @@ class LuxWage {
                 // Devamsızlık günü - kırmızı kart
                 borderColor = "border-red-200";
                 textColor = "text-red-500";
-                titleText = "Bugün Gelmedi";
-                amountText = "Devamsızlık";
+                titleText = todayAbsenceType === 'half' ? "Yarım Gün Devamsızlık" : "Bugün Gelmedi";
+                if (todayAbsenceType === 'half') {
+                    const halfAmount = rateValue / 2;
+                    const formattedHalfAmount = halfAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    amountText = isPending ? `${formattedHalfAmount} TL Eklenecek` : `+${formattedHalfAmount} TL Eklendi`;
+                } else {
+                    amountText = "Devamsızlık";
+                }
                 iconBgColor = "bg-red-500";
                 iconClass = "fa-calendar-times";
             } else if (isPending) {
@@ -2425,9 +2469,17 @@ class LuxWage {
                     }
                 }
                 
+                // Devamsızlık bilgisini al
+                const absence = getAbsenceForDate(employee, dateStr);
+                const workRatio = getAbsenceRatio(absence);
+                const absenceType = absence ? absence.type || 'full' : null;
+                
                 // If it's a closed day, no payment
                 if (isClosedDay) {
                     dailyAmount = 0;
+                } else if (absence && (employee.salaryType === 'daily' || employee.salaryType === 'weekly')) {
+                    // Günlük/haftalık maaşta yarım gün devamsızlık varsa günlük tutarı oranla
+                    dailyAmount = dailyAmount * workRatio;
                 }
                 
                 // Determine status based on getStatusForDate function
@@ -2438,7 +2490,7 @@ class LuxWage {
                 const isStopped = employee.isStopped || false;
                 
                 // Check if this day is an absence day
-                const isAbsent = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === dateStr);
+                const isAbsent = !!absence;
                 
                 logs.push({
                     date: dateStr,
@@ -2446,7 +2498,8 @@ class LuxWage {
                     amount: dailyAmount,
                     isStopped: isStopped,
                     isClosedDay: isClosedDay,
-                    isAbsent: isAbsent
+                    isAbsent: isAbsent,
+                    absenceType: absenceType
                 });
             }
             
@@ -2596,7 +2649,12 @@ class LuxWage {
         const isToday = selectedDate.getTime() === today.getTime();
         const isPast = selectedDate < today;
         
-        const deduction = this.calculateDailyWage(employee);
+        // Devamsızlık türünü oku (tam/yarım gün)
+        const absenceTypeInput = document.querySelector('input[name="absenceType"]:checked');
+        const absenceType = absenceTypeInput ? absenceTypeInput.value : 'full';
+        const dailyWage = this.calculateDailyWage(employee);
+        const deduction = absenceType === 'half' ? dailyWage / 2 : dailyWage;
+        const typeLabel = absenceType === 'half' ? 'Yarım gün' : 'Tam gün';
         
         // Devamsızlık geçmişine ekle
         if (!employee.absenceHistory) {
@@ -2608,15 +2666,16 @@ class LuxWage {
         // absenceEntry.deduction sadece görünüm/geçmiş için tutulur
         const absenceEntry = {
             date: selectedDateStr,
+            type: absenceType,
             timestamp: Date.now()
         };
         
         if (isPast) {
             absenceEntry.deduction = deduction;
-            showNotification(`Geçmiş devamsızlık kaydedildi. Kesinti: ${deduction.toFixed(2)} TL`, 'success');
+            showNotification(`${typeLabel} devamsızlık kaydedildi. Kesinti: ${deduction.toFixed(2)} TL`, 'success');
         } else if (isToday) {
             absenceEntry.deduction = 0;
-            showNotification(`Bugün için devamsızlık kaydedildi. Para eklenmeyecek`, 'success');
+            showNotification(`${typeLabel} devamsızlık kaydedildi. Para eklenmeyecek`, 'success');
         }
         
         employee.absenceHistory.push(absenceEntry);
@@ -2803,10 +2862,10 @@ class LuxWage {
                 while (currentDate < paymentDate) {
                     const dateStr = toLocalStr(currentDate);
                     const isClosed = this.isClosedDay(currentDate, employee);
-                    const isAbsent = employee.absenceHistory && employee.absenceHistory.some(absence => toLocalDateStr(parseLocalDate(absence.date)) === dateStr);
 
-                    if (!isClosed && !isAbsent) {
-                        workingDays++;
+                    if (!isClosed) {
+                        const absence = getAbsenceForDate(employee, dateStr);
+                        workingDays += getAbsenceRatio(absence);
                     }
                     currentDate.setDate(currentDate.getDate() + 1);
                 }
@@ -2840,10 +2899,10 @@ class LuxWage {
                     while (currentDate <= partialEnd) {
                         const dateStr = toLocalStr(currentDate);
                         const isClosed = this.isClosedDay(currentDate, employee);
-                        const isAbsent = employee.absenceHistory && employee.absenceHistory.some(absence => toLocalDateStr(parseLocalDate(absence.date)) === dateStr);
 
-                        if (!isClosed && !isAbsent) {
-                            workingDays++;
+                        if (!isClosed) {
+                            const absence = getAbsenceForDate(employee, dateStr);
+                            workingDays += getAbsenceRatio(absence);
                         }
                         currentDate.setDate(currentDate.getDate() + 1);
                     }
@@ -3049,10 +3108,9 @@ class LuxWage {
             while (currentDate < stopDate) {
                 if (!this.isClosedDay(currentDate, employee)) {
                     const currentDateStr = toLocalStr(currentDate);
-                    const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
-                    if (!isAbsentDay) {
-                        totalDebt += dailyWage;
-                    }
+                    const absence = getAbsenceForDate(employee, currentDateStr);
+                    const workRatio = getAbsenceRatio(absence);
+                    totalDebt += dailyWage * workRatio;
                 }
                 currentDate.setDate(currentDate.getDate() + 1);
             }
@@ -3090,12 +3148,9 @@ class LuxWage {
             while (currentDate < departureDate) {
                 if (!this.isClosedDay(currentDate, employee)) {
                     const currentDateStr = toLocalStr2(currentDate);
-                    const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
-                    
-                    // Devamsızlık gününde borç eklenmez; normal gün için borç ekle
-                    if (!isAbsentDay) {
-                        totalDebt += dailyWage;
-                    }
+                    const absence = getAbsenceForDate(employee, currentDateStr);
+                    const workRatio = getAbsenceRatio(absence);
+                    totalDebt += dailyWage * workRatio;
                 }
                 currentDate.setDate(currentDate.getDate() + 1);
             }
@@ -3152,19 +3207,19 @@ class LuxWage {
             // Gün kapalı değilse
             if (!this.isClosedDay(currentDate, employee)) {
                 // Devamsızlık günü kontrolü
-                const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+                const absence = getAbsenceForDate(employee, currentDateStr);
+                const workRatio = getAbsenceRatio(absence);
                 
-                // Devamsızlık gününde borç eklenmez; normal günler için ekle
-                if (!isAbsentDay) {
+                // Çalışılan gün oranına göre borç ekle (1 = tam, 0.5 = yarım gün devamsızlık, 0 = tam gün devamsızlık)
+                if (workRatio > 0) {
                     // Bugün için saat kontrolü: 18:00'den önce ise dahil etme
                     if (isToday) {
                         if (currentHour >= 18) {
-                            totalDebt += dailyWage;
+                            totalDebt += dailyWage * workRatio;
                         }
-                        // 00:00-06:00 ve 06:00-18:00 arası: borç ekleme (Bekleniyor/Gece Kapalı)
                     } else {
                         // Geçmiş günler için doğrudan ekle
-                        totalDebt += dailyWage;
+                        totalDebt += dailyWage * workRatio;
                     }
                 }
             }
@@ -3234,15 +3289,16 @@ class LuxWage {
             const isToday = currentDate.getTime() === today.getTime();
             
             if (!this.isClosedDay(currentDate, employee)) {
-                const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+                const absence = getAbsenceForDate(employee, currentDateStr);
+                const workRatio = getAbsenceRatio(absence);
                 
-                if (!isAbsentDay) {
+                if (workRatio > 0) {
                     if (isToday) {
                         if (currentHour >= 18) {
-                            totalDebt += dailyWage;
+                            totalDebt += dailyWage * workRatio;
                         }
                     } else {
-                        totalDebt += dailyWage;
+                        totalDebt += dailyWage * workRatio;
                     }
                 }
             }
@@ -3270,16 +3326,20 @@ class LuxWage {
         
         if (!employee) return;
         
-        const deduction = this.calculateDailyWage(employee);
+        const absenceTypeInput = document.querySelector('input[name="absenceType"]:checked');
+        const absenceType = absenceTypeInput ? absenceTypeInput.value : 'full';
+        const dailyWage = this.calculateDailyWage(employee);
+        const deduction = absenceType === 'half' ? dailyWage / 2 : dailyWage;
         document.getElementById('absenceDeduction').textContent = deduction.toFixed(2) + ' TL';
         
         let wageInfo;
+        const typeLabel = absenceType === 'half' ? '(Yarım gün)' : '(Tam gün)';
         if (employee.salaryType === 'daily') {
-            wageInfo = `Günlük ${employee.salaryAmount.toLocaleString('tr-TR')} TL = ${deduction.toFixed(2)} TL/gün`;
+            wageInfo = `Günlük ${employee.salaryAmount.toLocaleString('tr-TR')} TL = ${dailyWage.toFixed(2)} TL/gün ${typeLabel}`;
         } else if (employee.salaryType === 'weekly') {
-            wageInfo = `Haftalık ${employee.salaryAmount.toLocaleString('tr-TR')} TL / 6 gün = ${deduction.toFixed(2)} TL/gün`;
+            wageInfo = `Haftalık ${employee.salaryAmount.toLocaleString('tr-TR')} TL / 6 gün = ${dailyWage.toFixed(2)} TL/gün ${typeLabel}`;
         } else {
-            wageInfo = `Aylık ${employee.salaryAmount.toLocaleString('tr-TR')} TL / 26 gün = ${deduction.toFixed(2)} TL/gün`;
+            wageInfo = `Aylık ${employee.salaryAmount.toLocaleString('tr-TR')} TL / 26 gün = ${dailyWage.toFixed(2)} TL/gün ${typeLabel}`;
         }
         document.getElementById('wageCalculation').textContent = wageInfo;
     }
@@ -3325,6 +3385,10 @@ function openAbsenceModal(employeeId) {
     document.getElementById('absenceEmployeeName').value = employee.name;
     document.getElementById('absenceDeduction').textContent = '0 TL';
     document.getElementById('wageCalculation').textContent = 'Yevmiye hesaplanıyor...';
+    
+    // Devamsızlık türünü varsayılana sıfırla (tam gün)
+    const fullDayInput = document.querySelector('input[name="absenceType"][value="full"]');
+    if (fullDayInput) fullDayInput.checked = true;
     
     // Tarih seçimini kısıtla: bugün ve geçmiş 10 gün, işe başlamadan önce değil
     const startDate = new Date(employee.startDate);
@@ -3421,6 +3485,7 @@ function openAbsenceModal(employeeId) {
     
     absenceDateInput.onchange = validateAbsenceDate;
     validateAbsenceDate();
+    luxwage.calculateAbsenceDeduction();
     
     openModal('absenceModal');
 };
@@ -3588,18 +3653,18 @@ function calculateDebtInfo(employee) {
     while (currentDate <= periodEnd) {
         if (!luxwage.isClosedDay(currentDate, employee)) {
             const currentDateStr = toLocalDateStr(currentDate);
-            const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+            const absence = getAbsenceForDate(employee, currentDateStr);
+            const workRatio = getAbsenceRatio(absence);
+            const isToday = currentDate.getTime() === today.getTime();
+            const currentHour = now.getHours();
             
-            if (!isAbsentDay) {
-                const isToday = currentDate.getTime() === today.getTime();
-                const currentHour = now.getHours();
-                
+            if (workRatio > 0) {
                 if (isToday) {
                     if (currentHour >= 18) {
-                        periodDebt += dailyWage;
+                        periodDebt += dailyWage * workRatio;
                     }
                 } else {
-                    periodDebt += dailyWage;
+                    periodDebt += dailyWage * workRatio;
                 }
             }
         }
@@ -3675,21 +3740,19 @@ function calculateDebtNotifications(employee) {
             while (currentDate <= weekEnd) {
                 if (!luxwage.isClosedDay(currentDate, employee)) {
                     const currentDateStr = toLocalDateStr(currentDate);
-                    const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+                    const absence = getAbsenceForDate(employee, currentDateStr);
+                    const workRatio = getAbsenceRatio(absence);
+                    const isToday = currentDate.getTime() === today.getTime();
+                    const currentHour = now.getHours();
                     
-                    // Devamsızlık günü ise borç çıkar
-                    if (isAbsentDay) {
-                        periodDebt -= dailyWage;
-                    } else {
-                        const isToday = currentDate.getTime() === today.getTime();
-                        const currentHour = now.getHours();
-                        
+                    // Çalışılan gün oranına göre borç ekle (1 = tam, 0.5 = yarım gün devamsızlık, 0 = tam gün devamsızlık)
+                    if (workRatio > 0) {
                         if (isToday) {
                             if (currentHour >= 18) {
-                                periodDebt += dailyWage;
+                                periodDebt += dailyWage * workRatio;
                             }
                         } else {
-                            periodDebt += dailyWage;
+                            periodDebt += dailyWage * workRatio;
                         }
                     }
                 }
@@ -3734,21 +3797,19 @@ function calculateDebtNotifications(employee) {
             while (currentDate <= monthEnd) {
                 if (!luxwage.isClosedDay(currentDate, employee)) {
                     const currentDateStr = toLocalDateStr(currentDate);
-                    const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
+                    const absence = getAbsenceForDate(employee, currentDateStr);
+                    const workRatio = getAbsenceRatio(absence);
+                    const isToday = currentDate.getTime() === today.getTime();
+                    const currentHour = now.getHours();
                     
-                    // Devamsızlık günü ise borç çıkar
-                    if (isAbsentDay) {
-                        periodDebt -= dailyWage;
-                    } else {
-                        const isToday = currentDate.getTime() === today.getTime();
-                        const currentHour = now.getHours();
-                        
+                    // Çalışılan gün oranına göre borç ekle (1 = tam, 0.5 = yarım gün devamsızlık, 0 = tam gün devamsızlık)
+                    if (workRatio > 0) {
                         if (isToday) {
                             if (currentHour >= 18) {
-                                periodDebt += dailyWage;
+                                periodDebt += dailyWage * workRatio;
                             }
                         } else {
-                            periodDebt += dailyWage;
+                            periodDebt += dailyWage * workRatio;
                         }
                     }
                 }
@@ -3791,12 +3852,9 @@ function calculateDebtAtDate(employee, targetDate) {
     while (currentDate <= target) {
         if (!luxwage.isClosedDay(currentDate, employee)) {
             const currentDateStr = toLocalDateStr(currentDate);
-            const isAbsentDay = employee.absenceHistory && employee.absenceHistory.some(absence => absence.date === currentDateStr);
-            
-            // Devamsızlık gününde borç eklenmez; normal gün için borç ekle
-            if (!isAbsentDay) {
-                totalDebt += dailyWage;
-            }
+            const absence = getAbsenceForDate(employee, currentDateStr);
+            const workRatio = getAbsenceRatio(absence);
+            totalDebt += dailyWage * workRatio;
         }
         currentDate.setDate(currentDate.getDate() + 1);
     }
@@ -3956,15 +4014,28 @@ function generateHistoryContent(employee, recentPayments, recentAbsences, catego
             // Tarihe göre sırala (yeniden eskiye)
             const sortedAbsences = [...recentAbsences].sort((a, b) => new Date(b.date) - new Date(a.date));
             
+            const dailyWage = luxwage.calculateDailyWage(employee);
             sortedAbsences.forEach((absence, index) => {
-                const deductionText = absence.deduction > 0 
-                    ? `Kesinti: ${absence.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL` 
-                    : 'Para eklenmeyecek (bugün)';
+                const isHalfDay = absence.type === 'half';
+                const typeLabel = isHalfDay ? 'Yarım Gün Devamsızlık' : 'Tam Gün Devamsızlık';
+                const halfAmount = dailyWage / 2;
+                
+                let deductionText;
+                if (isHalfDay) {
+                    const amountText = absence.deduction > 0 
+                        ? `+${absence.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL eklendi`
+                        : `${halfAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL eklenecek`;
+                    deductionText = amountText;
+                } else {
+                    deductionText = absence.deduction > 0 
+                        ? `Kesinti: ${absence.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL` 
+                        : 'Para eklenmeyecek (bugün)';
+                }
                 
                 html += `
                     <div class="bg-red-50 rounded-lg p-2 mb-2 border-l-4 border-red-500 flex justify-between items-center md:p-3 md:mb-3">
                         <div>
-                            <p class="font-semibold text-gray-800 text-sm">Devamsızlık</p>
+                            <p class="font-semibold text-gray-800 text-sm">${typeLabel}</p>
                             <p class="text-xs text-gray-500">${absence.date}</p>
                         </div>
                         <div class="flex items-center space-x-3">
@@ -4219,11 +4290,16 @@ function openDailyDetails(employeeId) {
             
             if (log.isAbsent) {
                 rowClass = 'bg-red-50';
-                statusText = 'Devamsızlık';
+                statusText = log.absenceType === 'half' ? 'Yarım Gün Devamsızlık' : 'Devamsızlık';
                 statusClass = 'text-red-600 font-semibold';
                 // Devamsızlık kesinti bilgisini al
-                const absence = employee.absenceHistory.find(a => a.date === log.date);
-                if (absence && absence.deduction) {
+                const absence = employee.absenceHistory.find(a => toLocalDateStr(parseLocalDate(a.date)) === log.date);
+                if (log.absenceType === 'half') {
+                    const dailyWage = luxwage.calculateDailyWage(employee);
+                    const halfAmount = dailyWage / 2;
+                    const pendingLabel = log.status === 'pending' ? 'Eklenecek' : 'Eklendi';
+                    deductionText = ` (+${halfAmount.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL ${pendingLabel})`;
+                } else if (absence && absence.deduction) {
                     deductionText = ` (${absence.deduction.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TL kesinti)`;
                 }
             } else if (log.isStopped) {

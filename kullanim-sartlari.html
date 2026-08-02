@@ -23,6 +23,7 @@
     
     <!-- Font Awesome for Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo+Black&display=swap">
     
     <!-- Custom CSS - Google Material Design -->
     <link rel="stylesheet" href="style-material.css">
@@ -32,14 +33,14 @@
     <!-- Dashboard -->
     <div id="dashboard" class="min-h-screen">
         <!-- Mobile Top Bar -->
-        <header class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white shadow-md z-50 flex items-center justify-between px-4">
-            <a href="dashboard.html" class="flex items-center gap-2 font-bold text-xl">
+        <header id="mobileTopBar" class="md:hidden fixed top-0 left-0 right-0 h-16 bg-white shadow-md z-50 flex items-center justify-between px-4">
+            <a href="index.html" class="flex items-center gap-2 font-bold text-xl">
                 <img src="görsel/luxwagelogo.png" alt="LuxWage" class="h-9 w-9 rounded-xl object-contain shadow-md">
-                <span class="bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text text-transparent">LuxWage</span>
+                <span class="inline-block bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text px-1 py-1 text-xl leading-[1.2] tracking-[-0.02em] text-transparent" style="font-family: 'Archivo Black', Arial Black, sans-serif; transform:scaleX(.92) scaleY(.84); transform-origin:left center;">LUX WAGE</span>
             </a>
-            <div class="flex items-center gap-3">
-                <button type="button" class="share-page-btn w-10 h-10 flex items-center justify-center rounded-xl border-2 border-blue-500 text-blue-600 bg-white hover:bg-blue-50 transition-colors ml-2" aria-label="Sayfayı paylaş">
-                    <i class="fas fa-share-alt text-sm"></i>
+            <div class="flex items-center gap-2">
+                <button type="button" class="share-page-btn w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" aria-label="Sayfayı paylaş">
+                    <i class="fas fa-share-alt text-lg"></i>
                 </button>
                 <button type="button" id="mobileMenuToggle" class="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" aria-label="Menü">
                     <i class="fas fa-bars text-lg" id="mobileMenuIcon"></i>
@@ -49,41 +50,45 @@
         
         <div class="flex">
             <!-- Sidebar -->
-            <aside class="w-64 bg-blue-900 text-white shadow-xl flex flex-col fixed left-0 top-16 md:top-0 h-[calc(100vh-4rem)] md:h-screen overflow-y-auto transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-40">
+            <aside id="dashboardSidebar" class="w-64 bg-blue-900 text-white shadow-xl flex flex-col fixed left-0 top-16 md:top-0 h-[calc(100vh-4rem)] md:h-screen overflow-y-auto transform -translate-x-full md:translate-x-0 transition-transform duration-300 z-40">
                 <div class="p-6 flex-1 flex flex-col">
                     <div class="flex items-center mb-8">
-                        <a href="index.html" class="md:hidden flex items-center w-full text-white hover:text-blue-200 transition-colors font-medium">
-                            <i class="fas fa-globe mr-2"></i>
+                        <a href="index.html" class="md:hidden flex items-center w-full rounded-xl border border-emerald-300/40 bg-emerald-500/20 px-4 py-3 text-emerald-100 shadow-lg shadow-emerald-950/20 transition-colors hover:bg-emerald-500/35 hover:text-white font-semibold">
+                            <i class="fas fa-globe w-5 mr-3 text-emerald-300"></i>
                             Başlangıç Sayfası
                         </a>
                         <div class="hidden md:flex flex-col items-center w-full gap-2">
-                            <a href="dashboard.html" class="flex items-center gap-3 text-white hover:text-gray-200 transition-colors font-bold group">
+                            <a href="index.html" class="flex items-center gap-3 text-white hover:text-gray-200 transition-colors font-bold group">
                                 <img src="görsel/luxwagelogo.png" alt="LuxWage" class="h-9 w-9 rounded-lg object-contain shadow-lg">
-                                <span class="bg-gradient-to-r from-white to-blue-100 bg-clip-text text-transparent tracking-tight text-2xl">LuxWage</span>
+                                <span class="inline-block bg-gradient-to-r from-white via-blue-100 to-emerald-200 bg-clip-text px-1 py-1 text-2xl leading-[1.2] tracking-[-0.02em] text-transparent" style="font-family: 'Archivo Black', Arial Black, sans-serif; transform:scaleX(.92) scaleY(.84); transform-origin:left center;">LUX WAGE</span>
                             </a>
-                            <a href="index.html" class="flex items-center w-full px-4 py-3 rounded-lg text-white/70 hover:text-white hover:bg-white/10 transition-colors font-medium mb-2 mt-4">
-                                <i class="fas fa-globe w-5 mr-3"></i>
+                            <a href="index.html" class="flex items-center w-full rounded-xl border border-emerald-300/40 bg-emerald-500/20 px-4 py-3 text-emerald-100 shadow-lg shadow-emerald-950/20 transition-colors hover:bg-emerald-500/35 hover:text-white font-semibold mb-2 mt-4">
+                                <i class="fas fa-globe w-5 mr-3 text-emerald-300"></i>
                                 Başlangıç Sayfası
                             </a>
                         </div>
                     </div>
                     
-                    <nav class="space-y-2 mb-8">
-                        <a href="dashboard.html" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                    <nav class="space-y-2 mb-8" id="authNav">
+                        <a href="dashboard.html?view=home" id="homePageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
                             <i class="fas fa-home w-5 mr-3"></i>
                             Ana Sayfa
                         </a>
-                        <a href="dashboard.html" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                        <a href="dashboard.html?view=employees" id="employeesPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
                             <i class="fas fa-users w-5 mr-3"></i>
                             Çalışanlarım
                         </a>
-                        <a href="dashboard.html" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                        <a href="dashboard.html?view=pastEmployees" id="pastEmployeesPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
                             <i class="fas fa-archive w-5 mr-3"></i>
                             Geçmiş Çalışanlar
                         </a>
-                        <a href="dashboard.html" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                        <a href="dashboard.html?view=account" id="accountPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
                             <i class="fas fa-user-cog w-5 mr-3"></i>
                             Hesabım
+                        </a>
+                        <a href="dashboard.html?view=studio" id="studioPageBtn" class="nav-item flex items-center px-4 py-3 rounded-lg text-gray-300 hover:bg-white/10 hover:text-white transition-all duration-300">
+                            <i class="fas fa-star w-5 mr-3"></i>
+                            Lux Studio
                         </a>
                     </nav>
                     
