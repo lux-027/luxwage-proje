@@ -32,6 +32,245 @@
     
     <!-- Custom CSS - Google Material Design -->
     <link rel="stylesheet" href="style-material.css">
+    
+    <!-- Flatpickr modern centered calendar overrides -->
+    <style>
+        .flatpickr-calendar {
+            position: fixed !important;
+            top: 50% !important;
+            left: 50% !important;
+            transform: translate(-50%, -50%) !important;
+            width: 380px !important;
+            max-width: 95vw !important;
+            border-radius: 1.5rem !important;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25) !important;
+            border: 1px solid #e5e7eb !important;
+            background: #fff !important;
+            font-size: 15px !important;
+            z-index: 1001 !important;
+            padding: 4rem 1rem 1.5rem !important;
+        }
+        .flatpickr-calendar.arrowTop:before,
+        .flatpickr-calendar.arrowTop:after,
+        .flatpickr-calendar.arrowBottom:before,
+        .flatpickr-calendar.arrowBottom:after {
+            display: none !important;
+        }
+        .flatpickr-months {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            margin-bottom: 0.75rem !important;
+            position: relative !important;
+        }
+        .flatpickr-month {
+            flex: 1 !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.35rem !important;
+            font-size: 1.05rem !important;
+            font-weight: 700 !important;
+            color: #111827 !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+        }
+        .flatpickr-current-month {
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            gap: 0.35rem !important;
+            padding: 0 !important;
+            font-size: 1.05rem !important;
+            white-space: nowrap !important;
+            overflow: visible !important;
+        }
+        .cur-month, .cur-year {
+            font-weight: 700 !important;
+            color: #111827 !important;
+        }
+        .numInputWrapper {
+            width: 4.5ch !important;
+        }
+        .cur-year {
+            border: none !important;
+            background: transparent !important;
+            font-size: 1.05rem !important;
+            width: 100% !important;
+            padding: 0 !important;
+            text-align: left !important;
+        }
+        .numInputWrapper .arrowUp,
+        .numInputWrapper .arrowDown {
+            display: none !important;
+        }
+        .flatpickr-prev-month,
+        .flatpickr-next-month {
+            color: #6b7280 !important;
+            border-radius: 9999px !important;
+            width: 2.25rem !important;
+            height: 2.25rem !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: all 0.2s ease !important;
+            background: #f3f4f6 !important;
+            position: absolute !important;
+            top: 50% !important;
+            transform: translateY(-50%) !important;
+        }
+        .flatpickr-prev-month { left: 0.25rem !important; }
+        .flatpickr-next-month { right: 0.25rem !important; }
+        .flatpickr-prev-month:hover,
+        .flatpickr-next-month:hover {
+            background: #e5e7eb !important;
+            color: #111827 !important;
+        }
+        .flatpickr-prev-month svg,
+        .flatpickr-next-month svg {
+            width: 0.65rem !important;
+            height: 0.65rem !important;
+            fill: currentColor !important;
+        }
+        .flatpickr-weekday {
+            font-size: 0.75rem !important;
+            font-weight: 600 !important;
+            color: #9ca3af !important;
+            text-transform: none !important;
+        }
+        .flatpickr-day {
+            width: 36px !important;
+            height: 36px !important;
+            line-height: 36px !important;
+            border-radius: 9999px !important;
+            margin: 1px !important;
+            font-size: 14px !important;
+            color: #111827 !important;
+            font-weight: 500 !important;
+        }
+        .flatpickr-day.prevMonthDay,
+        .flatpickr-day.nextMonthDay {
+            visibility: hidden !important;
+            pointer-events: none !important;
+        }
+        .flatpickr-day.selected,
+        .flatpickr-day.startRange,
+        .flatpickr-day.endRange,
+        .flatpickr-day.selected.inRange,
+        .flatpickr-day.startRange.inRange,
+        .flatpickr-day.endRange.inRange {
+            background: #10b981 !important;
+            border-color: #10b981 !important;
+            color: #fff !important;
+            box-shadow: 0 4px 10px -2px rgba(16, 185, 129, 0.4) !important;
+        }
+        .flatpickr-day.today {
+            border: 1px solid #10b981 !important;
+            color: #10b981 !important;
+        }
+        .flatpickr-day.today.selected,
+        .flatpickr-day.today.startRange,
+        .flatpickr-day.today.endRange {
+            color: #fff !important;
+            background: #047857 !important;
+            border-color: #047857 !important;
+            font-weight: 700 !important;
+            text-shadow: 0 1px 2px rgba(0,0,0,0.3) !important;
+        }
+        .flatpickr-day:hover {
+            background: #ecfdf5 !important;
+            color: #10b981 !important;
+            border-color: transparent !important;
+        }
+        .flatpickr-day.flatpickr-disabled,
+        .flatpickr-day.disabled,
+        .flatpickr-day.notAllowed {
+            color: #d1d5db !important;
+            background: transparent !important;
+        }
+        .fp-close-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.25rem;
+            width: 2.25rem;
+            height: 2.25rem;
+            border: none;
+            border-radius: 9999px;
+            background: #f3f4f6;
+            color: #6b7280;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            z-index: 2;
+        }
+        .fp-close-btn i {
+            font-size: 0.85rem;
+        }
+        .fp-close-btn:hover {
+            background: #e5e7eb;
+            color: #111827;
+        }
+        .fp-calendar-title {
+            position: absolute;
+            top: 0.75rem;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #111827;
+            line-height: 2.25rem;
+            z-index: 2;
+            pointer-events: none;
+            white-space: nowrap;
+        }
+        .fp-footer {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 0.75rem;
+            padding: 0.75rem 1rem 0;
+            border-top: 1px solid #e5e7eb;
+            margin-top: 0.5rem;
+        }
+        .fp-selected-day {
+            font-size: 0.85rem;
+            font-weight: 500;
+            color: #374151;
+        }
+        .fp-confirm {
+            background: #10b981;
+            color: #fff;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.5rem 0.75rem;
+            font-size: 0.8rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .fp-confirm:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+            background: #9ca3af;
+        }
+        #mobileMenuIcon {
+            display: flex !important;
+        }
+        #mobileMenuIcon::before,
+        #mobileMenuIcon::after {
+            display: none !important;
+        }
+        /* Tüm modal ve açılır panellerin arka planını hafif karart + blur */
+        div[id$="Modal"].fixed.inset-0,
+        #flatpickrOverlay,
+        #actionsOverlay {
+            -webkit-backdrop-filter: blur(4px) !important;
+            backdrop-filter: blur(4px) !important;
+            background-color: rgba(0, 0, 0, 0.5) !important;
+        }
+    </style>
 </head>
 <body>
     
@@ -43,11 +282,11 @@
                 <img src="görsel/luxwagelogo.png" alt="LuxWage" class="h-9 w-9 rounded-xl object-contain shadow-md">
                 <span class="inline-block bg-gradient-to-r from-blue-600 to-emerald-500 bg-clip-text px-1 py-1 text-xl leading-[1.2] tracking-[-0.02em] text-transparent" style="font-family: 'Archivo Black', Arial Black, sans-serif; transform:scaleX(.92) scaleY(.84); transform-origin:left center;">LUX WAGE</span>
             </a>
-            <div class="flex items-center gap-2">
+            <div class="flex items-center gap-1.5">
                 <!-- Bildirim Butonu -->
                 <div class="relative">
-                    <button type="button" id="mobileNotifBtn" class="w-10 h-10 flex items-center justify-center rounded-xl bg-yellow-50 text-yellow-600 hover:bg-yellow-100 transition-colors relative" aria-label="Bildirimler">
-                        <i class="fas fa-bell text-lg"></i>
+                    <button type="button" id="mobileNotifBtn" class="w-9 h-9 flex items-center justify-center rounded-xl bg-yellow-50 text-yellow-600 hover:bg-yellow-100 transition-colors relative" aria-label="Bildirimler">
+                        <i class="fas fa-bell text-base"></i>
                         <span id="mobileNotifBadge" class="hidden absolute -top-1 -right-1 w-4 h-4 bg-red-500 text-white text-[9px] font-bold rounded-full flex items-center justify-center">1</span>
                     </button>
                     <!-- Bildirim Paneli -->
@@ -64,11 +303,14 @@
                         </div>
                     </div>
                 </div>
-                <button type="button" class="share-page-btn w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" aria-label="Sayfayı paylaş">
-                    <i class="fas fa-share-alt text-lg"></i>
+                <button type="button" class="share-page-btn w-9 h-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" aria-label="Sayfayı paylaş">
+                    <i class="fas fa-share-alt text-base"></i>
                 </button>
-                <button type="button" id="mobileMenuToggle" class="w-10 h-10 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" aria-label="Menü">
-                    <i class="fas fa-bars text-lg" id="mobileMenuIcon"></i>
+                <button type="button" id="mobileMenuToggle" class="w-9 h-9 flex items-center justify-center rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-100 transition-colors" aria-label="Menü">
+                    <span id="mobileMenuIcon" class="flex flex-col items-start justify-center gap-1">
+                        <span class="block h-0.5 w-5 rounded-full bg-current"></span>
+                        <span class="block h-0.5 w-2.5 rounded-full bg-current"></span>
+                    </span>
                 </button>
             </div>
         </header>
@@ -323,8 +565,11 @@
 
                     <div>
                         <label class="block text-xs md:text-sm font-medium text-gray-700 mb-1">İşe Başlama Tarihi</label>
-                        <input type="date" id="employeeStartDate" required class="w-full px-3 py-1.5 md:px-4 md:py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500">
-                        <p id="employeeStartDateInfo" class="text-xs text-gray-500 mt-1">Başlangıç tarihi bugün olarak ayarlandı.</p>
+                        <div class="relative">
+                            <input type="date" id="employeeStartDate" required class="w-full px-3 pr-10 py-1.5 md:px-4 md:pr-10 md:py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-emerald-500 focus:border-emerald-500" placeholder="Tarih seçin">
+                            <i class="fas fa-calendar-alt absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                        </div>
+                        <p id="employeeStartDateInfo" class="text-xs text-emerald-600 mt-1">Son 3 ay içinde ve dükkanın açık olduğu günlerden seçilebilir.</p>
                     </div>
                     
                     <div class="flex space-x-3 pt-4">
@@ -421,7 +666,10 @@
                     
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-1">Devamsızlık Tarihi</label>
-                        <input type="date" id="absenceDate" required class="w-full px-3 py-1.5 md:px-4 md:py-2 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                        <div class="relative">
+                            <input type="date" id="absenceDate" required class="w-full px-3 py-1.5 pr-10 md:px-4 md:py-2 md:pr-10 text-sm border border-gray-300 rounded-lg focus:ring-2 focus:ring-red-500 focus:border-red-500">
+                            <i class="fas fa-calendar-alt absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none"></i>
+                        </div>
                         <p id="absenceDateWarning" class="hidden text-xs text-red-600 mt-1 font-medium">
                             <i class="fas fa-exclamation-circle mr-1"></i>
                             Bu güne zaten devamsızlık kaydedilmiş
@@ -986,6 +1234,8 @@
     </div>
 
     <!-- JavaScript -->
+    <!-- Açılır işlem menüleri için bulanık arka plan -->
+    <div id="actionsOverlay" class="fixed inset-0 z-40 hidden" style="background-color: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px);"></div>
     <script type="module" src="./dashboard.js"></script>
     <script type="module" src="./sidebar.js"></script>
 </body>

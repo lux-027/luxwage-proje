@@ -4,6 +4,8 @@ import { getAuth, onAuthStateChanged, signOut, updateProfile, updatePassword, Em
 import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
 import luxStudioLogo from "./görsel/luxstudio_logo.png";
 import luxWageLogo from "./görsel/luxwagelogo.png";
+import flatpickr from "flatpickr";
+import "flatpickr/dist/flatpickr.min.css";
 
 // Firebase Config
 const firebaseConfig = {
@@ -53,6 +55,120 @@ function parseLocalDate(d) {
     if (isNaN(date.getTime())) return new Date(NaN);
     date.setHours(0, 0, 0, 0);
     return date;
+}
+
+// Ortak LuxWage flatpickr takvimi (başlık, kapat, onay, blur arka plan)
+function createLuxwageFlatpickr(input, { minDate, maxDate, disable = [], defaultDate, onChange, onConfirm }) {
+    const updateFooter = (selectedDates, instance) => {
+        const calendar = instance?.calendarContainer;
+        if (!calendar) return;
+        const selectedDayEl = calendar.querySelector('.fp-selected-day');
+        const confirmBtn = calendar.querySelector('.fp-confirm');
+        if (!selectedDayEl || !confirmBtn) return;
+        if (selectedDates && selectedDates.length > 0) {
+            const date = selectedDates[0];
+            const dayName = new Intl.DateTimeFormat('tr-TR', { weekday: 'long' }).format(date);
+            const dateText = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+            selectedDayEl.textContent = `${dayName}, ${dateText}`;
+            confirmBtn.disabled = false;
+        } else {
+            selectedDayEl.textContent = 'Tarih seçin';
+            confirmBtn.disabled = true;
+        }
+    };
+
+    return flatpickr(input, {
+        dateFormat: 'Y-m-d',
+        altInput: true,
+        altFormat: 'd F Y',
+        monthSelectorType: 'static',
+        shorthandCurrentMonth: false,
+        closeOnSelect: false,
+        locale: {
+            firstDayOfWeek: 1,
+            weekdays: {
+                shorthand: ['Pz','Pt','Sa','Ça','Pe','Cu','Ct'],
+                longhand: ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi']
+            },
+            months: {
+                shorthand: ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'],
+                longhand: ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık']
+            }
+        },
+        minDate,
+        maxDate,
+        disable,
+        defaultDate,
+        onChange: (selectedDates, dateStr, instance) => {
+            instance._pendingDate = selectedDates[0] || null;
+            instance._confirmed = false;
+            updateFooter(selectedDates, instance);
+            if (typeof onChange === 'function') onChange(selectedDates, dateStr, instance);
+        },
+        onReady: (selectedDates, dateStr, instance) => {
+            const calendar = instance.calendarContainer;
+            if (calendar && !calendar.querySelector('.fp-calendar-title')) {
+                const title = document.createElement('div');
+                title.className = 'fp-calendar-title';
+                title.textContent = 'LuxWage';
+                calendar.appendChild(title);
+            }
+            if (calendar && !calendar.querySelector('.fp-close-btn')) {
+                const closeBtn = document.createElement('button');
+                closeBtn.type = 'button';
+                closeBtn.className = 'fp-close-btn';
+                closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                closeBtn.setAttribute('aria-label', 'Kapat');
+                closeBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    instance.close();
+                });
+                const monthsRow = calendar.querySelector('.flatpickr-months');
+                if (monthsRow) {
+                    closeBtn.style.right = '0.25rem';
+                    closeBtn.style.top = '-3.25rem';
+                    monthsRow.appendChild(closeBtn);
+                } else {
+                    closeBtn.style.right = '0.25rem';
+                    closeBtn.style.top = '0.75rem';
+                    calendar.appendChild(closeBtn);
+                }
+            }
+            if (calendar && !calendar.querySelector('.fp-footer')) {
+                const footer = document.createElement('div');
+                footer.className = 'fp-footer';
+                footer.innerHTML = '<span class="fp-selected-day">Tarih seçin</span><button type="button" class="fp-confirm" disabled>Tarihi Onayla</button>';
+                const confirmBtn = footer.querySelector('.fp-confirm');
+                confirmBtn.addEventListener('click', (e) => {
+                    e.stopPropagation();
+                    instance._confirmed = true;
+                    if (typeof onConfirm === 'function') onConfirm();
+                    instance.close();
+                });
+                calendar.appendChild(footer);
+            }
+        },
+        onOpen: (selectedDates, dateStr, instance) => {
+            instance._originalDate = selectedDates[0] || null;
+            instance._pendingDate = selectedDates[0] || null;
+            instance._confirmed = false;
+            updateFooter(selectedDates, instance);
+            if (!document.getElementById('flatpickrOverlay')) {
+                const overlay = document.createElement('div');
+                overlay.id = 'flatpickrOverlay';
+                overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.5); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); z-index: 1000;';
+                overlay.addEventListener('click', () => instance.close());
+                document.body.appendChild(overlay);
+            }
+        },
+        onClose: (selectedDates, dateStr, instance) => {
+            if (instance && !instance._confirmed) {
+                instance.setDate(instance._originalDate, true);
+            }
+            const overlay = document.getElementById('flatpickrOverlay');
+            if (overlay) overlay.remove();
+        }
+    });
 }
 
 // Global variable for employee deletion
@@ -393,8 +509,122 @@ class LuxWage {
         // Employee start date change - update debt estimate
         const employeeStartDate = document.getElementById('employeeStartDate');
         if (employeeStartDate) {
-            employeeStartDate.addEventListener('change', () => {
-                this.updateEmployeeStartDateEstimate();
+            const today = new Date();
+            const minDate = new Date(today.getFullYear(), today.getMonth() - 3, today.getDate());
+            const updateFlatpickrFooter = (selectedDates, instance) => {
+                const calendar = instance?.calendarContainer;
+                if (!calendar) return;
+                const selectedDayEl = calendar.querySelector('.fp-selected-day');
+                const confirmBtn = calendar.querySelector('.fp-confirm');
+                if (!selectedDayEl || !confirmBtn) return;
+                if (selectedDates && selectedDates.length > 0) {
+                    const date = selectedDates[0];
+                    const dayName = new Intl.DateTimeFormat('tr-TR', { weekday: 'long' }).format(date);
+                    const dateText = new Intl.DateTimeFormat('tr-TR', { day: 'numeric', month: 'long', year: 'numeric' }).format(date);
+                    selectedDayEl.textContent = `${dayName}, ${dateText}`;
+                    confirmBtn.disabled = false;
+                } else {
+                    selectedDayEl.textContent = 'Tarih seçin';
+                    confirmBtn.disabled = true;
+                }
+            };
+            this.employeeStartDatePicker = flatpickr(employeeStartDate, {
+                dateFormat: 'Y-m-d',
+                altInput: true,
+                altFormat: 'd F Y',
+                monthSelectorType: 'static',
+                shorthandCurrentMonth: false,
+                locale: {
+                    firstDayOfWeek: 1,
+                    weekdays: {
+                        shorthand: ['Pz','Pt','Sa','Ça','Pe','Cu','Ct'],
+                        longhand: ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi']
+                    },
+                    months: {
+                        shorthand: ['Oca','Şub','Mar','Nis','May','Haz','Tem','Ağu','Eyl','Eki','Kas','Ara'],
+                        longhand: ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık']
+                    }
+                },
+                minDate: minDate,
+                maxDate: today,
+                closeOnSelect: false,
+                disable: [
+                    (date) => {
+                        const day = date.getDay();
+                        const checkboxes = document.querySelectorAll('input[name="closedDays"]:checked');
+                        const closedDays = Array.from(checkboxes).map(cb => parseInt(cb.value, 10));
+                        return closedDays.includes(day);
+                    }
+                ],
+                onChange: (selectedDates, dateStr, instance) => {
+                    instance._pendingDate = selectedDates[0] || null;
+                    instance._confirmed = false;
+                    updateFlatpickrFooter(selectedDates, instance);
+                },
+                onReady: (selectedDates, dateStr, instance) => {
+                    const calendar = instance.calendarContainer;
+                    if (calendar && !calendar.querySelector('.fp-calendar-title')) {
+                        const title = document.createElement('div');
+                        title.className = 'fp-calendar-title';
+                        title.textContent = 'LuxWage';
+                        calendar.appendChild(title);
+                    }
+                    if (calendar && !calendar.querySelector('.fp-close-btn')) {
+                        const closeBtn = document.createElement('button');
+                        closeBtn.type = 'button';
+                        closeBtn.className = 'fp-close-btn';
+                        closeBtn.innerHTML = '<i class="fas fa-times"></i>';
+                        closeBtn.setAttribute('aria-label', 'Kapat');
+                        closeBtn.style.right = '0.25rem';
+                        closeBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            instance.close();
+                        });
+                        const monthsRow = calendar.querySelector('.flatpickr-months');
+                        if (monthsRow) {
+                            closeBtn.style.right = '0.25rem';
+                            closeBtn.style.top = '-3.25rem';
+                            monthsRow.appendChild(closeBtn);
+                        } else {
+                            closeBtn.style.right = '0.25rem';
+                            closeBtn.style.top = '0.75rem';
+                            calendar.appendChild(closeBtn);
+                        }
+                    }
+                    if (calendar && !calendar.querySelector('.fp-footer')) {
+                        const footer = document.createElement('div');
+                        footer.className = 'fp-footer';
+                        footer.innerHTML = '<span class="fp-selected-day">Tarih seçin</span><button type="button" class="fp-confirm" disabled>Tarihi Onayla</button>';
+                        const confirmBtn = footer.querySelector('.fp-confirm');
+                        confirmBtn.addEventListener('click', (e) => {
+                            e.stopPropagation();
+                            instance._confirmed = true;
+                            this.updateEmployeeStartDateEstimate();
+                            instance.close();
+                        });
+                        calendar.appendChild(footer);
+                    }
+                },
+                onOpen: (selectedDates, dateStr, instance) => {
+                    instance._originalDate = selectedDates[0] || null;
+                    instance._pendingDate = selectedDates[0] || null;
+                    instance._confirmed = false;
+                    updateFlatpickrFooter(selectedDates, instance);
+                    if (!document.getElementById('flatpickrOverlay')) {
+                        const overlay = document.createElement('div');
+                        overlay.id = 'flatpickrOverlay';
+                        overlay.style.cssText = 'position: fixed; inset: 0; background: rgba(0,0,0,0.3); backdrop-filter: blur(4px); z-index: 1000;';
+                        overlay.addEventListener('click', () => this.employeeStartDatePicker?.close());
+                        document.body.appendChild(overlay);
+                    }
+                },
+                onClose: (selectedDates, dateStr, instance) => {
+                    if (instance && !instance._confirmed) {
+                        instance.setDate(instance._originalDate, true);
+                    }
+                    const overlay = document.getElementById('flatpickrOverlay');
+                    if (overlay) overlay.remove();
+                }
             });
         }
 
@@ -417,6 +647,7 @@ class LuxWage {
         closedDaysCheckboxes.forEach(cb => {
             cb.addEventListener('change', () => {
                 this.updateEmployeeStartDateEstimate();
+                if (this.employeeStartDatePicker) this.employeeStartDatePicker.redraw();
             });
         });
 
@@ -751,27 +982,27 @@ class LuxWage {
         
         switch(pageName) {
             case 'home':
-                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-home hidden md:inline mr-2 text-blue-600"></i>Ana Sayfa';
+                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-home mr-2 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-xs text-blue-600 md:h-8 md:w-8 md:text-sm"></i>Ana Sayfa';
                 if (homeSection) homeSection.style.display = 'block';
                 this.renderHomePage();
                 break;
             case 'employees':
-                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-users hidden md:inline mr-2 text-blue-600"></i>Çalışanlarım';
+                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-users mr-2 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-xs text-blue-600 md:h-8 md:w-8 md:text-sm"></i>Çalışanlarım';
                 if (employeesSection) employeesSection.style.display = 'block';
                 this.renderEmployeesPage();
                 break;
             case 'account':
-                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-user-circle hidden md:inline mr-2 text-blue-600"></i>Hesabım';
+                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-user-circle mr-2 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-xs text-blue-600 md:h-8 md:w-8 md:text-sm"></i>Hesabım';
                 if (accountSection) accountSection.style.display = 'block';
                 this.renderAccountPage();
                 break;
             case 'pastEmployees':
-                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-user-clock hidden md:inline mr-2 text-blue-600"></i>Geçmiş Çalışanlar';
+                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-user-clock mr-2 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-xs text-blue-600 md:h-8 md:w-8 md:text-sm"></i>Geçmiş Çalışanlar';
                 if (pastEmployeesSection) pastEmployeesSection.style.display = 'block';
                 this.renderPastEmployeesPage();
                 break;
             case 'studio':
-                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-star hidden md:inline mr-2 text-blue-600"></i>Lux Studio';
+                if (pageTitle) pageTitle.innerHTML = '<i class="fas fa-star mr-2 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-xs text-blue-600 md:h-8 md:w-8 md:text-sm"></i>Lux Studio';
                 if (studioSection) studioSection.style.display = 'block';
                 this.renderStudioPage();
                 break;
@@ -1970,8 +2201,12 @@ class LuxWage {
 
         const today = new Date();
         today.setHours(0, 0, 0, 0);
-        employeeStartDate.value = this.formatDateForInput(today);
-        this.updateEmployeeStartDateEstimate();
+        if (this.employeeStartDatePicker) {
+            this.employeeStartDatePicker.setDate(today, true);
+        } else {
+            employeeStartDate.value = this.formatDateForInput(today);
+            this.updateEmployeeStartDateEstimate();
+        }
     }
 
     formatDateForInput(date) {
@@ -3401,11 +3636,6 @@ function openAbsenceModal(employeeId) {
     tenDaysAgo.setDate(today.getDate() - 10);
     
     const minDate = startDate > tenDaysAgo ? startDate : tenDaysAgo;
-    const minDateStr = toLocalDateStr(minDate);
-    
-    const absenceDateInput = document.getElementById('absenceDate');
-    absenceDateInput.min = minDateStr;
-    absenceDateInput.max = todayStr;
     const dailyLogs = luxwage.calculateDailyLogs(employee);
     const defaultDate = new Date(today);
     while (defaultDate >= minDate) {
@@ -3415,19 +3645,20 @@ function openAbsenceModal(employeeId) {
         if (!luxwage.isClosedDay(defaultDate, employee) && !alreadyAbsent && !isStopped) break;
         defaultDate.setDate(defaultDate.getDate() - 1);
     }
-    absenceDateInput.value = defaultDate >= minDate ? toLocalDateStr(defaultDate) : '';
     
     // Tarih değiştiğinde kontrol et
+    const absenceDateInput = document.getElementById('absenceDate');
     const submitBtn = document.getElementById('absenceSubmitBtn');
     const warningEl = document.getElementById('absenceDateWarning');
     
     function validateAbsenceDate() {
         const selectedDate = parseLocalDate(absenceDateInput.value);
         const selectedDateStr = toLocalDateStr(selectedDate);
+        const displayInput = absenceDateInput._flatpickr?.altInput || absenceDateInput;
         
         // Varsayılan durumları sıfırla
-        absenceDateInput.classList.remove('border-red-500', 'bg-red-50');
-        absenceDateInput.classList.add('border-gray-300');
+        displayInput.classList.remove('border-red-500', 'bg-red-50');
+        displayInput.classList.add('border-gray-300');
         if (warningEl) warningEl.classList.add('hidden');
         if (submitBtn) submitBtn.disabled = false;
         
@@ -3463,8 +3694,8 @@ function openAbsenceModal(employeeId) {
         
         // Aynı güne tekrar devamsızlık kontrolü - kırmızı pasif yap
         if (employee.absenceHistory && employee.absenceHistory.some(absence => toLocalDateStr(parseLocalDate(absence.date)) === selectedDateStr)) {
-            absenceDateInput.classList.remove('border-gray-300');
-            absenceDateInput.classList.add('border-red-500', 'bg-red-50');
+            displayInput.classList.remove('border-gray-300');
+            displayInput.classList.add('border-red-500', 'bg-red-50');
             if (warningEl) warningEl.classList.remove('hidden');
             if (submitBtn) submitBtn.disabled = true;
             return false;
@@ -3483,7 +3714,31 @@ function openAbsenceModal(employeeId) {
         return true;
     }
     
-    absenceDateInput.onchange = validateAbsenceDate;
+    const isDisabledDay = (date) => {
+        if (date < minDate || date > today) return true;
+        const dateStr = toLocalDateStr(date);
+        const alreadyAbsent = employee.absenceHistory && employee.absenceHistory.some(absence => toLocalDateStr(parseLocalDate(absence.date)) === dateStr);
+        const isStopped = dailyLogs.some(log => log.date === dateStr && log.isStopped);
+        return luxwage.isClosedDay(date, employee) || alreadyAbsent || isStopped;
+    };
+    
+    if (absenceDateInput._flatpickr) {
+        absenceDateInput._flatpickr.destroy();
+    }
+    const absenceDatePicker = createLuxwageFlatpickr(absenceDateInput, {
+        minDate,
+        maxDate: today,
+        disable: [isDisabledDay],
+        defaultDate: defaultDate >= minDate ? defaultDate : null,
+        onChange: (selectedDates, dateStr, instance) => {
+            validateAbsenceDate();
+            if (!absenceDateInput.value) {
+                instance.setDate(null, false);
+            }
+            luxwage.calculateAbsenceDeduction();
+        }
+    });
+    
     validateAbsenceDate();
     luxwage.calculateAbsenceDeduction();
     
@@ -5228,6 +5483,7 @@ document.addEventListener('DOMContentLoaded', function() {
 
         // İşlemler dropdown toggle
         const actionsBtn = e.target.closest('.actionsMenuBtn');
+        const actionsOverlay = document.getElementById('actionsOverlay');
         if (actionsBtn) {
             const dropdown = actionsBtn.closest('.relative').querySelector('.actionsDropdown');
             // Diğer tüm dropdownları kapat
@@ -5235,6 +5491,9 @@ document.addEventListener('DOMContentLoaded', function() {
                 if (d !== dropdown) d.classList.add('hidden');
             });
             dropdown.classList.toggle('hidden');
+            if (actionsOverlay) {
+                actionsOverlay.classList.toggle('hidden', dropdown.classList.contains('hidden'));
+            }
             e.stopPropagation();
             return;
         }
@@ -5242,11 +5501,13 @@ document.addEventListener('DOMContentLoaded', function() {
         // Dropdown dışına tıklanınca kapat
         if (!e.target.closest('.actionsDropdown') && !e.target.closest('.actionsMenuBtn')) {
             document.querySelectorAll('.actionsDropdown').forEach(d => d.classList.add('hidden'));
+            if (actionsOverlay) actionsOverlay.classList.add('hidden');
         }
 
         // Dropdown içindeki bir butona tıklanınca dropdown'ı kapat
         if (e.target.closest('.actionsDropdown')) {
             document.querySelectorAll('.actionsDropdown').forEach(d => d.classList.add('hidden'));
+            if (actionsOverlay) actionsOverlay.classList.add('hidden');
         }
 
         // Employee action buttons with data-id (employee ID)
